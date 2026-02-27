@@ -1,3 +1,6 @@
+// Agent types
+export type AgentType = 'watcher' | 'doer' | 'auto';
+
 // Agent status lifecycle
 export type AgentStatus =
   | 'creating'
@@ -11,6 +14,7 @@ export type AgentStatus =
 export interface Agent {
   id: string;
   name: string;
+  type: AgentType;
   prompt: string;
   description: string | null;
   status: AgentStatus;

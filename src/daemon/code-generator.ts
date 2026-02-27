@@ -5,11 +5,15 @@ import { BASE_SYSTEM_PROMPT, getTemplate, registerTemplate } from '../agent/temp
 import { webMonitorTemplate } from '../agent/templates/web-monitor.js';
 import { apiCheckerTemplate } from '../agent/templates/api-checker.js';
 import { rssWatcherTemplate } from '../agent/templates/rss-watcher.js';
+import { doerTemplate } from '../agent/templates/doer.js';
+import { autoTemplate } from '../agent/templates/auto.js';
 
 // Register built-in templates
 registerTemplate(webMonitorTemplate);
 registerTemplate(apiCheckerTemplate);
 registerTemplate(rssWatcherTemplate);
+registerTemplate(doerTemplate);
+registerTemplate(autoTemplate);
 
 interface GeneratedAgent {
   name: string;

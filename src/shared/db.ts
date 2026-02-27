@@ -27,6 +27,7 @@ function migrate(db: Database.Database): void {
     CREATE TABLE IF NOT EXISTS agents (
       id          TEXT PRIMARY KEY,
       name        TEXT NOT NULL,
+      type        TEXT NOT NULL DEFAULT 'watcher',
       prompt      TEXT NOT NULL,
       description TEXT,
       status      TEXT NOT NULL DEFAULT 'creating',
@@ -41,6 +42,9 @@ function migrate(db: Database.Database): void {
       created_at  TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status);
+    CREATE INDEX IF NOT EXISTS idx_agents_created ON agents(created_at DESC);
 
     CREATE TABLE IF NOT EXISTS agent_logs (
       id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,6 +67,20 @@ function migrate(db: Database.Database): void {
       severity    TEXT DEFAULT 'info',
       status      TEXT DEFAULT 'sent',
       created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_notifications_severity
+      ON notifications(severity, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS agent_metrics (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent_id        TEXT NOT NULL UNIQUE REFERENCES agents(id) ON DELETE CASCADE,
+      run_count       INTEGER DEFAULT 0,
+      success_count   INTEGER DEFAULT 0,
+      error_count     INTEGER DEFAULT 0,
+      avg_duration_ms REAL DEFAULT 0,
+      last_duration_ms INTEGER DEFAULT 0,
+      updated_at      TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
     CREATE TABLE IF NOT EXISTS agent_store (

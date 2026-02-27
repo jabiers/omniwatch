@@ -11,13 +11,15 @@ import { configCommand } from './commands/config.js';
 import { daemonCommand } from './commands/daemon.js';
 import { dashCommand } from './commands/dash.js';
 import { chatCommand } from './commands/chat.js';
+import { doCommand } from './commands/do.js';
+import { autoCommand } from './commands/auto.js';
 
 const program = new Command();
 
 program
   .name('omni')
   .description('OmniWatch - AI-native autonomous agent management CLI')
-  .version('0.2.0');
+  .version('0.3.0');
 
 program.addCommand(watchCommand);
 program.addCommand(listCommand);
@@ -31,5 +33,7 @@ program.addCommand(configCommand);
 program.addCommand(daemonCommand);
 program.addCommand(dashCommand);
 program.addCommand(chatCommand);
+program.addCommand(doCommand);
+program.addCommand(autoCommand);
 
 program.parse();

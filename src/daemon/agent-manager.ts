@@ -3,14 +3,14 @@ import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { nanoid } from 'nanoid';
-import { AGENTS_DIR, AGENT_MEMORY_LIMIT } from '../shared/constants.js';
+import { AGENTS_DIR, AGENT_MEMORY_LIMIT, MAX_AGENTS } from '../shared/constants.js';
 import { getDb } from '../shared/db.js';
 import { log } from '../shared/logger.js';
 import { Errors } from '../shared/errors.js';
 import { sendNotification } from './notifier.js';
 import { recordHeartbeat } from './health-monitor.js';
 import { broadcastLogEntry } from './handlers/log.js';
-import type { Agent, AgentConfig, AgentMessage, DaemonToAgentMessage } from '../shared/types.js';
+import type { Agent, AgentConfig, AgentMessage, AgentType, DaemonToAgentMessage } from '../shared/types.js';
 
 // In-memory map of running agent processes
 const processes = new Map<string, ChildProcess>();
@@ -19,21 +19,35 @@ export function getRunningProcesses(): Map<string, ChildProcess> {
   return processes;
 }
 
+export function enforceAgentLimit(): void {
+  const db = getDb();
+  const { count } = db.prepare(
+    "SELECT COUNT(*) as count FROM agents WHERE status IN ('running', 'creating', 'ready')"
+  ).get() as { count: number };
+
+  if (count >= MAX_AGENTS) {
+    throw Errors.MAX_AGENTS_EXCEEDED(count, MAX_AGENTS);
+  }
+}
+
 export function createAgentRecord(
   prompt: string,
   name: string,
   description: string | null,
   code: string,
   config: AgentConfig,
+  type: AgentType = 'watcher',
 ): Agent {
+  enforceAgentLimit();
+
   const db = getDb();
   const id = `agent-${nanoid(8)}`;
   const codeHash = createHash('sha256').update(code).digest('hex').slice(0, 16);
 
   db.prepare(`
-    INSERT INTO agents (id, name, prompt, description, status, code_hash, config)
-    VALUES (?, ?, ?, ?, 'creating', ?, ?)
-  `).run(id, name, prompt, description, codeHash, JSON.stringify(config));
+    INSERT INTO agents (id, name, type, prompt, description, status, code_hash, config)
+    VALUES (?, ?, ?, ?, ?, 'creating', ?, ?)
+  `).run(id, name, type, prompt, description, codeHash, JSON.stringify(config));
 
   // Write agent code to disk
   const agentDir = join(AGENTS_DIR, id);

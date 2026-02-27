@@ -44,6 +44,9 @@ function storeRequest(msg: AgentMessage): Promise<unknown> {
 export interface OmniSDK {
   fetch(url: string, options?: RequestInit): Promise<Response>;
   notify(message: string, options?: { title?: string; severity?: 'critical' | 'warning' | 'info' }): Promise<void>;
+  sleep(ms: number): Promise<void>;
+  retry<T>(fn: () => Promise<T>, opts?: { maxRetries?: number; delay?: number; backoff?: number }): Promise<T>;
+  timeout<T>(fn: () => Promise<T>, ms: number): Promise<T>;
   store: {
     get(key: string): Promise<unknown>;
     set(key: string, value: unknown): Promise<void>;
@@ -70,6 +73,35 @@ export function createSDK(): OmniSDK {
 
     async notify(message: string, options?: { title?: string; severity?: 'critical' | 'warning' | 'info' }): Promise<void> {
       send({ type: 'notify', message, options });
+    },
+
+    sleep(ms: number): Promise<void> {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    },
+
+    async retry<T>(fn: () => Promise<T>, opts?: { maxRetries?: number; delay?: number; backoff?: number }): Promise<T> {
+      const { maxRetries = 3, delay = 1000, backoff = 2 } = opts || {};
+      let lastError: Error = new Error('retry failed');
+      for (let i = 0; i <= maxRetries; i++) {
+        try {
+          return await fn();
+        } catch (e) {
+          lastError = e instanceof Error ? e : new Error(String(e));
+          if (i < maxRetries) {
+            await new Promise(r => setTimeout(r, delay * Math.pow(backoff, i)));
+          }
+        }
+      }
+      throw lastError;
+    },
+
+    async timeout<T>(fn: () => Promise<T>, ms: number): Promise<T> {
+      return Promise.race([
+        fn(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms)
+        ),
+      ]);
     },
 
     store: {

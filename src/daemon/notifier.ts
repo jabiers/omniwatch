@@ -1,6 +1,7 @@
 import { getDb } from '../shared/db.js';
 import { log } from '../shared/logger.js';
 import { dispatchNotification } from './notification-channels/registry.js';
+import { shouldThrottle, getSuppressedCount } from './smart-throttle.js';
 import type { Severity } from './notification-channels/types.js';
 
 interface NotifyOptions {
@@ -14,6 +15,13 @@ export async function sendNotification(
   options: NotifyOptions = {},
 ): Promise<void> {
   const { title = 'OmniWatch Alert', severity = 'info' } = options;
+
+  // Check throttle before sending
+  if (shouldThrottle(agentId, severity)) {
+    const suppressed = getSuppressedCount(agentId, severity);
+    log('info', `Notification throttled for agent ${agentId} (severity: ${severity}, suppressed: ${suppressed})`);
+    return;
+  }
 
   // Record in DB
   const db = getDb();

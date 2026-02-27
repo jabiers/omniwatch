@@ -28,4 +28,6 @@ export const Errors = {
     new OmniError('HEAL_EXHAUSTED', `Agent '${id}' exceeded max heal attempts (3)`, { id }),
   MAX_AGENTS_REACHED: () =>
     new OmniError('MAX_AGENTS_REACHED', 'Maximum number of agents reached (20)'),
+  MAX_AGENTS_EXCEEDED: (current: number, max: number) =>
+    new OmniError('MAX_AGENTS_EXCEEDED', `Agent limit reached: ${current}/${max} active agents`),
 } as const;

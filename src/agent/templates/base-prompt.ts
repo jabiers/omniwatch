@@ -17,6 +17,9 @@ Generate a self-contained Node.js ES module monitoring script.
 - omni.log.info(message, meta?) - Info log
 - omni.log.warn(message, meta?) - Warning log
 - omni.log.error(message, meta?) - Error log
+- omni.sleep(ms) - Wait for given milliseconds (async)
+- omni.retry(fn, { maxRetries?, delay?, backoff? }) - Retry with exponential backoff
+- omni.timeout(fn, ms) - Reject if function takes longer than ms
 
 ## Rules
 1. Export a default async function that receives the \`omni\` SDK object
