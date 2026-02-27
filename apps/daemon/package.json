@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "openai": "^4.73.0",
     "@omniwatch/shared": "workspace:*",
     "@omniwatch/db": "workspace:*",
     "acorn": "^8.16.0",

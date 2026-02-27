@@ -1,11 +1,11 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { AGENTS_DIR } from '@omniwatch/shared';
 import type { AgentLog } from '@omniwatch/shared';
-import { loadConfig, getDb } from '@omniwatch/db';
+import { getDb } from '@omniwatch/db';
 import { getAgent } from './agent-manager.js';
 import { validateCode } from './code-validator.js';
+import { getAIProvider } from './ai-provider.js';
 
 export interface ChatResponse {
   message: string;
@@ -36,11 +36,7 @@ export async function handleChat(
     'SELECT * FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT 10'
   ).all(agentId) as AgentLog[];
 
-  const config = loadConfig();
-  const apiKey = config.ai.api_key || process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error('Anthropic API key not configured');
-
-  const client = new Anthropic({ apiKey });
+  const ai = getAIProvider();
 
   const systemPrompt = `You are an AI assistant helping modify an OmniWatch monitoring agent.
 
@@ -70,14 +66,7 @@ Respond with JSON only:
     { role: 'user' as const, content: userMessage },
   ];
 
-  const response = await client.messages.create({
-    model: config.ai.model || 'claude-sonnet-4-20250514',
-    max_tokens: 4096,
-    system: systemPrompt,
-    messages,
-  });
-
-  const text = response.content[0].type === 'text' ? response.content[0].text : '';
+  const text = await ai.chat(systemPrompt, messages);
   let jsonText = text.trim();
   if (jsonText.startsWith('```')) {
     jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');

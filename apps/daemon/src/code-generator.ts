@@ -1,7 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { log } from '@omniwatch/shared';
-import { loadConfig } from '@omniwatch/db';
 import { BASE_SYSTEM_PROMPT, getTemplate, registerTemplate } from './agent/templates/base-prompt.js';
+import { getAIProvider } from './ai-provider.js';
 import { webMonitorTemplate } from './agent/templates/web-monitor.js';
 import { apiCheckerTemplate } from './agent/templates/api-checker.js';
 import { rssWatcherTemplate } from './agent/templates/rss-watcher.js';
@@ -26,16 +25,7 @@ export async function generateAgentCode(
   prompt: string,
   templateName?: string,
 ): Promise<GeneratedAgent> {
-  const config = loadConfig();
-  const apiKey = config.ai.api_key || process.env.ANTHROPIC_API_KEY || process.env.OMNI_ANTHROPIC_API_KEY;
-
-  if (!apiKey) {
-    throw new Error(
-      'Anthropic API key not configured. Run: omni config set ai.api_key <your-key>'
-    );
-  }
-
-  const client = new Anthropic({ apiKey });
+  const ai = getAIProvider();
 
   // Apply template suffix if specified
   let finalPrompt = prompt;
@@ -51,27 +41,14 @@ export async function generateAgentCode(
     }
   }
 
-  log('info', 'Generating agent code with Claude...');
+  log('info', 'Generating agent code with AI...');
 
-  const message = await client.messages.create({
-    model: config.ai.model || 'claude-sonnet-4-20250514',
-    max_tokens: 4096,
-    system: BASE_SYSTEM_PROMPT,
-    messages: [
-      {
-        role: 'user',
-        content: finalPrompt,
-      },
-    ],
-  });
-
-  const content = message.content[0];
-  if (content.type !== 'text') {
-    throw new Error('Unexpected response type from Claude');
-  }
+  const text = await ai.chat(BASE_SYSTEM_PROMPT, [
+    { role: 'user', content: finalPrompt },
+  ]);
 
   try {
-    let jsonText = content.text.trim();
+    let jsonText = text.trim();
     if (jsonText.startsWith('```')) {
       jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
     }
@@ -101,43 +78,23 @@ export async function regenerateAgentCode(
   currentCode: string,
   error: string,
 ): Promise<GeneratedAgent> {
-  const config = loadConfig();
-  const apiKey = config.ai.api_key || process.env.ANTHROPIC_API_KEY || process.env.OMNI_ANTHROPIC_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('Anthropic API key not configured');
-  }
-
-  const client = new Anthropic({ apiKey });
+  const ai = getAIProvider();
 
   log('info', 'Regenerating agent code (self-healing)...');
 
-  const message = await client.messages.create({
-    model: config.ai.model || 'claude-sonnet-4-20250514',
-    max_tokens: 4096,
-    system: BASE_SYSTEM_PROMPT,
-    messages: [
-      {
-        role: 'user',
-        content: prompt,
-      },
-      {
-        role: 'assistant',
-        content: JSON.stringify({ name: 'agent', description: '', code: currentCode, dependencies: [] }),
-      },
-      {
-        role: 'user',
-        content: `The agent code above failed with this error:\n\n${error}\n\nPlease fix the code and respond with the corrected JSON.`,
-      },
-    ],
-  });
+  const text = await ai.chat(BASE_SYSTEM_PROMPT, [
+    { role: 'user', content: prompt },
+    {
+      role: 'assistant',
+      content: JSON.stringify({ name: 'agent', description: '', code: currentCode, dependencies: [] }),
+    },
+    {
+      role: 'user',
+      content: `The agent code above failed with this error:\n\n${error}\n\nPlease fix the code and respond with the corrected JSON.`,
+    },
+  ]);
 
-  const content = message.content[0];
-  if (content.type !== 'text') {
-    throw new Error('Unexpected response type');
-  }
-
-  let jsonText = content.text.trim();
+  let jsonText = text.trim();
   if (jsonText.startsWith('```')) {
     jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
   }
