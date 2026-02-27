@@ -1,0 +1,38 @@
+{
+  "version": "2.0",
+  "lastUpdated": "2026-02-27T02:10:00.000Z",
+  "activeFeatures": [],
+  "primaryFeature": null,
+  "features": {
+    "omniwatch-mvp": {
+      "phase": "archived",
+      "matchRate": 90,
+      "iterationCount": 1,
+      "startedAt": "2026-02-27T00:00:00.000Z",
+      "archivedAt": "2026-02-27T01:45:00.000Z",
+      "archivedTo": "docs/archive/2026-02/omniwatch-mvp/"
+    },
+    "omniwatch-v0.2": {
+      "phase": "archived",
+      "matchRate": 97,
+      "iterationCount": 0,
+      "startedAt": "2026-02-27T01:50:00.000Z",
+      "archivedAt": "2026-02-27T02:10:00.000Z",
+      "archivedTo": "docs/archive/2026-02/omniwatch-v0.2/"
+    }
+  },
+  "pipeline": {
+    "currentPhase": 0,
+    "level": "Enterprise",
+    "phaseHistory": [
+      "plan",
+      "design"
+    ]
+  },
+  "session": {
+    "startedAt": "2026-02-27T00:00:00.000Z",
+    "onboardingCompleted": true,
+    "lastActivity": "2026-02-27T02:10:00.000Z"
+  },
+  "history": []
+}

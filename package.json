@@ -1,0 +1,49 @@
+{
+  "name": "omniwatch",
+  "version": "0.2.0",
+  "description": "AI-native CLI tool for autonomous agent management. Don't Config, Just Speak.",
+  "type": "module",
+  "bin": {
+    "omni": "./dist/cli/index.js"
+  },
+  "scripts": {
+    "dev": "tsx src/cli/index.ts",
+    "dev:daemon": "tsx src/daemon/index.ts",
+    "build": "tsup",
+    "test": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "cli",
+    "ai",
+    "monitoring",
+    "agent",
+    "automation",
+    "claude"
+  ],
+  "author": "Paul",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "acorn": "^8.16.0",
+    "better-sqlite3": "^11.7.0",
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "ink": "^6.8.0",
+    "nanoid": "^5.0.9",
+    "ora": "^8.1.1",
+    "react": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.2.14",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}

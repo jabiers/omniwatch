@@ -1,0 +1,28 @@
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+
+export const OMNI_HOME = join(homedir(), '.omniwatch');
+export const DB_PATH = join(OMNI_HOME, 'omniwatch.db');
+export const SOCKET_PATH = join(OMNI_HOME, 'omnid.sock');
+export const PID_FILE = join(OMNI_HOME, 'omnid.pid');
+export const CONFIG_FILE = join(OMNI_HOME, 'config.json');
+export const AGENTS_DIR = join(OMNI_HOME, 'agents');
+export const LOGS_DIR = join(OMNI_HOME, 'logs');
+
+export const HEARTBEAT_INTERVAL = 10_000; // 10s
+export const HEARTBEAT_TIMEOUT = 30_000;  // 30s
+export const MAX_HEAL_ATTEMPTS = 3;
+export const MAX_AGENTS = 20;
+export const AGENT_MEMORY_LIMIT = 128; // MB
+
+export const WHITELISTED_PACKAGES = [
+  'axios', 'cheerio', 'dayjs', 'lodash',
+  'node-fetch', 'rss-parser', 'xml2js',
+  'ws', 'csv-parse', 'jsonpath',
+];
+
+export const FORBIDDEN_APIS = [
+  'child_process', 'cluster', 'dgram',
+  'fs', 'net', 'tls', 'vm', 'worker_threads',
+  'eval', 'Function',
+];
