@@ -19,12 +19,11 @@ import {
 } from "lucide-react";
 
 interface MetricsData {
-  runCount: number;
-  successRate: number;
-  avgDuration: number;
-  lastRun?: string;
-  errorCount?: number;
-  healCount?: number;
+  run_count: number;
+  success_count: number;
+  error_count: number;
+  avg_duration_ms: number;
+  last_duration_ms: number;
 }
 
 interface AgentDetail {
@@ -33,14 +32,19 @@ interface AgentDetail {
   type: string;
   status: string;
   prompt?: string;
-  createdAt?: string;
-  metrics?: MetricsData;
+  created_at?: string;
+  heal_count?: number;
+  error_count?: number;
+  last_run_at?: string;
 }
 
 interface LogEntry {
-  timestamp: string;
+  id: number;
+  agent_id: string;
   level: string;
   message: string;
+  metadata: string | null;
+  created_at: string;
 }
 
 interface ChatMessage {
@@ -94,8 +98,8 @@ export default function AgentDetailPage({
     try {
       const res = await fetch(`/api/agents/${id}`);
       if (res.ok) {
-        const data = (await res.json()) as AgentDetail;
-        setAgent(data);
+        const data = await res.json();
+        setAgent(data.agent ?? data);
       }
     } catch {
       // API not available
@@ -107,8 +111,10 @@ export default function AgentDetailPage({
       const levelParam = logFilter !== "all" ? `?level=${logFilter}` : "";
       const res = await fetch(`/api/agents/${id}/logs${levelParam}`);
       if (res.ok) {
-        const data = (await res.json()) as LogEntry[] | { logs: LogEntry[] };
-        setLogs(Array.isArray(data) ? data : data.logs ?? []);
+        const data = await res.json();
+        const raw: LogEntry[] = Array.isArray(data) ? data : data.logs ?? [];
+        // API returns DESC order, reverse to show oldest first (newest at bottom)
+        setLogs(raw.reverse());
       }
     } catch {
       // API not available
@@ -119,8 +125,8 @@ export default function AgentDetailPage({
     try {
       const res = await fetch(`/api/agents/${id}/metrics`);
       if (res.ok) {
-        const data = (await res.json()) as MetricsData;
-        setMetrics(data);
+        const data = await res.json();
+        setMetrics(data.metrics ?? data);
       }
     } catch {
       // API not available
@@ -260,8 +266,7 @@ export default function AgentDetailPage({
   const filteredLogs =
     logFilter === "all" ? logs : logs.filter((l) => l.level === logFilter);
 
-  // Merge agent metrics with separate metrics fetch
-  const displayMetrics = metrics ?? agent?.metrics ?? null;
+  const displayMetrics = metrics;
 
   if (loading) {
     return (
@@ -319,9 +324,9 @@ export default function AgentDetailPage({
             </div>
             <div className="flex items-center gap-4 text-sm text-gray-500">
               <span className="capitalize">{agent.type}</span>
-              {agent.createdAt && (
+              {agent.created_at && (
                 <span>
-                  Created {new Date(agent.createdAt).toLocaleDateString()}
+                  Created {new Date(agent.created_at).toLocaleDateString()}
                 </span>
               )}
             </div>
@@ -404,18 +409,22 @@ export default function AgentDetailPage({
         <div className="grid grid-cols-3 gap-4">
           <div className="glass-card text-center">
             <p className="text-xs text-gray-500 mb-1">Run Count</p>
-            <p className="text-2xl font-bold">{displayMetrics.runCount}</p>
+            <p className="text-2xl font-bold">{displayMetrics.run_count}</p>
           </div>
           <div className="glass-card text-center">
             <p className="text-xs text-gray-500 mb-1">Success Rate</p>
             <p className="text-2xl font-bold">
-              {(displayMetrics.successRate * 100).toFixed(1)}%
+              {displayMetrics.run_count > 0
+                ? ((displayMetrics.success_count / displayMetrics.run_count) * 100).toFixed(1)
+                : "0.0"}%
             </p>
           </div>
           <div className="glass-card text-center">
             <p className="text-xs text-gray-500 mb-1">Avg Duration</p>
             <p className="text-2xl font-bold">
-              {(displayMetrics.avgDuration / 1000).toFixed(1)}s
+              {displayMetrics.avg_duration_ms > 0
+                ? (displayMetrics.avg_duration_ms / 1000).toFixed(1)
+                : "0.0"}s
             </p>
           </div>
         </div>
@@ -490,9 +499,9 @@ export default function AgentDetailPage({
               </p>
             ) : (
               filteredLogs.map((log, i) => (
-                <div key={i} className="log-line flex gap-3">
+                <div key={log.id ?? i} className="log-line flex gap-3">
                   <span className="text-gray-600 shrink-0">
-                    {new Date(log.timestamp).toLocaleTimeString()}
+                    {new Date(log.created_at).toLocaleTimeString()}
                   </span>
                   <span
                     className={`w-12 shrink-0 uppercase ${logLevelColor[log.level] ?? "text-gray-500"}`}
@@ -623,44 +632,43 @@ export default function AgentDetailPage({
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <MetricCard
                   label="Total Runs"
-                  value={String(displayMetrics.runCount)}
+                  value={String(displayMetrics.run_count)}
                 />
-                <MetricCard
-                  label="Success Rate"
-                  value={`${(displayMetrics.successRate * 100).toFixed(1)}%`}
-                  color={
-                    displayMetrics.successRate >= 0.9
-                      ? "text-emerald-400"
-                      : displayMetrics.successRate >= 0.7
-                        ? "text-yellow-400"
+                {(() => {
+                  const rate = displayMetrics.run_count > 0
+                    ? displayMetrics.success_count / displayMetrics.run_count
+                    : 0;
+                  return (
+                    <MetricCard
+                      label="Success Rate"
+                      value={`${(rate * 100).toFixed(1)}%`}
+                      color={
+                        rate >= 0.9 ? "text-emerald-400"
+                        : rate >= 0.7 ? "text-yellow-400"
                         : "text-red-400"
-                  }
-                />
+                      }
+                    />
+                  );
+                })()}
                 <MetricCard
                   label="Avg Duration"
-                  value={`${(displayMetrics.avgDuration / 1000).toFixed(1)}s`}
+                  value={`${displayMetrics.avg_duration_ms > 0 ? (displayMetrics.avg_duration_ms / 1000).toFixed(1) : "0.0"}s`}
                 />
-                {displayMetrics.errorCount != null && (
-                  <MetricCard
-                    label="Errors"
-                    value={String(displayMetrics.errorCount)}
-                    color={
-                      displayMetrics.errorCount > 0
-                        ? "text-red-400"
-                        : "text-gray-300"
-                    }
-                  />
-                )}
-                {displayMetrics.healCount != null && (
+                <MetricCard
+                  label="Errors"
+                  value={String(displayMetrics.error_count)}
+                  color={displayMetrics.error_count > 0 ? "text-red-400" : "text-gray-300"}
+                />
+                {agent?.heal_count != null && (
                   <MetricCard
                     label="Heal Attempts"
-                    value={String(displayMetrics.healCount)}
+                    value={String(agent.heal_count)}
                   />
                 )}
-                {displayMetrics.lastRun && (
+                {agent?.last_run_at && (
                   <MetricCard
                     label="Last Run"
-                    value={new Date(displayMetrics.lastRun).toLocaleString()}
+                    value={new Date(agent.last_run_at).toLocaleString()}
                     small
                   />
                 )}
