@@ -4,12 +4,14 @@ import { useEffect, useState, useCallback } from "react";
 import { Filter, Calendar, Check, Eye } from "lucide-react";
 
 interface Notification {
-  id: string;
-  agentId: string;
-  agentName?: string;
+  id: number;
+  agent_id: string;
+  channel: string;
+  title: string;
   severity: string;
   message: string;
-  createdAt: string;
+  status: string;
+  created_at: string;
 }
 
 const severityConfig: Record<
@@ -72,25 +74,25 @@ export default function NotificationsPage() {
 
   // Get unique agent names for filter
   const agentNames = Array.from(
-    new Set(notifications.map((n) => n.agentName ?? n.agentId))
+    new Set(notifications.map((n) => n.agent_id))
   );
 
   // Filter notifications
   const filtered = notifications.filter((n) => {
     if (filterSeverity !== "all" && n.severity !== filterSeverity) return false;
-    if (filterAgent !== "all" && (n.agentName ?? n.agentId) !== filterAgent)
+    if (filterAgent !== "all" && (n.agent_id) !== filterAgent)
       return false;
 
     // Date range filter
     if (dateFrom) {
       const from = new Date(dateFrom);
-      const created = new Date(n.createdAt);
+      const created = new Date(n.created_at);
       if (created < from) return false;
     }
     if (dateTo) {
       const to = new Date(dateTo);
       to.setHours(23, 59, 59, 999);
-      const created = new Date(n.createdAt);
+      const created = new Date(n.created_at);
       if (created > to) return false;
     }
 
@@ -102,15 +104,15 @@ export default function NotificationsPage() {
   const hasMore = visibleCount < filtered.length;
 
   /** Mark a single notification as read (local state) */
-  function markAsRead(id: string) {
-    setReadIds((prev) => new Set([...prev, id]));
+  function markAsRead(id: number) {
+    setReadIds((prev) => new Set([...prev, String(id)]));
   }
 
   /** Mark all visible as read */
   function markAllAsRead() {
     setReadIds((prev) => {
       const next = new Set(prev);
-      visible.forEach((n) => next.add(n.id));
+      visible.forEach((n) => next.add(String(n.id)));
       return next;
     });
   }
@@ -120,7 +122,7 @@ export default function NotificationsPage() {
     setVisibleCount((prev) => prev + PAGE_SIZE);
   }
 
-  const unreadCount = filtered.filter((n) => !readIds.has(n.id)).length;
+  const unreadCount = filtered.filter((n) => !readIds.has(String(n.id))).length;
 
   return (
     <div className="space-y-6">
@@ -277,7 +279,7 @@ export default function NotificationsPage() {
             ) : (
               visible.map((n) => {
                 const sc = severityConfig[n.severity] ?? severityConfig.info;
-                const isRead = readIds.has(n.id);
+                const isRead = readIds.has(String(n.id));
                 return (
                   <tr
                     key={n.id}
@@ -304,17 +306,22 @@ export default function NotificationsPage() {
                     </td>
                     {/* Message */}
                     <td className="px-4 py-3 text-sm max-w-md">
+                      {n.title && (
+                        <span className={`block text-xs text-gray-500 mb-0.5`}>
+                          {n.title}
+                        </span>
+                      )}
                       <span className={isRead ? "" : "font-medium"}>
                         {n.message}
                       </span>
                     </td>
                     {/* Agent */}
                     <td className="px-4 py-3 text-sm text-gray-400">
-                      {n.agentName ?? n.agentId}
+                      {n.agent_id}
                     </td>
                     {/* Timestamp */}
                     <td className="px-4 py-3 text-sm text-gray-500">
-                      {new Date(n.createdAt).toLocaleString()}
+                      {new Date(n.created_at).toLocaleString()}
                     </td>
                     {/* Actions */}
                     <td className="px-4 py-3 text-right">
