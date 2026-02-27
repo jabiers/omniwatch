@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { Command } from 'commander';
 import { watchCommand } from './commands/watch.js';
 import { listCommand } from './commands/list.js';

@@ -4,7 +4,7 @@
   "description": "AI-native CLI tool for autonomous agent management. Don't Config, Just Speak.",
   "type": "module",
   "bin": {
-    "omni": "./dist/cli/index.js"
+    "omni": "./bin/omni.mjs"
   },
   "scripts": {
     "dev": "tsx src/cli/index.ts",

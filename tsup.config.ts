@@ -8,7 +8,6 @@ export default defineConfig([
     target: 'node20',
     sourcemap: true,
     clean: true,
-    banner: { js: '#!/usr/bin/env node' },
     esbuildOptions(options) {
       options.jsx = 'automatic';
       options.jsxImportSource = 'react';
