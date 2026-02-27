@@ -100,12 +100,13 @@ export async function startAgent(id: string): Promise<void> {
   if (agent.status === 'running') throw Errors.AGENT_ALREADY_RUNNING(id);
 
   const agentDir = join(AGENTS_DIR, id);
-  const runtimePath = resolve(new URL('../../dist/agent/runtime.js', import.meta.url).pathname);
 
-  // Use tsx for development, dist for production
-  const scriptPath = existsSync(runtimePath)
-    ? runtimePath
-    : resolve(new URL('../agent/runtime.ts', import.meta.url).pathname);
+  // runtime.js is in the same dist directory: dist/agent/runtime.js
+  // When running from dist/index.js, resolve relative to current file
+  const distRuntime = resolve(new URL('./agent/runtime.js', import.meta.url).pathname);
+  // Fallback for dev mode (tsx): resolve from source
+  const srcRuntime = resolve(new URL('../agent/runtime.ts', import.meta.url).pathname);
+  const scriptPath = existsSync(distRuntime) ? distRuntime : srcRuntime;
 
   const child = fork(scriptPath, [id], {
     cwd: agentDir,
