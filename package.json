@@ -14,6 +14,9 @@
   "keywords": ["cli", "ai", "monitoring", "agent", "automation", "claude"],
   "author": "Paul",
   "license": "MIT",
+  "bin": {
+    "omni": "./bin/omni.mjs"
+  },
   "engines": {
     "node": ">=20.0.0"
   },

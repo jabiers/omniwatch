@@ -99,20 +99,23 @@ export async function ensureDaemon(): Promise<void> {
 }
 
 async function startDaemon(): Promise<void> {
-  // Try dist first (production), then src (development)
-  const __dirname = resolve(fileURLToPath(import.meta.url), '..');
-  const distPath = resolve(__dirname, '../../dist/daemon/index.js');
-  const srcPath = resolve(__dirname, '../../daemon/index.ts');
+  // Bundled CLI runs from apps/cli/dist/index.js
+  // Daemon dist is at apps/daemon/dist/index.js
+  const cliDir = resolve(fileURLToPath(import.meta.url), '..');
+  const daemonDistPath = resolve(cliDir, '../../daemon/dist/index.js');
+  const daemonSrcPath = resolve(cliDir, '../../daemon/src/index.ts');
 
   let command: string;
   let args: string[];
 
-  if (existsSync(distPath)) {
+  if (existsSync(daemonDistPath)) {
     command = 'node';
-    args = [distPath];
-  } else {
+    args = [daemonDistPath];
+  } else if (existsSync(daemonSrcPath)) {
     command = 'npx';
-    args = ['tsx', srcPath];
+    args = ['tsx', daemonSrcPath];
+  } else {
+    throw new Error('Daemon binary not found. Run: pnpm build');
   }
 
   const child = spawn(command, args, {
