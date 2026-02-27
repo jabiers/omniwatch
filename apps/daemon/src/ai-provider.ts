@@ -50,8 +50,9 @@ class OpenAIProvider implements AIProvider {
     const response = await this.client.chat.completions.create({
       model,
       max_tokens: maxTokens,
+      response_format: { type: 'json_object' },
       messages: [
-        { role: 'system', content: system },
+        { role: 'system', content: system + '\n\nIMPORTANT: Always respond with valid JSON only.' },
         ...messages,
       ],
     });
@@ -90,7 +91,8 @@ let cachedProvider: { key: string; provider: AIProvider } | null = null;
 export function getAIProvider(): AIProvider {
   const config = loadConfig();
   const model = config.ai.model || 'claude-sonnet-4-20250514';
-  const provider = config.ai.provider || detectProvider(model);
+  // Always detect provider from model name (config.ai.provider is ignored)
+  const provider = detectProvider(model);
   const apiKey = resolveApiKey(provider);
 
   if (!apiKey) {

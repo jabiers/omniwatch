@@ -7,6 +7,19 @@ import { getAgent } from './agent-manager.js';
 import { validateCode } from './code-validator.js';
 import { getAIProvider } from './ai-provider.js';
 
+/** Extract JSON from AI response that may contain markdown or extra text */
+function extractJson(raw: string): string {
+  let text = raw.trim();
+  if (text.startsWith('```')) {
+    text = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+  }
+  if (text.startsWith('{')) return text;
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start !== -1 && end > start) return text.slice(start, end + 1);
+  return text;
+}
+
 export interface ChatResponse {
   message: string;
   modifiedCode?: string;
@@ -67,12 +80,7 @@ Respond with JSON only:
   ];
 
   const text = await ai.chat(systemPrompt, messages);
-  let jsonText = text.trim();
-  if (jsonText.startsWith('```')) {
-    jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
-  }
-
-  return JSON.parse(jsonText) as ChatResponse;
+  return JSON.parse(extractJson(text)) as ChatResponse;
 }
 
 export function applyCodeChange(agentId: string, newCode: string): void {

@@ -130,8 +130,16 @@ export default function SettingsPage() {
     e.preventDefault();
     setSaving(true);
 
+    // Detect provider from model name
+    const detectProvider = (m: string) => {
+      if (m.startsWith("gpt-") || m.startsWith("o1") || m.startsWith("o3")) return "openai";
+      if (m.startsWith("gemini-")) return "google";
+      return "anthropic";
+    };
+
     const config: ApiConfig = {
       ai: {
+        provider: detectProvider(aiModel),
         api_key: aiApiKey || undefined,
         model: aiModel,
       },

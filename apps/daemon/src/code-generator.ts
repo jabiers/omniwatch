@@ -14,6 +14,28 @@ registerTemplate(rssWatcherTemplate);
 registerTemplate(doerTemplate);
 registerTemplate(autoTemplate);
 
+/** Extract JSON object from AI response that may contain markdown or extra text */
+function extractJson(raw: string): string {
+  let text = raw.trim();
+
+  // Strip markdown code fences
+  if (text.startsWith('```')) {
+    text = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+  }
+
+  // If it already starts with {, use as-is
+  if (text.startsWith('{')) return text;
+
+  // Find first { and last } to extract embedded JSON
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start !== -1 && end > start) {
+    return text.slice(start, end + 1);
+  }
+
+  return text;
+}
+
 interface GeneratedAgent {
   name: string;
   description: string;
@@ -48,12 +70,7 @@ export async function generateAgentCode(
   ]);
 
   try {
-    let jsonText = text.trim();
-    if (jsonText.startsWith('```')) {
-      jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
-    }
-
-    const result = JSON.parse(jsonText) as GeneratedAgent;
+    const result = JSON.parse(extractJson(text)) as GeneratedAgent;
 
     if (!result.name || !result.code) {
       throw new Error('Invalid response structure');
@@ -94,10 +111,5 @@ export async function regenerateAgentCode(
     },
   ]);
 
-  let jsonText = text.trim();
-  if (jsonText.startsWith('```')) {
-    jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
-  }
-
-  return JSON.parse(jsonText) as GeneratedAgent;
+  return JSON.parse(extractJson(text)) as GeneratedAgent;
 }
