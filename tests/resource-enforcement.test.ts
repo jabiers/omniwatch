@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { MAX_AGENTS, AGENT_MEMORY_LIMIT } from '../src/shared/constants.js';
+import { MAX_AGENTS, AGENT_MEMORY_LIMIT } from '@omniwatch/shared';
 
 describe('Resource Enforcement', () => {
   it('should have MAX_AGENTS set to 20', () => {

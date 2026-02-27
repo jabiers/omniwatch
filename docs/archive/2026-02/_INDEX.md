@@ -4,6 +4,7 @@
 |---------|:----------:|:----------:|----------|
 | omniwatch-mvp | 90% | 1 | 2026-02-27 |
 | omniwatch-v0.2 | 97% | 0 | 2026-02-27 |
+| omniwatch-v0.3 | 97% | 1 | 2026-02-27 |
 
 ## omniwatch-mvp
 
@@ -25,3 +26,14 @@
   - [Design](omniwatch-v0.2/omniwatch-v0.2.design.md)
   - [Analysis](omniwatch-v0.2/omniwatch-v0.2.analysis.md)
   - [Report](omniwatch-v0.2/omniwatch-v0.2.report.md)
+
+## omniwatch-v0.3
+
+- **Description**: Production hardening - do/auto commands, smart throttle, SDK expansion, self-healing enhancement
+- **Duration**: 2026-02-27 (1 day)
+- **Match Rate**: 97%
+- **Documents**:
+  - [Plan](omniwatch-v0.3/omniwatch-v0.3.plan.md)
+  - [Design](omniwatch-v0.3/omniwatch-v0.3.design.md)
+  - [Analysis](omniwatch-v0.3/omniwatch-v0.3.analysis.md)
+  - [Report](omniwatch-v0.3/omniwatch-v0.3.report.md)

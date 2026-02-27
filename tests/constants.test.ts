@@ -9,7 +9,7 @@ import {
   AGENT_MEMORY_LIMIT,
   WHITELISTED_PACKAGES,
   FORBIDDEN_APIS,
-} from '../src/shared/constants.js';
+} from '@omniwatch/shared';
 
 describe('constants', () => {
   it('OMNI_HOME is under home directory', () => {

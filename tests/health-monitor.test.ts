@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock dependencies
-vi.mock('../src/shared/db.js', () => ({
+vi.mock('@omniwatch/db', () => ({
   getDb: vi.fn(() => ({
     prepare: vi.fn(() => ({
       all: vi.fn(() => []),
@@ -9,15 +9,16 @@ vi.mock('../src/shared/db.js', () => ({
     })),
   })),
 }));
-vi.mock('../src/shared/logger.js', () => ({
-  log: vi.fn(),
-}));
-vi.mock('../src/daemon/agent-manager.js', () => ({
+vi.mock('@omniwatch/shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@omniwatch/shared')>();
+  return { ...actual, log: vi.fn() };
+});
+vi.mock('../apps/daemon/src/agent-manager.js', () => ({
   getRunningProcesses: vi.fn(() => new Map()),
   getAgent: vi.fn(),
   updateAgent: vi.fn(),
 }));
-vi.mock('../src/daemon/self-healer.js', () => ({
+vi.mock('../apps/daemon/src/self-healer.js', () => ({
   attemptHeal: vi.fn(() => Promise.resolve()),
 }));
 
@@ -25,7 +26,7 @@ import {
   recordHeartbeat,
   startHealthMonitor,
   stopHealthMonitor,
-} from '../src/daemon/health-monitor.js';
+} from '../apps/daemon/src/health-monitor.js';
 
 describe('health-monitor', () => {
   beforeEach(() => {

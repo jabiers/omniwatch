@@ -1,0 +1,25 @@
+{
+  "name": "@omniwatch/cli",
+  "version": "0.4.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx src/index.ts",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@omniwatch/shared": "workspace:*",
+    "@omniwatch/db": "workspace:*",
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "ink": "^6.8.0",
+    "ora": "^8.1.1",
+    "react": "^19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.0"
+  }
+}

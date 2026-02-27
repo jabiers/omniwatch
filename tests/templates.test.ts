@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { registerTemplate, getTemplate, listTemplates, TEMPLATES, BASE_SYSTEM_PROMPT } from '../src/agent/templates/base-prompt.js';
-import { webMonitorTemplate } from '../src/agent/templates/web-monitor.js';
-import { apiCheckerTemplate } from '../src/agent/templates/api-checker.js';
-import { rssWatcherTemplate } from '../src/agent/templates/rss-watcher.js';
+import { registerTemplate, getTemplate, listTemplates, TEMPLATES, BASE_SYSTEM_PROMPT } from '../apps/daemon/src/agent/templates/base-prompt.js';
+import { webMonitorTemplate } from '../apps/daemon/src/agent/templates/web-monitor.js';
+import { apiCheckerTemplate } from '../apps/daemon/src/agent/templates/api-checker.js';
+import { rssWatcherTemplate } from '../apps/daemon/src/agent/templates/rss-watcher.js';
 
 describe('Agent Templates', () => {
   it('BASE_SYSTEM_PROMPT contains essential rules', () => {

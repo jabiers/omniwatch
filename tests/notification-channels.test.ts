@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock config and logger
-vi.mock('../src/shared/config.js', () => ({
+vi.mock('@omniwatch/db', () => ({
   loadConfig: vi.fn(() => ({
     notification: {
       webhook_url: 'https://example.com/webhook',
@@ -14,16 +14,17 @@ vi.mock('../src/shared/config.js', () => ({
     },
   })),
 }));
-vi.mock('../src/shared/logger.js', () => ({
-  log: vi.fn(),
-}));
+vi.mock('@omniwatch/shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@omniwatch/shared')>();
+  return { ...actual, log: vi.fn() };
+});
 
-import { registerChannel, getConfiguredChannels, dispatchNotification, clearChannels } from '../src/daemon/notification-channels/registry.js';
-import { WebhookChannel } from '../src/daemon/notification-channels/webhook.js';
-import { SlackChannel } from '../src/daemon/notification-channels/slack.js';
-import { DiscordChannel } from '../src/daemon/notification-channels/discord.js';
-import { TelegramChannel } from '../src/daemon/notification-channels/telegram.js';
-import type { NotificationPayload } from '../src/daemon/notification-channels/types.js';
+import { registerChannel, getConfiguredChannels, dispatchNotification, clearChannels } from '../apps/daemon/src/notification-channels/registry.js';
+import { WebhookChannel } from '../apps/daemon/src/notification-channels/webhook.js';
+import { SlackChannel } from '../apps/daemon/src/notification-channels/slack.js';
+import { DiscordChannel } from '../apps/daemon/src/notification-channels/discord.js';
+import { TelegramChannel } from '../apps/daemon/src/notification-channels/telegram.js';
+import type { NotificationPayload } from '../apps/daemon/src/notification-channels/types.js';
 
 describe('Notification Channel Registry', () => {
   beforeEach(() => {

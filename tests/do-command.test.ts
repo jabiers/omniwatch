@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Command } from 'commander';
 
 // Test the do command structure by importing it
-import { doCommand } from '../src/cli/commands/do.js';
+import { doCommand } from '../apps/cli/src/commands/do.js';
 
 describe('Do Command', () => {
   it('should be a Commander instance', () => {

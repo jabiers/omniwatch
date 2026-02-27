@@ -3,26 +3,25 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mock dependencies
 const mockRun = vi.fn();
 const mockPrepare = vi.fn(() => ({ run: mockRun }));
-vi.mock('../src/shared/db.js', () => ({
+vi.mock('@omniwatch/db', () => ({
   getDb: vi.fn(() => ({
     prepare: mockPrepare,
   })),
-}));
-vi.mock('../src/shared/config.js', () => ({
   loadConfig: vi.fn(() => ({
     ai: { provider: 'anthropic', api_key: '', model: 'claude-sonnet-4-20250514' },
     notification: { webhook_url: '', system: false, slack_webhook: '', discord_webhook: '', telegram_token: '', telegram_chat_id: '', channels: {} },
     agent: { max_count: 20, memory_limit_mb: 128, heartbeat_interval_ms: 10000, heartbeat_timeout_ms: 30000, max_heal_attempts: 3 },
   })),
 }));
-vi.mock('../src/shared/logger.js', () => ({
-  log: vi.fn(),
-}));
-vi.mock('../src/daemon/notification-channels/registry.js', () => ({
+vi.mock('@omniwatch/shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@omniwatch/shared')>();
+  return { ...actual, log: vi.fn() };
+});
+vi.mock('../apps/daemon/src/notification-channels/registry.js', () => ({
   dispatchNotification: vi.fn(),
 }));
 
-import { sendNotification } from '../src/daemon/notifier.js';
+import { sendNotification } from '../apps/daemon/src/notifier.js';
 
 describe('sendNotification', () => {
   beforeEach(() => {

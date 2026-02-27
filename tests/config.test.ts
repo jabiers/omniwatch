@@ -9,14 +9,18 @@ const testDir = join(tmpdir(), `omniwatch-test-${nanoid(6)}`);
 const testConfigFile = join(testDir, 'config.toml');
 
 // Mock constants to use temp paths
-vi.mock('../src/shared/constants.js', () => ({
-  OMNI_HOME: testDir,
-  CONFIG_FILE: testConfigFile,
-  LOGS_DIR: join(testDir, 'logs'),
-}));
+vi.mock('@omniwatch/shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@omniwatch/shared')>();
+  return {
+    ...actual,
+    OMNI_HOME: testDir,
+    CONFIG_FILE: testConfigFile,
+    LOGS_DIR: join(testDir, 'logs'),
+  };
+});
 
 // Must import AFTER mocking
-const { loadConfig, saveConfig, getConfigValue, setConfigValue } = await import('../src/shared/config.js');
+const { loadConfig, saveConfig, getConfigValue, setConfigValue } = await import('@omniwatch/db');
 
 beforeEach(() => {
   // Clean up and reset between tests

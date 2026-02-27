@@ -1,11 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 
 // Mock logger before importing the module under test
-vi.mock('../src/shared/logger.js', () => ({
-  log: vi.fn(),
-}));
+vi.mock('@omniwatch/shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@omniwatch/shared')>();
+  return { ...actual, log: vi.fn() };
+});
 
-import { validateCode } from '../src/daemon/code-validator.js';
+import { validateCode } from '../apps/daemon/src/code-validator.js';
 
 describe('validateCode', () => {
   const validCode = `

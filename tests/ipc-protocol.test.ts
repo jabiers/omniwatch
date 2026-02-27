@@ -7,7 +7,7 @@ import {
   encodeMessage,
   parseMessages,
   RPC_ERRORS,
-} from '../src/shared/ipc-protocol.js';
+} from '@omniwatch/shared';
 
 describe('createRequest', () => {
   it('creates a JSON-RPC 2.0 request', () => {

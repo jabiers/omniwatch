@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateCode } from '../src/daemon/code-validator.js';
+import { validateCode } from '../apps/daemon/src/code-validator.js';
 
 describe('Code Validator - Loop Detection', () => {
   it('should detect while(true) without break', () => {

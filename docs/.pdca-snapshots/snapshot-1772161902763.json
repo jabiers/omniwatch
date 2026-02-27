@@ -1,0 +1,55 @@
+{
+  "timestamp": "2026-02-27T03:11:42.763Z",
+  "reason": "compaction",
+  "status": {
+    "version": "2.0",
+    "lastUpdated": "2026-02-27T03:10:00.000Z",
+    "activeFeatures": [
+      "omniwatch-v0.3"
+    ],
+    "primaryFeature": "omniwatch-v0.3",
+    "features": {
+      "omniwatch-mvp": {
+        "phase": "archived",
+        "matchRate": 90,
+        "iterationCount": 1,
+        "startedAt": "2026-02-27T00:00:00.000Z",
+        "archivedAt": "2026-02-27T01:45:00.000Z",
+        "archivedTo": "docs/archive/2026-02/omniwatch-mvp/"
+      },
+      "omniwatch-v0.2": {
+        "phase": "archived",
+        "matchRate": 97,
+        "iterationCount": 0,
+        "startedAt": "2026-02-27T01:50:00.000Z",
+        "archivedAt": "2026-02-27T02:10:00.000Z",
+        "archivedTo": "docs/archive/2026-02/omniwatch-v0.2/"
+      },
+      "omniwatch-v0.3": {
+        "phase": "completed",
+        "startedAt": "2026-02-27T02:15:00.000Z",
+        "planDoc": "docs/01-plan/features/omniwatch-v0.3.plan.md",
+        "designDoc": "docs/02-design/features/omniwatch-v0.3.design.md",
+        "matchRate": 97,
+        "iterationCount": 1
+      }
+    },
+    "pipeline": {
+      "currentPhase": 5,
+      "level": "Enterprise",
+      "phaseHistory": [
+        "plan",
+        "design",
+        "do",
+        "check",
+        "report"
+      ]
+    },
+    "session": {
+      "startedAt": "2026-02-27T00:00:00.000Z",
+      "onboardingCompleted": true,
+      "lastActivity": "2026-02-27T03:10:00.000Z"
+    },
+    "history": []
+  }
+}

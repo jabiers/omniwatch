@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Command } from 'commander';
 
-import { autoCommand } from '../src/cli/commands/auto.js';
+import { autoCommand } from '../apps/cli/src/commands/auto.js';
 
 describe('Auto Command', () => {
   it('should be a Commander instance', () => {
