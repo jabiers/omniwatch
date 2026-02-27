@@ -10,32 +10,53 @@ import {
   Loader2,
 } from "lucide-react";
 
-/** Shape of the config returned from GET /api/config */
-interface AppConfig {
+/** Shape matches the actual API response (snake_case) */
+interface ApiConfig {
   ai?: {
-    apiKey?: string;
+    provider?: string;
+    api_key?: string;
     model?: string;
   };
   notification?: {
-    slack?: string;
-    discord?: string;
-    telegram?: {
-      token?: string;
-      chatId?: string;
-    };
+    webhook_url?: string;
     system?: boolean;
+    slack_webhook?: string;
+    discord_webhook?: string;
+    telegram_token?: string;
+    telegram_chat_id?: string;
+    channels?: Record<string, unknown>;
   };
   agent?: {
-    maxAgents?: number;
-    memoryLimit?: number;
-    maxHealAttempts?: number;
+    max_count?: number;
+    memory_limit_mb?: number;
+    max_heal_attempts?: number;
   };
 }
 
-const modelOptions = [
-  { value: "claude-sonnet-4-20250514", label: "Claude Sonnet 4" },
-  { value: "claude-opus-4-20250514", label: "Claude Opus 4" },
-  { value: "claude-haiku-3-5-20241022", label: "Claude Haiku 3.5" },
+const providerGroups = [
+  {
+    label: "Anthropic (Claude)",
+    models: [
+      { value: "claude-sonnet-4-20250514", label: "Claude Sonnet 4" },
+      { value: "claude-opus-4-20250514", label: "Claude Opus 4" },
+      { value: "claude-haiku-3-5-20241022", label: "Claude Haiku 3.5" },
+    ],
+  },
+  {
+    label: "OpenAI",
+    models: [
+      { value: "gpt-4o", label: "GPT-4o" },
+      { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+      { value: "o3-mini", label: "o3-mini" },
+    ],
+  },
+  {
+    label: "Google",
+    models: [
+      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+    ],
+  },
 ];
 
 export default function SettingsPage() {
@@ -71,23 +92,23 @@ export default function SettingsPage() {
         const res = await fetch("/api/config");
         if (res.ok) {
           const data = await res.json();
-          const cfg: AppConfig = data.config ?? data;
+          const cfg: ApiConfig = data.config ?? data;
 
           // AI
-          setAiApiKey(cfg.ai?.apiKey ?? "");
+          setAiApiKey(cfg.ai?.api_key ?? "");
           setAiModel(cfg.ai?.model ?? "claude-sonnet-4-20250514");
 
           // Notifications
-          setSlackWebhook(cfg.notification?.slack ?? "");
-          setDiscordWebhook(cfg.notification?.discord ?? "");
-          setTelegramToken(cfg.notification?.telegram?.token ?? "");
-          setTelegramChatId(cfg.notification?.telegram?.chatId ?? "");
+          setSlackWebhook(cfg.notification?.slack_webhook ?? "");
+          setDiscordWebhook(cfg.notification?.discord_webhook ?? "");
+          setTelegramToken(cfg.notification?.telegram_token ?? "");
+          setTelegramChatId(cfg.notification?.telegram_chat_id ?? "");
           setSystemNotifications(cfg.notification?.system ?? true);
 
           // Agent
-          setMaxAgents(cfg.agent?.maxAgents ?? 10);
-          setMemoryLimit(cfg.agent?.memoryLimit ?? 256);
-          setMaxHealAttempts(cfg.agent?.maxHealAttempts ?? 3);
+          setMaxAgents(cfg.agent?.max_count ?? 20);
+          setMemoryLimit(cfg.agent?.memory_limit_mb ?? 128);
+          setMaxHealAttempts(cfg.agent?.max_heal_attempts ?? 3);
         }
       } catch {
         // API not available
@@ -109,27 +130,22 @@ export default function SettingsPage() {
     e.preventDefault();
     setSaving(true);
 
-    const config: AppConfig = {
+    const config: ApiConfig = {
       ai: {
-        apiKey: aiApiKey || undefined,
+        api_key: aiApiKey || undefined,
         model: aiModel,
       },
       notification: {
-        slack: slackWebhook || undefined,
-        discord: discordWebhook || undefined,
-        telegram:
-          telegramToken || telegramChatId
-            ? {
-                token: telegramToken || undefined,
-                chatId: telegramChatId || undefined,
-              }
-            : undefined,
+        slack_webhook: slackWebhook || undefined,
+        discord_webhook: discordWebhook || undefined,
+        telegram_token: telegramToken || undefined,
+        telegram_chat_id: telegramChatId || undefined,
         system: systemNotifications,
       },
       agent: {
-        maxAgents,
-        memoryLimit,
-        maxHealAttempts,
+        max_count: maxAgents,
+        memory_limit_mb: memoryLimit,
+        max_heal_attempts: maxHealAttempts,
       },
     };
 
@@ -226,12 +242,19 @@ export default function SettingsPage() {
               onChange={(e) => setAiModel(e.target.value)}
               className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50"
             >
-              {modelOptions.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.label}
-                </option>
+              {providerGroups.map((group) => (
+                <optgroup key={group.label} label={group.label}>
+                  {group.models.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
+            <p className="text-xs text-gray-600 mt-1">
+              Currently only Anthropic models are supported. Other providers coming soon.
+            </p>
           </div>
         </div>
 
