@@ -18,23 +18,25 @@ interface Agent {
   name: string;
   type: string;
   status: string;
-  lastRun?: string;
+  last_run_at?: string;
+  created_at?: string;
 }
 
 interface Notification {
-  id: string;
-  agentId: string;
-  agentName?: string;
+  id: number;
+  agent_id: string;
+  title: string;
   severity: string;
   message: string;
-  createdAt: string;
+  created_at: string;
 }
 
 interface SystemStatus {
   uptime?: number;
-  totalAgents?: number;
-  runningAgents?: number;
-  errorAgents?: number;
+  agentCount?: number;
+  runningCount?: number;
+  daemonPid?: number;
+  daemonRunning?: boolean;
 }
 
 const statusColor: Record<string, string> = {
@@ -149,7 +151,7 @@ export default function DashboardPage() {
   const running = agents.filter((a) => a.status === "running").length;
   const errors = agents.filter((a) => a.status === "error").length;
   const todayNotifs = notifications.filter((n) => {
-    const d = new Date(n.createdAt);
+    const d = new Date(n.created_at);
     const today = new Date();
     return d.toDateString() === today.toDateString();
   }).length;
@@ -157,19 +159,19 @@ export default function DashboardPage() {
   const stats = [
     {
       label: "Total Agents",
-      value: systemStatus?.totalAgents ?? agents.length,
+      value: systemStatus?.agentCount ?? agents.length,
       icon: Bot,
       color: "text-blue-400",
     },
     {
       label: "Running",
-      value: systemStatus?.runningAgents ?? running,
+      value: systemStatus?.runningCount ?? running,
       icon: Play,
       color: "text-emerald-400",
     },
     {
       label: "Errors",
-      value: systemStatus?.errorAgents ?? errors,
+      value: errors,
       icon: AlertTriangle,
       color: "text-red-400",
     },
@@ -326,8 +328,8 @@ export default function DashboardPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm truncate">{n.message}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      {n.agentName ?? n.agentId} &middot;{" "}
-                      {new Date(n.createdAt).toLocaleTimeString()}
+                      {n.agent_id} &middot;{" "}
+                      {new Date(n.created_at).toLocaleTimeString()}
                     </p>
                   </div>
                 </div>
