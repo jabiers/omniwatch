@@ -63,10 +63,26 @@ export async function attemptHeal(agentId: string): Promise<void> {
     const currentCode = readFileSync(join(agentDir, 'index.js'), 'utf-8');
     const errorMessage = agent.last_error || 'Unknown error';
 
-    // Fast path: missing module → just reinstall dependencies
+    // Fast path: missing module → add to package.json + reinstall
     const missingModuleMatch = errorMessage.match(/Cannot find (?:module|package) '([^']+)'/);
     if (missingModuleMatch) {
-      log('info', `Agent ${agentId} missing module "${missingModuleMatch[1]}", reinstalling deps...`);
+      const missingPkg = missingModuleMatch[1];
+      log('info', `Agent ${agentId} missing module "${missingPkg}", adding to package.json and installing...`);
+
+      // Ensure package.json has the missing dependency + any from agent config
+      const pkgPath = join(agentDir, 'package.json');
+      try {
+        const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+        pkg.dependencies = pkg.dependencies || {};
+        pkg.dependencies[missingPkg] = 'latest';
+        // Also merge deps from agent config
+        const configDeps: string[] = JSON.parse(agent.config || '{}').dependencies || [];
+        for (const dep of configDeps) {
+          if (!pkg.dependencies[dep]) pkg.dependencies[dep] = 'latest';
+        }
+        writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
+      } catch { /* ignore */ }
+
       await installDependencies(agentId);
       updateAgent(agentId, {
         status: 'ready',
@@ -75,7 +91,7 @@ export async function attemptHeal(agentId: string): Promise<void> {
         last_error: null,
       } as Partial<Agent>);
       await startAgent(agentId);
-      log('info', `Agent ${agentId} healed via dependency reinstall`);
+      log('info', `Agent ${agentId} healed via dependency install (${missingPkg})`);
       return;
     }
 
