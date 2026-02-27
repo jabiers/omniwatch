@@ -20,8 +20,10 @@ export const handleAgentRPC = {
 
     log('info', `Creating agent from prompt: "${prompt.slice(0, 80)}..."`);
 
-    // 1. Generate code with Claude
-    const generated = await generateAgentCode(prompt);
+    const template = params.template as string | undefined;
+
+    // 1. Generate code with AI
+    const generated = await generateAgentCode(prompt, template);
 
     // 2. Validate generated code
     const validation = validateCode(generated.code);
@@ -29,10 +31,11 @@ export const handleAgentRPC = {
       throw Errors.VALIDATION_FAILED(validation.issues);
     }
 
-    // 3. Create agent record + write files
+    // 3. Create agent record (user-provided name takes priority)
+    const agentName = (params.name as string)?.trim() || generated.name;
     const agent = createAgentRecord(
       prompt,
-      generated.name,
+      agentName,
       generated.description,
       generated.code,
       { dependencies: generated.dependencies },

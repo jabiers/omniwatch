@@ -7,6 +7,7 @@ import { getDb } from '@omniwatch/db';
 import { getAgent, updateAgent, startAgent } from './agent-manager.js';
 import { regenerateAgentCode } from './code-generator.js';
 import { validateCode } from './code-validator.js';
+import { installDependencies } from './dependency-installer.js';
 import { sendNotification } from './notifier.js';
 
 // Track last heal time per agent for exponential backoff
@@ -58,10 +59,26 @@ export async function attemptHeal(agentId: string): Promise<void> {
   lastHealTime.set(agentId, Date.now());
 
   try {
-    // Gather full context for AI
     const agentDir = join(AGENTS_DIR, agentId);
     const currentCode = readFileSync(join(agentDir, 'index.js'), 'utf-8');
     const errorMessage = agent.last_error || 'Unknown error';
+
+    // Fast path: missing module → just reinstall dependencies
+    const missingModuleMatch = errorMessage.match(/Cannot find (?:module|package) '([^']+)'/);
+    if (missingModuleMatch) {
+      log('info', `Agent ${agentId} missing module "${missingModuleMatch[1]}", reinstalling deps...`);
+      await installDependencies(agentId);
+      updateAgent(agentId, {
+        status: 'ready',
+        heal_count: agent.heal_count + 1,
+        error_count: 0,
+        last_error: null,
+      } as Partial<Agent>);
+      await startAgent(agentId);
+      log('info', `Agent ${agentId} healed via dependency reinstall`);
+      return;
+    }
+
     const recentLogs = getRecentLogs(agentId);
 
     // Build enriched error context
@@ -91,9 +108,24 @@ export async function attemptHeal(agentId: string): Promise<void> {
       return;
     }
 
-    // Write the fixed code
+    // Write the fixed code and update package.json with new deps
     const codeHash = createHash('sha256').update(regenerated.code).digest('hex').slice(0, 16);
     writeFileSync(join(agentDir, 'index.js'), regenerated.code);
+
+    if (regenerated.dependencies?.length > 0) {
+      const pkgPath = join(agentDir, 'package.json');
+      try {
+        const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+        for (const dep of regenerated.dependencies) {
+          if (!pkg.dependencies?.[dep]) {
+            pkg.dependencies = pkg.dependencies || {};
+            pkg.dependencies[dep] = 'latest';
+          }
+        }
+        writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
+      } catch { /* ignore */ }
+      await installDependencies(agentId);
+    }
 
     updateAgent(agentId, {
       status: 'ready',

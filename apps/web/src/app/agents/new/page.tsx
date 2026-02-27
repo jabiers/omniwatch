@@ -82,10 +82,11 @@ export default function NewAgentPage() {
       }
 
       const data = await res.json();
+      const r = data.result ?? data;
       setPreview({
-        code: data.code ?? data.generatedCode ?? "",
-        type: data.type,
-        name: data.name,
+        code: r.code ?? r.generatedCode ?? "",
+        type: r.type,
+        name: r.name,
       });
     } catch (err) {
       setPreviewError(

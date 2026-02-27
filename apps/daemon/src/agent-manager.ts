@@ -9,6 +9,7 @@ import { getDb } from '@omniwatch/db';
 import { sendNotification } from './notifier.js';
 import { recordHeartbeat } from './health-monitor.js';
 import { broadcastLogEntry } from './handlers/log.js';
+import { attemptHeal } from './self-healer.js';
 
 // In-memory map of running agent processes
 const processes = new Map<string, ChildProcess>();
@@ -226,13 +227,15 @@ function handleAgentMessage(agentId: string, msg: AgentMessage): void {
     case 'store.delete':
       handleStoreMessage(agentId, msg);
       break;
-    case 'error':
+    case 'error': {
       insertLog(agentId, 'error', msg.error, { stack: msg.stack });
+      const current = getAgent(agentId);
       updateAgent(agentId, {
-        error_count: (getAgent(agentId)?.error_count ?? 0) + 1,
+        error_count: (current?.error_count ?? 0) + 1,
         last_error: msg.error,
       } as Partial<Agent>);
       break;
+    }
   }
 }
 
@@ -241,7 +244,16 @@ function handleAgentExit(agentId: string, code: number | null, signal: string | 
   if (!agent || agent.status === 'stopped' || agent.status === 'destroyed') return;
 
   log('warn', `Agent ${agentId} exited (code: ${code}, signal: ${signal})`);
-  updateAgent(agentId, { status: 'error', pid: null } as Partial<Agent>);
+  updateAgent(agentId, {
+    status: 'error',
+    pid: null,
+    last_error: agent.last_error || `Process exited with code ${code}`,
+  } as Partial<Agent>);
+
+  // Trigger self-healing immediately on crash
+  attemptHeal(agentId).catch((err) => {
+    log('error', `Auto-heal on exit failed for ${agentId}: ${err}`);
+  });
 }
 
 function handleStoreMessage(agentId: string, msg: AgentMessage): void {
