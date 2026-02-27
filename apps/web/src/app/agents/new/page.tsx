@@ -3,35 +3,100 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  Sparkles,
+  Eye,
+  Loader2,
+  Code,
+  Rocket,
+} from "lucide-react";
 
 const agentTypes = [
   {
     value: "watcher",
     label: "Watcher",
     desc: "Monitors conditions and sends alerts",
+    icon: "👁",
   },
   {
     value: "doer",
     label: "Doer",
     desc: "Executes actions when triggered",
+    icon: "⚡",
   },
   {
     value: "auto",
     label: "Auto",
     desc: "AI decides the best agent type",
+    icon: "🤖",
   },
 ];
+
+interface PreviewResult {
+  code: string;
+  type?: string;
+  name?: string;
+}
 
 export default function NewAgentPage() {
   const router = useRouter();
   const [prompt, setPrompt] = useState("");
+  const [name, setName] = useState("");
   const [type, setType] = useState("auto");
   const [once, setOnce] = useState(false);
   const [schedule, setSchedule] = useState("");
+
+  // Preview state
+  const [previewing, setPreviewing] = useState(false);
+  const [preview, setPreview] = useState<PreviewResult | null>(null);
+  const [previewError, setPreviewError] = useState("");
+
+  // Create state
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  /** Preview generated code before creating */
+  async function handlePreview() {
+    if (!prompt.trim()) return;
+
+    setPreviewing(true);
+    setPreviewError("");
+    setPreview(null);
+
+    try {
+      const body: Record<string, unknown> = {
+        prompt: prompt.trim(),
+      };
+      if (type !== "auto") body.template = type;
+
+      const res = await fetch("/api/agents/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message ?? `Preview failed (${res.status})`);
+      }
+
+      const data = await res.json();
+      setPreview({
+        code: data.code ?? data.generatedCode ?? "",
+        type: data.type,
+        name: data.name,
+      });
+    } catch (err) {
+      setPreviewError(
+        err instanceof Error ? err.message : "Failed to preview"
+      );
+    } finally {
+      setPreviewing(false);
+    }
+  }
+
+  /** Create the agent */
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!prompt.trim()) return;
@@ -44,6 +109,7 @@ export default function NewAgentPage() {
         prompt: prompt.trim(),
         type,
       };
+      if (name.trim()) body.name = name.trim();
       if (once) body.once = true;
       if (schedule.trim()) body.schedule = schedule.trim();
 
@@ -99,6 +165,20 @@ export default function NewAgentPage() {
           />
         </div>
 
+        {/* Agent Name (Optional) */}
+        <div>
+          <label className="text-sm text-gray-400 mb-1 block">
+            Name <span className="text-gray-600">(optional)</span>
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="my-price-watcher"
+            className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
+          />
+        </div>
+
         {/* Agent Type */}
         <div>
           <label className="text-sm text-gray-400 mb-2 block">
@@ -116,7 +196,10 @@ export default function NewAgentPage() {
                     : "hover:bg-white/[0.05]"
                 }`}
               >
-                <p className="text-sm font-medium mb-0.5">{t.label}</p>
+                <p className="text-sm font-medium mb-0.5">
+                  <span className="mr-1.5">{t.icon}</span>
+                  {t.label}
+                </p>
                 <p className="text-xs text-gray-500">{t.desc}</p>
               </button>
             ))}
@@ -143,9 +226,7 @@ export default function NewAgentPage() {
           </label>
 
           <div>
-            <label className="text-sm mb-1 block">
-              Schedule (--schedule)
-            </label>
+            <label className="text-sm mb-1 block">Schedule (--schedule)</label>
             <input
               type="text"
               value={schedule}
@@ -155,6 +236,56 @@ export default function NewAgentPage() {
             />
           </div>
         </div>
+
+        {/* Preview Button */}
+        <button
+          type="button"
+          onClick={handlePreview}
+          disabled={previewing || !prompt.trim()}
+          className="w-full py-3 rounded-lg bg-white/[0.05] border border-white/[0.08] text-gray-300 font-medium hover:bg-white/[0.08] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+        >
+          {previewing ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Generating Preview...
+            </>
+          ) : (
+            <>
+              <Eye className="w-4 h-4" />
+              Preview Code
+            </>
+          )}
+        </button>
+
+        {/* Preview Error */}
+        {previewError && (
+          <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400">
+            {previewError}
+          </div>
+        )}
+
+        {/* Preview Result */}
+        {preview && (
+          <div className="glass-card !p-0 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08]">
+              <span className="flex items-center gap-2 text-sm text-gray-400">
+                <Code className="w-4 h-4" />
+                Generated Code
+                {preview.type && (
+                  <span className="px-2 py-0.5 rounded-full text-xs bg-emerald-500/10 text-emerald-400 capitalize">
+                    {preview.type}
+                  </span>
+                )}
+              </span>
+              {preview.name && (
+                <span className="text-xs text-gray-500">{preview.name}</span>
+              )}
+            </div>
+            <pre className="p-4 text-xs font-mono overflow-x-auto max-h-64 overflow-y-auto">
+              <code className="text-gray-300">{preview.code}</code>
+            </pre>
+          </div>
+        )}
 
         {/* Error */}
         {error && (
@@ -167,9 +298,19 @@ export default function NewAgentPage() {
         <button
           type="submit"
           disabled={submitting || !prompt.trim()}
-          className="w-full py-3 rounded-lg bg-emerald-500 text-white font-medium hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="w-full py-3 rounded-lg bg-emerald-500 text-white font-medium hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
         >
-          {submitting ? "Creating..." : "Create Agent"}
+          {submitting ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Creating...
+            </>
+          ) : (
+            <>
+              <Rocket className="w-4 h-4" />
+              Create Agent
+            </>
+          )}
         </button>
       </form>
     </div>

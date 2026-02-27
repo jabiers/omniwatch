@@ -4,6 +4,8 @@ import { cors } from 'hono/cors';
 import { agentRoutes } from './routes/agents.js';
 import { notificationRoutes } from './routes/notifications.js';
 import { systemRoutes } from './routes/system.js';
+import { configRoutes } from './routes/config.js';
+import { chatRoutes } from './routes/chat.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { requestLogger } from './middleware/logger.js';
 import { initWebSocket } from './ws.js';
@@ -18,6 +20,8 @@ app.onError(errorHandler);
 app.route('/api', agentRoutes);
 app.route('/api', notificationRoutes);
 app.route('/api', systemRoutes);
+app.route('/api', configRoutes);
+app.route('/api', chatRoutes);
 
 // Health check
 app.get('/health', (c) =>

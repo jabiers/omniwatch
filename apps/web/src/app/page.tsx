@@ -1,8 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
-import { Bot, AlertTriangle, Play, Bell } from "lucide-react";
+import {
+  Bot,
+  AlertTriangle,
+  Play,
+  Bell,
+  Square,
+  Activity,
+  Wifi,
+  WifiOff,
+} from "lucide-react";
 
 interface Agent {
   id: string;
@@ -21,6 +30,13 @@ interface Notification {
   createdAt: string;
 }
 
+interface SystemStatus {
+  uptime?: number;
+  totalAgents?: number;
+  runningAgents?: number;
+  errorAgents?: number;
+}
+
 const statusColor: Record<string, string> = {
   running: "bg-emerald-500",
   stopped: "bg-gray-500",
@@ -31,35 +47,104 @@ const statusColor: Record<string, string> = {
 export default function DashboardPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [wsConnected, setWsConnected] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
 
+  const loadData = useCallback(async () => {
+    try {
+      const [agentsRes, notifsRes, statusRes] = await Promise.allSettled([
+        fetch("/api/agents"),
+        fetch("/api/notifications"),
+        fetch("/api/system/status"),
+      ]);
+
+      if (agentsRes.status === "fulfilled" && agentsRes.value.ok) {
+        const data = await agentsRes.value.json();
+        setAgents(Array.isArray(data) ? data : data.agents ?? []);
+      }
+
+      if (notifsRes.status === "fulfilled" && notifsRes.value.ok) {
+        const data = await notifsRes.value.json();
+        setNotifications(
+          Array.isArray(data) ? data : data.notifications ?? []
+        );
+      }
+
+      if (statusRes.status === "fulfilled" && statusRes.value.ok) {
+        const data = await statusRes.value.json();
+        setSystemStatus(data);
+      }
+    } catch {
+      // API might not be available yet
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Initial load + auto-refresh every 5s
   useEffect(() => {
-    async function load() {
+    loadData();
+    const interval = setInterval(loadData, 5000);
+    return () => clearInterval(interval);
+  }, [loadData]);
+
+  // WebSocket for real-time updates
+  useEffect(() => {
+    function connectWs() {
       try {
-        const [agentsRes, notifsRes] = await Promise.allSettled([
-          fetch("/api/agents"),
-          fetch("/api/notifications"),
-        ]);
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const ws = new WebSocket(`${protocol}//localhost:3456/ws`);
+        wsRef.current = ws;
 
-        if (agentsRes.status === "fulfilled" && agentsRes.value.ok) {
-          const data = await agentsRes.value.json();
-          setAgents(Array.isArray(data) ? data : data.agents ?? []);
-        }
-
-        if (notifsRes.status === "fulfilled" && notifsRes.value.ok) {
-          const data = await notifsRes.value.json();
-          setNotifications(
-            Array.isArray(data) ? data : data.notifications ?? []
-          );
-        }
+        ws.onopen = () => setWsConnected(true);
+        ws.onclose = () => {
+          setWsConnected(false);
+          // Reconnect after 5s
+          setTimeout(connectWs, 5000);
+        };
+        ws.onerror = () => setWsConnected(false);
+        ws.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === "agent:status" || msg.type === "agent:update") {
+              loadData();
+            } else if (msg.type === "notification") {
+              loadData();
+            }
+          } catch {
+            // Ignore malformed messages
+          }
+        };
       } catch {
-        // API might not be available yet
-      } finally {
-        setLoading(false);
+        // WebSocket not available
       }
     }
-    load();
-  }, []);
+
+    connectWs();
+    return () => {
+      wsRef.current?.close();
+    };
+  }, [loadData]);
+
+  /** Send start/stop action for an agent */
+  async function sendAction(agentId: string, action: "start" | "stop") {
+    setActionLoading(`${agentId}-${action}`);
+    try {
+      const res = await fetch(`/api/agents/${agentId}/${action}`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        await loadData();
+      }
+    } catch {
+      // handle error
+    } finally {
+      setActionLoading(null);
+    }
+  }
 
   const running = agents.filter((a) => a.status === "running").length;
   const errors = agents.filter((a) => a.status === "error").length;
@@ -72,19 +157,19 @@ export default function DashboardPage() {
   const stats = [
     {
       label: "Total Agents",
-      value: agents.length,
+      value: systemStatus?.totalAgents ?? agents.length,
       icon: Bot,
       color: "text-blue-400",
     },
     {
       label: "Running",
-      value: running,
+      value: systemStatus?.runningAgents ?? running,
       icon: Play,
       color: "text-emerald-400",
     },
     {
       label: "Errors",
-      value: errors,
+      value: systemStatus?.errorAgents ?? errors,
       icon: AlertTriangle,
       color: "text-red-400",
     },
@@ -98,7 +183,22 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <div className="flex items-center gap-2 text-xs">
+          {wsConnected ? (
+            <span className="flex items-center gap-1.5 text-emerald-400">
+              <Wifi className="w-3.5 h-3.5" />
+              Live
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-gray-500">
+              <WifiOff className="w-3.5 h-3.5" />
+              Polling
+            </span>
+          )}
+        </div>
+      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -117,6 +217,17 @@ export default function DashboardPage() {
           );
         })}
       </div>
+
+      {/* System Uptime */}
+      {systemStatus?.uptime != null && (
+        <div className="glass-card flex items-center gap-3">
+          <Activity className="w-4 h-4 text-emerald-400" />
+          <span className="text-sm text-gray-400">System Uptime:</span>
+          <span className="text-sm font-mono">
+            {formatUptime(systemStatus.uptime)}
+          </span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Agents */}
@@ -143,23 +254,47 @@ export default function DashboardPage() {
               </Link>
             </p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1">
               {agents.slice(0, 5).map((agent) => (
-                <Link
+                <div
                   key={agent.id}
-                  href={`/agents/${agent.id}`}
-                  className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-white/[0.05] transition-colors"
+                  className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-white/[0.05] transition-colors group"
                 >
-                  <div className="flex items-center gap-3">
+                  <Link
+                    href={`/agents/${agent.id}`}
+                    className="flex items-center gap-3 flex-1 min-w-0"
+                  >
                     <span
-                      className={`w-2 h-2 rounded-full ${statusColor[agent.status] ?? "bg-gray-500"}`}
+                      className={`w-2 h-2 rounded-full shrink-0 ${statusColor[agent.status] ?? "bg-gray-500"}`}
                     />
-                    <span className="text-sm">{agent.name}</span>
+                    <span className="text-sm truncate">{agent.name}</span>
+                    <span className="text-xs text-gray-500 capitalize shrink-0">
+                      {agent.type}
+                    </span>
+                  </Link>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {agent.status !== "running" && (
+                      <button
+                        onClick={() => sendAction(agent.id, "start")}
+                        disabled={actionLoading === `${agent.id}-start`}
+                        className="p-1 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 disabled:opacity-30 transition-colors"
+                        title="Start"
+                      >
+                        <Play className="w-3 h-3" />
+                      </button>
+                    )}
+                    {agent.status === "running" && (
+                      <button
+                        onClick={() => sendAction(agent.id, "stop")}
+                        disabled={actionLoading === `${agent.id}-stop`}
+                        className="p-1 rounded bg-white/[0.05] text-gray-400 hover:bg-white/[0.1] disabled:opacity-30 transition-colors"
+                        title="Stop"
+                      >
+                        <Square className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
-                  <span className="text-xs text-gray-500 capitalize">
-                    {agent.type}
-                  </span>
-                </Link>
+                </div>
               ))}
             </div>
           )}
@@ -187,7 +322,7 @@ export default function DashboardPage() {
                   key={n.id}
                   className="flex items-start gap-3 py-2 px-3 rounded-lg"
                 >
-                  <SeverityDot severity={n.severity} />
+                  <SeverityBadge severity={n.severity} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm truncate">{n.message}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
@@ -205,12 +340,36 @@ export default function DashboardPage() {
   );
 }
 
-function SeverityDot({ severity }: { severity: string }) {
-  const color =
-    severity === "critical"
-      ? "bg-red-500"
-      : severity === "warning"
-        ? "bg-yellow-500"
-        : "bg-blue-500";
-  return <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${color}`} />;
+/** Severity badge with colored background */
+function SeverityBadge({ severity }: { severity: string }) {
+  const config: Record<string, { dot: string; text: string; bg: string }> = {
+    critical: { dot: "bg-red-500", text: "text-red-400", bg: "bg-red-500/10" },
+    warning: {
+      dot: "bg-yellow-500",
+      text: "text-yellow-400",
+      bg: "bg-yellow-500/10",
+    },
+    info: { dot: "bg-blue-500", text: "text-blue-400", bg: "bg-blue-500/10" },
+  };
+  const sc = config[severity] ?? config.info;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] capitalize mt-0.5 shrink-0 ${sc.bg} ${sc.text}`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
+      {severity}
+    </span>
+  );
+}
+
+/** Format seconds to human-readable uptime */
+function formatUptime(seconds: number): string {
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const parts: string[] = [];
+  if (d > 0) parts.push(`${d}d`);
+  if (h > 0) parts.push(`${h}h`);
+  parts.push(`${m}m`);
+  return parts.join(" ");
 }

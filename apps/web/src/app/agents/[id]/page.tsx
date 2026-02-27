@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef, use } from "react";
+import { useEffect, useState, useRef, useCallback, use } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Play,
@@ -9,7 +10,22 @@ import {
   RotateCcw,
   Trash2,
   Filter,
+  Send,
+  Code,
+  CheckCircle,
+  XCircle,
+  MessageSquare,
+  BarChart3,
 } from "lucide-react";
+
+interface MetricsData {
+  runCount: number;
+  successRate: number;
+  avgDuration: number;
+  lastRun?: string;
+  errorCount?: number;
+  healCount?: number;
+}
 
 interface AgentDetail {
   id: string;
@@ -18,17 +34,20 @@ interface AgentDetail {
   status: string;
   prompt?: string;
   createdAt?: string;
-  metrics?: {
-    runCount: number;
-    successRate: number;
-    avgDuration: number;
-  };
+  metrics?: MetricsData;
 }
 
 interface LogEntry {
   timestamp: string;
   level: string;
   message: string;
+}
+
+interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+  modifiedCode?: string;
+  timestamp: number;
 }
 
 const logLevelColor: Record<string, string> = {
@@ -44,60 +63,205 @@ export default function AgentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const router = useRouter();
   const [agent, setAgent] = useState<AgentDetail | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [metrics, setMetrics] = useState<MetricsData | null>(null);
   const [logFilter, setLogFilter] = useState("all");
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [confirmDestroy, setConfirmDestroy] = useState(false);
+
+  // Chat state
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatSending, setChatSending] = useState(false);
+  const [applyingCode, setApplyingCode] = useState<number | null>(null);
+  const [applyResult, setApplyResult] = useState<{
+    index: number;
+    success: boolean;
+  } | null>(null);
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<"logs" | "chat" | "metrics">(
+    "logs"
+  );
+
   const logsEndRef = useRef<HTMLDivElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [agentRes, logsRes] = await Promise.allSettled([
-          fetch(`/api/agents/${id}`),
-          fetch(`/api/agents/${id}/logs`),
-        ]);
-
-        if (agentRes.status === "fulfilled" && agentRes.value.ok) {
-          const data = (await agentRes.value.json()) as AgentDetail;
-          setAgent(data);
-        }
-
-        if (logsRes.status === "fulfilled" && logsRes.value.ok) {
-          const data = (await logsRes.value.json()) as LogEntry[] | { logs: LogEntry[] };
-          setLogs(Array.isArray(data) ? data : data.logs ?? []);
-        }
-      } catch {
-        // API not available
-      } finally {
-        setLoading(false);
+  const loadAgent = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/agents/${id}`);
+      if (res.ok) {
+        const data = (await res.json()) as AgentDetail;
+        setAgent(data);
       }
+    } catch {
+      // API not available
     }
-    load();
   }, [id]);
+
+  const loadLogs = useCallback(async () => {
+    try {
+      const levelParam = logFilter !== "all" ? `?level=${logFilter}` : "";
+      const res = await fetch(`/api/agents/${id}/logs${levelParam}`);
+      if (res.ok) {
+        const data = (await res.json()) as LogEntry[] | { logs: LogEntry[] };
+        setLogs(Array.isArray(data) ? data : data.logs ?? []);
+      }
+    } catch {
+      // API not available
+    }
+  }, [id, logFilter]);
+
+  const loadMetrics = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/agents/${id}/metrics`);
+      if (res.ok) {
+        const data = (await res.json()) as MetricsData;
+        setMetrics(data);
+      }
+    } catch {
+      // API not available
+    }
+  }, [id]);
+
+  // Initial load
+  useEffect(() => {
+    async function initialLoad() {
+      await Promise.allSettled([loadAgent(), loadLogs(), loadMetrics()]);
+      setLoading(false);
+    }
+    initialLoad();
+  }, [loadAgent, loadLogs, loadMetrics]);
+
+  // Auto-refresh logs every 3s
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadAgent();
+      loadLogs();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [loadAgent, loadLogs]);
 
   // Auto-scroll logs
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [logs]);
 
+  // Auto-scroll chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
+  /** Send control action */
   async function sendAction(action: string) {
-    setActionLoading(true);
+    if (action === "destroy") {
+      setActionLoading("destroy");
+      try {
+        const res = await fetch(`/api/agents/${id}`, { method: "DELETE" });
+        if (res.ok) {
+          router.push("/agents");
+          return;
+        }
+      } catch {
+        // handle error
+      } finally {
+        setActionLoading(null);
+        setConfirmDestroy(false);
+      }
+      return;
+    }
+
+    setActionLoading(action);
     try {
       await fetch(`/api/agents/${id}/${action}`, { method: "POST" });
-      // Refresh agent state
-      const res = await fetch(`/api/agents/${id}`);
-      if (res.ok) setAgent((await res.json()) as AgentDetail);
+      await loadAgent();
     } catch {
       // handle error
     } finally {
-      setActionLoading(false);
+      setActionLoading(null);
+    }
+  }
+
+  /** Send chat message to modify agent */
+  async function sendChat(e: React.FormEvent) {
+    e.preventDefault();
+    if (!chatInput.trim() || chatSending) return;
+
+    const userMessage: ChatMessage = {
+      role: "user",
+      content: chatInput.trim(),
+      timestamp: Date.now(),
+    };
+    setChatMessages((prev) => [...prev, userMessage]);
+    setChatInput("");
+    setChatSending(true);
+
+    try {
+      const res = await fetch(`/api/agents/${id}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMessage.content }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const assistantMessage: ChatMessage = {
+          role: "assistant",
+          content: data.message ?? data.response ?? "OK",
+          modifiedCode: data.modifiedCode ?? data.code,
+          timestamp: Date.now(),
+        };
+        setChatMessages((prev) => [...prev, assistantMessage]);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        const errMessage: ChatMessage = {
+          role: "assistant",
+          content: `Error: ${err.message ?? res.statusText}`,
+          timestamp: Date.now(),
+        };
+        setChatMessages((prev) => [...prev, errMessage]);
+      }
+    } catch {
+      const errMessage: ChatMessage = {
+        role: "assistant",
+        content: "Failed to send message. API may be unavailable.",
+        timestamp: Date.now(),
+      };
+      setChatMessages((prev) => [...prev, errMessage]);
+    } finally {
+      setChatSending(false);
+    }
+  }
+
+  /** Apply code modification */
+  async function applyCode(code: string, messageIndex: number) {
+    setApplyingCode(messageIndex);
+    setApplyResult(null);
+    try {
+      const res = await fetch(`/api/agents/${id}/apply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      setApplyResult({ index: messageIndex, success: res.ok });
+      if (res.ok) {
+        await loadAgent();
+      }
+    } catch {
+      setApplyResult({ index: messageIndex, success: false });
+    } finally {
+      setApplyingCode(null);
     }
   }
 
   const filteredLogs =
     logFilter === "all" ? logs : logs.filter((l) => l.level === logFilter);
+
+  // Merge agent metrics with separate metrics fetch
+  const displayMetrics = metrics ?? agent?.metrics ?? null;
 
   if (loading) {
     return (
@@ -167,7 +331,9 @@ export default function AgentDetailPage({
           <div className="flex items-center gap-2">
             <button
               onClick={() => sendAction("start")}
-              disabled={actionLoading || agent.status === "running"}
+              disabled={
+                actionLoading === "start" || agent.status === "running"
+              }
               className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               title="Start"
             >
@@ -175,7 +341,9 @@ export default function AgentDetailPage({
             </button>
             <button
               onClick={() => sendAction("stop")}
-              disabled={actionLoading || agent.status === "stopped"}
+              disabled={
+                actionLoading === "stop" || agent.status === "stopped"
+              }
               className="p-2 rounded-lg bg-white/[0.05] text-gray-400 hover:bg-white/[0.1] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               title="Stop"
             >
@@ -183,20 +351,42 @@ export default function AgentDetailPage({
             </button>
             <button
               onClick={() => sendAction("restart")}
-              disabled={actionLoading}
+              disabled={actionLoading === "restart"}
               className="p-2 rounded-lg bg-white/[0.05] text-gray-400 hover:bg-white/[0.1] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               title="Restart"
             >
               <RotateCcw className="w-4 h-4" />
             </button>
-            <button
-              onClick={() => sendAction("destroy")}
-              disabled={actionLoading}
-              className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              title="Destroy"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+
+            {/* Destroy with confirm */}
+            {confirmDestroy ? (
+              <div className="flex items-center gap-1 ml-1">
+                <button
+                  onClick={() => sendAction("destroy")}
+                  disabled={actionLoading === "destroy"}
+                  className="px-3 py-2 rounded-lg text-xs bg-red-500/20 text-red-400 hover:bg-red-500/30 disabled:opacity-30 transition-colors"
+                >
+                  {actionLoading === "destroy"
+                    ? "Destroying..."
+                    : "Confirm Destroy"}
+                </button>
+                <button
+                  onClick={() => setConfirmDestroy(false)}
+                  className="px-3 py-2 rounded-lg text-xs bg-white/[0.05] text-gray-400 hover:bg-white/[0.1] transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDestroy(true)}
+                disabled={!!actionLoading}
+                className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                title="Destroy"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -209,72 +399,304 @@ export default function AgentDetailPage({
         )}
       </div>
 
-      {/* Metrics */}
-      {agent.metrics && (
+      {/* Metrics Summary */}
+      {displayMetrics && (
         <div className="grid grid-cols-3 gap-4">
           <div className="glass-card text-center">
             <p className="text-xs text-gray-500 mb-1">Run Count</p>
-            <p className="text-2xl font-bold">{agent.metrics.runCount}</p>
+            <p className="text-2xl font-bold">{displayMetrics.runCount}</p>
           </div>
           <div className="glass-card text-center">
             <p className="text-xs text-gray-500 mb-1">Success Rate</p>
             <p className="text-2xl font-bold">
-              {(agent.metrics.successRate * 100).toFixed(1)}%
+              {(displayMetrics.successRate * 100).toFixed(1)}%
             </p>
           </div>
           <div className="glass-card text-center">
             <p className="text-xs text-gray-500 mb-1">Avg Duration</p>
             <p className="text-2xl font-bold">
-              {(agent.metrics.avgDuration / 1000).toFixed(1)}s
+              {(displayMetrics.avgDuration / 1000).toFixed(1)}s
             </p>
           </div>
         </div>
       )}
 
-      {/* Logs */}
-      <div className="glass-card !p-0">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08]">
-          <h2 className="text-sm font-medium">Logs</h2>
-          <div className="flex items-center gap-2">
-            <Filter className="w-3 h-3 text-gray-500" />
-            {["all", "info", "warn", "error", "debug"].map((level) => (
-              <button
-                key={level}
-                onClick={() => setLogFilter(level)}
-                className={`px-2 py-0.5 rounded text-xs capitalize transition-colors ${
-                  logFilter === level
-                    ? "bg-white/[0.1] text-white"
-                    : "text-gray-500 hover:text-gray-300"
-                }`}
-              >
-                {level}
-              </button>
-            ))}
+      {/* Tab Switcher */}
+      <div className="flex items-center gap-1 border-b border-white/[0.08] pb-0">
+        <button
+          onClick={() => setActiveTab("logs")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm transition-colors border-b-2 -mb-[1px] ${
+            activeTab === "logs"
+              ? "border-emerald-500 text-white"
+              : "border-transparent text-gray-500 hover:text-gray-300"
+          }`}
+        >
+          <Filter className="w-3.5 h-3.5" />
+          Logs
+        </button>
+        <button
+          onClick={() => setActiveTab("chat")}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm transition-colors border-b-2 -mb-[1px] ${
+            activeTab === "chat"
+              ? "border-emerald-500 text-white"
+              : "border-transparent text-gray-500 hover:text-gray-300"
+          }`}
+        >
+          <MessageSquare className="w-3.5 h-3.5" />
+          Chat
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("metrics");
+            loadMetrics();
+          }}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm transition-colors border-b-2 -mb-[1px] ${
+            activeTab === "metrics"
+              ? "border-emerald-500 text-white"
+              : "border-transparent text-gray-500 hover:text-gray-300"
+          }`}
+        >
+          <BarChart3 className="w-3.5 h-3.5" />
+          Metrics
+        </button>
+      </div>
+
+      {/* Logs Tab */}
+      {activeTab === "logs" && (
+        <div className="glass-card !p-0">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08]">
+            <h2 className="text-sm font-medium">Live Logs</h2>
+            <div className="flex items-center gap-2">
+              <Filter className="w-3 h-3 text-gray-500" />
+              {["all", "info", "warn", "error", "debug"].map((level) => (
+                <button
+                  key={level}
+                  onClick={() => setLogFilter(level)}
+                  className={`px-2 py-0.5 rounded text-xs capitalize transition-colors ${
+                    logFilter === level
+                      ? "bg-white/[0.1] text-white"
+                      : "text-gray-500 hover:text-gray-300"
+                  }`}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="max-h-96 overflow-y-auto p-4 space-y-0.5">
+            {filteredLogs.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">
+                No logs available.
+              </p>
+            ) : (
+              filteredLogs.map((log, i) => (
+                <div key={i} className="log-line flex gap-3">
+                  <span className="text-gray-600 shrink-0">
+                    {new Date(log.timestamp).toLocaleTimeString()}
+                  </span>
+                  <span
+                    className={`w-12 shrink-0 uppercase ${logLevelColor[log.level] ?? "text-gray-500"}`}
+                  >
+                    {log.level}
+                  </span>
+                  <span className="text-gray-300">{log.message}</span>
+                </div>
+              ))
+            )}
+            <div ref={logsEndRef} />
           </div>
         </div>
-        <div className="max-h-96 overflow-y-auto p-4 space-y-0.5">
-          {filteredLogs.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">
-              No logs available.
-            </p>
-          ) : (
-            filteredLogs.map((log, i) => (
-              <div key={i} className="log-line flex gap-3">
-                <span className="text-gray-600 shrink-0">
-                  {new Date(log.timestamp).toLocaleTimeString()}
-                </span>
-                <span
-                  className={`w-12 shrink-0 uppercase ${logLevelColor[log.level] ?? "text-gray-500"}`}
-                >
-                  {log.level}
-                </span>
-                <span className="text-gray-300">{log.message}</span>
+      )}
+
+      {/* Chat Tab */}
+      {activeTab === "chat" && (
+        <div className="glass-card !p-0 flex flex-col" style={{ height: 480 }}>
+          {/* Chat messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {chatMessages.length === 0 && (
+              <div className="text-center text-gray-500 text-sm py-8">
+                <MessageSquare className="w-8 h-8 mx-auto mb-3 opacity-30" />
+                <p>Chat with this agent to modify its behavior.</p>
+                <p className="text-xs mt-1">
+                  e.g. &quot;Change the check interval to 5 minutes&quot;
+                </p>
               </div>
-            ))
-          )}
-          <div ref={logsEndRef} />
+            )}
+
+            {chatMessages.map((msg, i) => (
+              <div
+                key={i}
+                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                <div
+                  className={`max-w-[80%] rounded-lg px-4 py-2.5 ${
+                    msg.role === "user"
+                      ? "bg-emerald-500/20 text-emerald-100"
+                      : "bg-white/[0.05] text-gray-300"
+                  }`}
+                >
+                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+
+                  {/* Modified code preview */}
+                  {msg.modifiedCode && (
+                    <div className="mt-3 rounded-lg overflow-hidden border border-white/[0.08]">
+                      <div className="flex items-center justify-between px-3 py-2 bg-white/[0.03] border-b border-white/[0.08]">
+                        <span className="flex items-center gap-1.5 text-xs text-gray-400">
+                          <Code className="w-3 h-3" />
+                          Modified Code
+                        </span>
+                        {applyResult?.index === i ? (
+                          applyResult.success ? (
+                            <span className="flex items-center gap-1 text-xs text-emerald-400">
+                              <CheckCircle className="w-3 h-3" />
+                              Applied
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-xs text-red-400">
+                              <XCircle className="w-3 h-3" />
+                              Failed
+                            </span>
+                          )
+                        ) : (
+                          <button
+                            onClick={() => applyCode(msg.modifiedCode!, i)}
+                            disabled={applyingCode === i}
+                            className="px-2 py-1 rounded text-xs bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 disabled:opacity-30 transition-colors"
+                          >
+                            {applyingCode === i ? "Applying..." : "Apply"}
+                          </button>
+                        )}
+                      </div>
+                      <pre className="p-3 text-xs font-mono overflow-x-auto max-h-48 overflow-y-auto">
+                        <code>{msg.modifiedCode}</code>
+                      </pre>
+                    </div>
+                  )}
+
+                  <p className="text-[10px] text-gray-600 mt-1.5">
+                    {new Date(msg.timestamp).toLocaleTimeString()}
+                  </p>
+                </div>
+              </div>
+            ))}
+
+            {chatSending && (
+              <div className="flex justify-start">
+                <div className="bg-white/[0.05] rounded-lg px-4 py-2.5">
+                  <span className="text-sm text-gray-500">Thinking...</span>
+                </div>
+              </div>
+            )}
+
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Chat input */}
+          <form
+            onSubmit={sendChat}
+            className="flex items-center gap-2 px-4 py-3 border-t border-white/[0.08]"
+          >
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="Ask to modify this agent..."
+              disabled={chatSending}
+              className="flex-1 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600 disabled:opacity-50"
+            />
+            <button
+              type="submit"
+              disabled={chatSending || !chatInput.trim()}
+              className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </form>
         </div>
-      </div>
+      )}
+
+      {/* Metrics Tab */}
+      {activeTab === "metrics" && (
+        <div className="glass-card">
+          {displayMetrics ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <MetricCard
+                  label="Total Runs"
+                  value={String(displayMetrics.runCount)}
+                />
+                <MetricCard
+                  label="Success Rate"
+                  value={`${(displayMetrics.successRate * 100).toFixed(1)}%`}
+                  color={
+                    displayMetrics.successRate >= 0.9
+                      ? "text-emerald-400"
+                      : displayMetrics.successRate >= 0.7
+                        ? "text-yellow-400"
+                        : "text-red-400"
+                  }
+                />
+                <MetricCard
+                  label="Avg Duration"
+                  value={`${(displayMetrics.avgDuration / 1000).toFixed(1)}s`}
+                />
+                {displayMetrics.errorCount != null && (
+                  <MetricCard
+                    label="Errors"
+                    value={String(displayMetrics.errorCount)}
+                    color={
+                      displayMetrics.errorCount > 0
+                        ? "text-red-400"
+                        : "text-gray-300"
+                    }
+                  />
+                )}
+                {displayMetrics.healCount != null && (
+                  <MetricCard
+                    label="Heal Attempts"
+                    value={String(displayMetrics.healCount)}
+                  />
+                )}
+                {displayMetrics.lastRun && (
+                  <MetricCard
+                    label="Last Run"
+                    value={new Date(displayMetrics.lastRun).toLocaleString()}
+                    small
+                  />
+                )}
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 text-center py-8">
+              No metrics available.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Reusable metric display card */
+function MetricCard({
+  label,
+  value,
+  color,
+  small,
+}: {
+  label: string;
+  value: string;
+  color?: string;
+  small?: boolean;
+}) {
+  return (
+    <div className="p-4 rounded-lg bg-white/[0.02] border border-white/[0.06]">
+      <p className="text-xs text-gray-500 mb-1">{label}</p>
+      <p
+        className={`${small ? "text-sm" : "text-xl"} font-bold ${color ?? "text-gray-200"}`}
+      >
+        {value}
+      </p>
     </div>
   );
 }
