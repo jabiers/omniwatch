@@ -15,6 +15,10 @@ export const MAX_HEAL_ATTEMPTS = 3;
 export const MAX_AGENTS = 20;
 export const AGENT_MEMORY_LIMIT = 128; // MB
 
+// Zombie agent detection: repeated runtime errors without crashing
+export const ZOMBIE_ERROR_THRESHOLD = 5;    // error count within window
+export const ZOMBIE_CHECK_WINDOW = 300;     // seconds (5 minutes)
+
 export const WHITELISTED_PACKAGES = [
   'axios', 'cheerio', 'dayjs', 'lodash',
   'node-fetch', 'rss-parser', 'xml2js',
