@@ -98,7 +98,8 @@ export default function DashboardPage() {
     function connectWs() {
       try {
         const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const ws = new WebSocket(`${protocol}//localhost:3456/ws`);
+        const wsHost = process.env.NEXT_PUBLIC_WS_HOST || window.location.host;
+        const ws = new WebSocket(`${protocol}//${wsHost}/ws`);
         wsRef.current = ws;
 
         ws.onopen = () => setWsConnected(true);
