@@ -1,7 +1,15 @@
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import { log } from '@omniwatch/shared';
-import { loadConfig } from '@omniwatch/db';
+import { loadConfig, recordAIUsage, calculateCost } from '@omniwatch/db';
+
+/** Context for tracking which agent/operation is using AI */
+let aiContext: { agentId?: string; operation: string } = { operation: 'unknown' };
+
+/** Set the current AI usage context before calling chat() */
+export function setAIContext(ctx: { agentId?: string; operation: string }): void {
+  aiContext = ctx;
+}
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
@@ -21,8 +29,11 @@ class AnthropicProvider implements AIProvider {
   }
 
   async chat(system: string, messages: ChatMessage[], maxTokens = 4096): Promise<string> {
+    const model = loadConfig().ai.model || 'claude-sonnet-4-20250514';
+    const start = Date.now();
+
     const response = await this.client.messages.create({
-      model: loadConfig().ai.model || 'claude-sonnet-4-20250514',
+      model,
       max_tokens: maxTokens,
       system,
       messages,
@@ -32,6 +43,24 @@ class AnthropicProvider implements AIProvider {
     if (content.type !== 'text') {
       throw new Error('Unexpected response type from Anthropic');
     }
+
+    // Track usage
+    const inputTokens = response.usage.input_tokens;
+    const outputTokens = response.usage.output_tokens;
+    try {
+      recordAIUsage({
+        agent_id: aiContext.agentId,
+        provider: 'anthropic',
+        model,
+        operation: aiContext.operation,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        total_tokens: inputTokens + outputTokens,
+        cost_usd: calculateCost(model, inputTokens, outputTokens),
+        duration_ms: Date.now() - start,
+      });
+    } catch { /* non-critical */ }
+
     return content.text;
   }
 }
@@ -46,6 +75,7 @@ class OpenAIProvider implements AIProvider {
 
   async chat(system: string, messages: ChatMessage[], maxTokens = 4096): Promise<string> {
     const model = loadConfig().ai.model || 'gpt-4o';
+    const start = Date.now();
 
     const response = await this.client.chat.completions.create({
       model,
@@ -61,6 +91,24 @@ class OpenAIProvider implements AIProvider {
     if (!choice?.message?.content) {
       throw new Error('Unexpected response from OpenAI');
     }
+
+    // Track usage
+    const inputTokens = response.usage?.prompt_tokens || 0;
+    const outputTokens = response.usage?.completion_tokens || 0;
+    try {
+      recordAIUsage({
+        agent_id: aiContext.agentId,
+        provider: 'openai',
+        model,
+        operation: aiContext.operation,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        total_tokens: inputTokens + outputTokens,
+        cost_usd: calculateCost(model, inputTokens, outputTokens),
+        duration_ms: Date.now() - start,
+      });
+    } catch { /* non-critical */ }
+
     return choice.message.content;
   }
 }
@@ -75,6 +123,7 @@ class OllamaProvider implements AIProvider {
 
   async chat(system: string, messages: ChatMessage[], maxTokens = 4096): Promise<string> {
     const model = loadConfig().ai.model || 'llama3.2';
+    const start = Date.now();
 
     const response = await fetch(`${this.baseUrl}/api/chat`, {
       method: 'POST',
@@ -96,10 +145,32 @@ class OllamaProvider implements AIProvider {
       throw new Error(`Ollama request failed (${response.status}): ${errText}`);
     }
 
-    const data = await response.json() as { message?: { content?: string } };
+    const data = await response.json() as {
+      message?: { content?: string };
+      prompt_eval_count?: number;
+      eval_count?: number;
+    };
     if (!data.message?.content) {
       throw new Error('Unexpected response from Ollama');
     }
+
+    // Track usage (Ollama is free but track tokens for insights)
+    const inputTokens = data.prompt_eval_count || 0;
+    const outputTokens = data.eval_count || 0;
+    try {
+      recordAIUsage({
+        agent_id: aiContext.agentId,
+        provider: 'ollama',
+        model,
+        operation: aiContext.operation,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        total_tokens: inputTokens + outputTokens,
+        cost_usd: 0, // Local = free
+        duration_ms: Date.now() - start,
+      });
+    } catch { /* non-critical */ }
+
     return data.message.content;
   }
 }

@@ -12,11 +12,13 @@ import {
   Activity,
   Menu,
   X,
+  DollarSign,
 } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/agents", label: "Agents", icon: Bot },
+  { href: "/usage", label: "Usage", icon: DollarSign },
   { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

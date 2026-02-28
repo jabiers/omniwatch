@@ -6,6 +6,7 @@ import { notificationRoutes } from './routes/notifications.js';
 import { systemRoutes } from './routes/system.js';
 import { configRoutes } from './routes/config.js';
 import { chatRoutes } from './routes/chat.js';
+import { usageRoutes } from './routes/usage.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { requestLogger } from './middleware/logger.js';
 import { initWebSocket } from './ws.js';
@@ -22,6 +23,7 @@ app.route('/api', notificationRoutes);
 app.route('/api', systemRoutes);
 app.route('/api', configRoutes);
 app.route('/api', chatRoutes);
+app.route('/api', usageRoutes);
 
 // Health check
 app.get('/health', (c) =>

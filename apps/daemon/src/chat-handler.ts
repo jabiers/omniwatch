@@ -5,7 +5,7 @@ import type { AgentLog } from '@omniwatch/shared';
 import { getDb } from '@omniwatch/db';
 import { getAgent } from './agent-manager.js';
 import { validateCode } from './code-validator.js';
-import { getAIProvider } from './ai-provider.js';
+import { getAIProvider, setAIContext } from './ai-provider.js';
 
 /** Extract JSON from AI response that may contain markdown or extra text */
 function extractJson(raw: string): string {
@@ -79,6 +79,7 @@ Respond with JSON only:
     { role: 'user' as const, content: userMessage },
   ];
 
+  setAIContext({ agentId, operation: 'chat' });
   const text = await ai.chat(systemPrompt, messages);
   return JSON.parse(extractJson(text)) as ChatResponse;
 }

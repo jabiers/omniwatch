@@ -1,6 +1,6 @@
 import { log } from '@omniwatch/shared';
 import { BASE_SYSTEM_PROMPT, getTemplate, registerTemplate } from './agent/templates/base-prompt.js';
-import { getAIProvider } from './ai-provider.js';
+import { getAIProvider, setAIContext } from './ai-provider.js';
 import { webMonitorTemplate } from './agent/templates/web-monitor.js';
 import { apiCheckerTemplate } from './agent/templates/api-checker.js';
 import { rssWatcherTemplate } from './agent/templates/rss-watcher.js';
@@ -64,6 +64,7 @@ export async function generateAgentCode(
   }
 
   log('info', 'Generating agent code with AI...');
+  setAIContext({ operation: 'generate' });
 
   const text = await ai.chat(BASE_SYSTEM_PROMPT, [
     { role: 'user', content: finalPrompt },
@@ -98,6 +99,7 @@ export async function regenerateAgentCode(
   const ai = getAIProvider();
 
   log('info', 'Regenerating agent code (self-healing)...');
+  setAIContext({ operation: 'regenerate' });
 
   const text = await ai.chat(BASE_SYSTEM_PROMPT, [
     { role: 'user', content: prompt },

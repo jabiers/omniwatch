@@ -90,6 +90,25 @@ function migrate(db: Database.Database): void {
       updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
       PRIMARY KEY (agent_id, key)
     );
+
+    CREATE TABLE IF NOT EXISTS ai_usage (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent_id        TEXT REFERENCES agents(id) ON DELETE SET NULL,
+      provider        TEXT NOT NULL,
+      model           TEXT NOT NULL,
+      operation       TEXT NOT NULL DEFAULT 'generate',
+      input_tokens    INTEGER DEFAULT 0,
+      output_tokens   INTEGER DEFAULT 0,
+      total_tokens    INTEGER DEFAULT 0,
+      cost_usd        REAL DEFAULT 0,
+      duration_ms     INTEGER DEFAULT 0,
+      created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_ai_usage_agent
+      ON ai_usage(agent_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_ai_usage_time
+      ON ai_usage(created_at DESC);
   `);
 }
 
