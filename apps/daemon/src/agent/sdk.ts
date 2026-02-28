@@ -1,17 +1,40 @@
 import { nanoid } from 'nanoid';
-import type { AgentMessage, DaemonToAgentMessage } from '@omniwatch/shared';
+import type { AgentMessage, AgentType, DaemonToAgentMessage } from '@omniwatch/shared';
 
-type StoreResolver = (value: unknown) => void;
+type RequestResolver = (value: unknown) => void;
 
-const pendingStoreRequests = new Map<string, StoreResolver>();
+const pendingRequests = new Map<string, RequestResolver>();
+
+// Mesh event listeners: topic → callbacks
+const meshListeners: Array<{ topic: string; callback: (event: { topic: string; payload: unknown; from: string }) => void }> = [];
 
 // Handle responses from daemon
 export function handleDaemonMessage(msg: DaemonToAgentMessage): void {
   if (msg.type === 'store.result') {
-    const resolver = pendingStoreRequests.get(msg.requestId);
+    const resolver = pendingRequests.get(msg.requestId);
     if (resolver) {
       resolver(msg.value);
-      pendingStoreRequests.delete(msg.requestId);
+      pendingRequests.delete(msg.requestId);
+    }
+  } else if (msg.type === 'spawn.result') {
+    const resolver = pendingRequests.get(msg.requestId);
+    if (resolver) {
+      resolver(msg.error ? { error: msg.error } : { agentId: msg.agentId });
+      pendingRequests.delete(msg.requestId);
+    }
+  } else if (msg.type === 'snapshot.result') {
+    const resolver = pendingRequests.get(msg.requestId);
+    if (resolver) {
+      resolver(msg.seq);
+      pendingRequests.delete(msg.requestId);
+    }
+  } else if (msg.type === 'mesh.event') {
+    for (const listener of meshListeners) {
+      if (listener.topic === msg.topic || listener.topic === '*') {
+        try {
+          listener.callback({ topic: msg.topic, payload: msg.payload, from: msg.from });
+        } catch { /* ignore listener errors */ }
+      }
     }
   } else if (msg.type === 'shutdown') {
     process.exit(0);
@@ -24,15 +47,15 @@ function send(msg: AgentMessage): void {
   }
 }
 
-function storeRequest(msg: AgentMessage): Promise<unknown> {
+function awaitRequest(msg: AgentMessage, timeoutMs = 10_000): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const requestId = (msg as { requestId: string }).requestId;
     const timeout = setTimeout(() => {
-      pendingStoreRequests.delete(requestId);
-      reject(new Error('Store request timeout'));
-    }, 10_000);
+      pendingRequests.delete(requestId);
+      reject(new Error('Request timeout'));
+    }, timeoutMs);
 
-    pendingStoreRequests.set(requestId, (value) => {
+    pendingRequests.set(requestId, (value) => {
       clearTimeout(timeout);
       resolve(value);
     });
@@ -57,6 +80,17 @@ export interface OmniSDK {
     warn(message: string, meta?: Record<string, unknown>): void;
     error(message: string, meta?: Record<string, unknown>): void;
   };
+  // v0.5: Agent Mesh
+  mesh: {
+    publish(topic: string, payload: unknown): void;
+    subscribe(topic: string): void;
+    unsubscribe(topic: string): void;
+    on(topic: string, callback: (event: { topic: string; payload: unknown; from: string }) => void): void;
+  };
+  // v0.5: Spawn Chain
+  spawn(prompt: string, options?: { name?: string; type?: AgentType; schedule?: string }): Promise<string>;
+  // v0.5: Time Travel
+  snapshot(label?: string): Promise<number>;
 }
 
 export function createSDK(): OmniSDK {
@@ -107,17 +141,17 @@ export function createSDK(): OmniSDK {
     store: {
       async get(key: string): Promise<unknown> {
         const requestId = nanoid(8);
-        return storeRequest({ type: 'store.get', key, requestId });
+        return awaitRequest({ type: 'store.get', key, requestId });
       },
 
       async set(key: string, value: unknown): Promise<void> {
         const requestId = nanoid(8);
-        await storeRequest({ type: 'store.set', key, value, requestId });
+        await awaitRequest({ type: 'store.set', key, value, requestId });
       },
 
       async delete(key: string): Promise<void> {
         const requestId = nanoid(8);
-        await storeRequest({ type: 'store.delete', key, requestId });
+        await awaitRequest({ type: 'store.delete', key, requestId });
       },
     },
 
@@ -131,6 +165,39 @@ export function createSDK(): OmniSDK {
       error(message: string, meta?: Record<string, unknown>): void {
         send({ type: 'log', level: 'error', message, metadata: meta });
       },
+    },
+
+    // v0.5: Agent Mesh
+    mesh: {
+      publish(topic: string, payload: unknown): void {
+        send({ type: 'mesh.publish', topic, payload });
+      },
+      subscribe(topic: string): void {
+        send({ type: 'mesh.subscribe', topic });
+      },
+      unsubscribe(topic: string): void {
+        send({ type: 'mesh.unsubscribe', topic });
+      },
+      on(topic: string, callback: (event: { topic: string; payload: unknown; from: string }) => void): void {
+        meshListeners.push({ topic, callback });
+      },
+    },
+
+    // v0.5: Spawn Chain
+    async spawn(prompt: string, options?: { name?: string; type?: AgentType; schedule?: string }): Promise<string> {
+      const requestId = nanoid(8);
+      const result = await awaitRequest(
+        { type: 'spawn.create', prompt, options, requestId },
+        60_000,
+      ) as { agentId?: string; error?: string };
+      if (result.error) throw new Error(result.error);
+      return result.agentId!;
+    },
+
+    // v0.5: Time Travel
+    async snapshot(label?: string): Promise<number> {
+      const requestId = nanoid(8);
+      return awaitRequest({ type: 'snapshot', label, requestId }) as Promise<number>;
     },
   };
 }

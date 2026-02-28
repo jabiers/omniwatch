@@ -15,6 +15,8 @@ import { handleAgentRPC } from './handlers/agent.js';
 import { handleLogRPC } from './handlers/log.js';
 import { handleSystemRPC } from './handlers/system.js';
 import { handleChatRPC } from './handlers/chat.js';
+import { handleMeshRPC } from './handlers/mesh.js';
+import { handleSnapshotRPC } from './handlers/snapshot.js';
 
 let server: Server | null = null;
 const clients = new Set<Socket>();
@@ -41,6 +43,17 @@ function registerHandlers(): void {
   handlers['agent.chat'] = handleChatRPC.chat;
   handlers['agent.preview'] = handleChatRPC.preview;
   handlers['agent.apply'] = handleChatRPC.apply;
+
+  // v0.5: Mesh handlers
+  handlers['mesh.topology'] = handleMeshRPC.topology;
+  handlers['mesh.events'] = handleMeshRPC.events;
+  handlers['mesh.subscribe'] = handleMeshRPC.subscribe;
+  handlers['mesh.unsubscribe'] = handleMeshRPC.unsubscribe;
+
+  // v0.5: Snapshot handlers
+  handlers['snapshot.capture'] = handleSnapshotRPC.capture;
+  handlers['snapshot.restore'] = handleSnapshotRPC.restore;
+  handlers['snapshot.list'] = handleSnapshotRPC.list;
 
   // System handlers
   handlers['system.stats'] = handleSystemRPC.stats;

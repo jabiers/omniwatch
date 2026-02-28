@@ -28,6 +28,9 @@ export interface Agent {
   last_error: string | null;
   created_at: string;
   updated_at: string;
+  // v0.5: Spawn Chain
+  parent_id: string | null;
+  spawn_depth: number;
 }
 
 export interface AgentConfig {
@@ -93,11 +96,25 @@ export type AgentMessage =
   | { type: 'store.get'; key: string; requestId: string }
   | { type: 'store.set'; key: string; value: unknown; requestId: string }
   | { type: 'store.delete'; key: string; requestId: string }
-  | { type: 'error'; error: string; stack?: string };
+  | { type: 'error'; error: string; stack?: string }
+  // v0.5: Agent Mesh
+  | { type: 'mesh.publish'; topic: string; payload: unknown }
+  | { type: 'mesh.subscribe'; topic: string }
+  | { type: 'mesh.unsubscribe'; topic: string }
+  // v0.5: Spawn Chain
+  | { type: 'spawn.create'; prompt: string; options?: { name?: string; type?: AgentType; schedule?: string }; requestId: string }
+  // v0.5: Time Travel
+  | { type: 'snapshot'; label?: string; requestId: string };
 
 export type DaemonToAgentMessage =
   | { type: 'store.result'; requestId: string; value: unknown }
-  | { type: 'shutdown' };
+  | { type: 'shutdown' }
+  // v0.5: Agent Mesh
+  | { type: 'mesh.event'; topic: string; payload: unknown; from: string }
+  // v0.5: Spawn Chain
+  | { type: 'spawn.result'; requestId: string; agentId?: string; error?: string }
+  // v0.5: Time Travel
+  | { type: 'snapshot.result'; requestId: string; seq: number };
 
 // v0.2: Chat types
 export interface ChatMessage {

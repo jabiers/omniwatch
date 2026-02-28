@@ -10,6 +10,14 @@ import { sendNotification } from './notifier.js';
 import { recordHeartbeat } from './health-monitor.js';
 import { broadcastLogEntry } from './handlers/log.js';
 import { attemptHeal } from './self-healer.js';
+import { meshPublish, meshSubscribe, meshUnsubscribe, meshRemoveAgent } from './event-bus.js';
+import { spawnChildAgent, getChildAgents } from './spawn-manager.js';
+import { captureSnapshot } from './time-travel.js';
+
+/** Auto-capture snapshot with error suppression (best-effort) */
+function autoSnapshot(agentId: string, label: string): void {
+  try { captureSnapshot(agentId, label); } catch { /* ignore - agent may not exist yet */ }
+}
 
 // In-memory map of running agent processes
 const processes = new Map<string, ChildProcess>();
@@ -149,6 +157,9 @@ export async function startAgent(id: string): Promise<void> {
     last_run_at: new Date().toISOString(),
   } as Partial<Agent>);
 
+  // v0.5: Auto-capture snapshot on start
+  autoSnapshot(id, 'start');
+
   log('info', `Agent ${id} started (PID: ${child.pid})`);
 }
 
@@ -170,6 +181,9 @@ export async function stopAgent(id: string): Promise<void> {
       resolve();
     });
 
+    // v0.5: Auto-capture snapshot on stop
+    autoSnapshot(id, 'stop');
+
     child.kill('SIGTERM');
     processes.delete(id);
     updateAgent(id, { status: 'stopped', pid: null } as Partial<Agent>);
@@ -183,6 +197,18 @@ export async function restartAgent(id: string): Promise<void> {
 }
 
 export async function destroyAgent(id: string): Promise<void> {
+  // v0.5: Cascade destroy child agents
+  const children = getChildAgents(id);
+  for (const child of children) {
+    const childAgent = child as Agent;
+    if (childAgent.status !== 'destroyed') {
+      await destroyAgent(childAgent.id);
+    }
+  }
+
+  // Remove mesh subscriptions
+  meshRemoveAgent(id);
+
   await stopAgent(id);
 
   const agentDir = join(AGENTS_DIR, id);
@@ -228,8 +254,28 @@ function handleAgentMessage(agentId: string, msg: AgentMessage): void {
     case 'store.delete':
       handleStoreMessage(agentId, msg);
       break;
+    // v0.5: Agent Mesh
+    case 'mesh.publish':
+      meshPublish(agentId, msg.topic, msg.payload);
+      break;
+    case 'mesh.subscribe':
+      meshSubscribe(agentId, msg.topic);
+      break;
+    case 'mesh.unsubscribe':
+      meshUnsubscribe(agentId, msg.topic);
+      break;
+    // v0.5: Spawn Chain
+    case 'spawn.create':
+      handleSpawnMessage(agentId, msg);
+      break;
+    // v0.5: Time Travel
+    case 'snapshot':
+      handleSnapshotMessage(agentId, msg);
+      break;
     case 'error': {
       insertLog(agentId, 'error', msg.error, { stack: msg.stack });
+      // v0.5: Auto-capture snapshot on error
+      autoSnapshot(agentId, `error:${msg.error.slice(0, 50)}`);
       const current = getAgent(agentId);
       updateAgent(agentId, {
         error_count: (current?.error_count ?? 0) + 1,
@@ -255,6 +301,36 @@ function handleAgentExit(agentId: string, code: number | null, signal: string | 
   attemptHeal(agentId).catch((err) => {
     log('error', `Auto-heal on exit failed for ${agentId}: ${err}`);
   });
+}
+
+/** Handle spawn.create messages from agents */
+function handleSpawnMessage(agentId: string, msg: AgentMessage): void {
+  if (msg.type !== 'spawn.create') return;
+  const child = processes.get(agentId);
+  if (!child) return;
+
+  spawnChildAgent(agentId, msg.prompt, msg.options || {})
+    .then((childId) => {
+      child.send({ type: 'spawn.result', requestId: msg.requestId, agentId: childId } as DaemonToAgentMessage);
+    })
+    .catch((err) => {
+      const error = err instanceof Error ? err.message : String(err);
+      child.send({ type: 'spawn.result', requestId: msg.requestId, error } as DaemonToAgentMessage);
+    });
+}
+
+/** Handle snapshot messages from agents */
+function handleSnapshotMessage(agentId: string, msg: AgentMessage): void {
+  if (msg.type !== 'snapshot') return;
+  const child = processes.get(agentId);
+  if (!child) return;
+
+  try {
+    const seq = captureSnapshot(agentId, msg.label);
+    child.send({ type: 'snapshot.result', requestId: msg.requestId, seq } as DaemonToAgentMessage);
+  } catch (err) {
+    log('error', `Snapshot failed for ${agentId}: ${err}`);
+  }
 }
 
 function handleStoreMessage(agentId: string, msg: AgentMessage): void {

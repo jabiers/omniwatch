@@ -5,6 +5,7 @@ import { AGENTS_DIR, MAX_HEAL_ATTEMPTS, log, Errors } from '@omniwatch/shared';
 import type { Agent, AgentLog } from '@omniwatch/shared';
 import { getDb } from '@omniwatch/db';
 import { getAgent, updateAgent, startAgent } from './agent-manager.js';
+import { captureSnapshot } from './time-travel.js';
 import { regenerateAgentCode } from './code-generator.js';
 import { validateCode } from './code-validator.js';
 import { installDependencies } from './dependency-installer.js';
@@ -27,6 +28,9 @@ function getRecentLogs(agentId: string, limit = 20): string {
 }
 
 export async function attemptHeal(agentId: string): Promise<void> {
+  // v0.5: Auto-capture snapshot before healing
+  try { captureSnapshot(agentId, 'pre-heal'); } catch { /* ignore */ }
+
   const agent = getAgent(agentId);
   if (!agent) return;
 

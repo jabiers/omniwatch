@@ -5,6 +5,7 @@ import { startRPCServer, stopRPCServer } from './rpc-server.js';
 import { restoreRunningAgents } from './agent-manager.js';
 import { startHealthMonitor, stopHealthMonitor } from './health-monitor.js';
 import { startScheduler, stopScheduler } from './scheduler.js';
+import { restoreMeshSubscriptions } from './event-bus.js';
 import { registerChannel } from './notification-channels/registry.js';
 import { WebhookChannel } from './notification-channels/webhook.js';
 import { SystemChannel } from './notification-channels/system.js';
@@ -69,6 +70,9 @@ async function main(): Promise<void> {
 
   // Restore agents that were running before daemon restart
   await restoreRunningAgents();
+
+  // Restore mesh subscriptions from DB
+  restoreMeshSubscriptions();
 
   log('info', 'Daemon ready');
 

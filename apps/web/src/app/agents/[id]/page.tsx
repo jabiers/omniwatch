@@ -16,6 +16,9 @@ import {
   XCircle,
   MessageSquare,
   BarChart3,
+  Camera,
+  GitBranch,
+  RotateCw,
 } from "lucide-react";
 
 interface MetricsData {
@@ -36,6 +39,25 @@ interface AgentDetail {
   heal_count?: number;
   error_count?: number;
   last_run_at?: string;
+  parent_id?: string | null;
+  spawn_depth?: number;
+}
+
+interface SnapshotMeta {
+  id: number;
+  agent_id: string;
+  seq: number;
+  label: string | null;
+  created_at: string;
+}
+
+interface ChildAgent {
+  id: string;
+  name: string;
+  status: string;
+  type: string;
+  spawn_depth: number;
+  created_at: string;
 }
 
 interface LogEntry {
@@ -86,8 +108,14 @@ export default function AgentDetailPage({
     success: boolean;
   } | null>(null);
 
+  // v0.5: Snapshots & spawn chain state
+  const [snapshots, setSnapshots] = useState<SnapshotMeta[]>([]);
+  const [children, setChildren] = useState<ChildAgent[]>([]);
+  const [snapshotLoading, setSnapshotLoading] = useState(false);
+  const [restoringSeq, setRestoringSeq] = useState<number | null>(null);
+
   // Tab state
-  const [activeTab, setActiveTab] = useState<"logs" | "chat" | "metrics">(
+  const [activeTab, setActiveTab] = useState<"logs" | "chat" | "metrics" | "snapshots" | "children">(
     "logs"
   );
 
@@ -133,14 +161,38 @@ export default function AgentDetailPage({
     }
   }, [id]);
 
+  const loadSnapshots = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/agents/${id}/snapshots`);
+      if (res.ok) {
+        const data = await res.json();
+        setSnapshots(data.snapshots ?? []);
+      }
+    } catch {
+      // API not available
+    }
+  }, [id]);
+
+  const loadChildren = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/agents/${id}/children`);
+      if (res.ok) {
+        const data = await res.json();
+        setChildren(data.children ?? []);
+      }
+    } catch {
+      // API not available
+    }
+  }, [id]);
+
   // Initial load
   useEffect(() => {
     async function initialLoad() {
-      await Promise.allSettled([loadAgent(), loadLogs(), loadMetrics()]);
+      await Promise.allSettled([loadAgent(), loadLogs(), loadMetrics(), loadSnapshots(), loadChildren()]);
       setLoading(false);
     }
     initialLoad();
-  }, [loadAgent, loadLogs, loadMetrics]);
+  }, [loadAgent, loadLogs, loadMetrics, loadSnapshots, loadChildren]);
 
   // Auto-refresh logs every 3s
   useEffect(() => {
@@ -188,6 +240,28 @@ export default function AgentDetailPage({
       // handle error
     } finally {
       setActionLoading(null);
+    }
+  }
+
+  /** Capture a snapshot */
+  async function captureSnapshot() {
+    setSnapshotLoading(true);
+    try {
+      await fetch(`/api/agents/${id}/snapshots`, { method: "POST" });
+      await loadSnapshots();
+    } catch { /* ignore */ } finally {
+      setSnapshotLoading(false);
+    }
+  }
+
+  /** Restore a snapshot */
+  async function restoreSnapshotSeq(seq: number) {
+    setRestoringSeq(seq);
+    try {
+      await fetch(`/api/agents/${id}/snapshots/${seq}/restore`, { method: "POST" });
+      await loadAgent();
+    } catch { /* ignore */ } finally {
+      setRestoringSeq(null);
     }
   }
 
@@ -468,6 +542,44 @@ export default function AgentDetailPage({
           <BarChart3 className="w-3.5 h-3.5" />
           Metrics
         </button>
+        <button
+          onClick={() => {
+            setActiveTab("snapshots");
+            loadSnapshots();
+          }}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm transition-colors border-b-2 -mb-[1px] ${
+            activeTab === "snapshots"
+              ? "border-emerald-500 text-white"
+              : "border-transparent text-gray-500 hover:text-gray-300"
+          }`}
+        >
+          <Camera className="w-3.5 h-3.5" />
+          Snapshots
+          {snapshots.length > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full bg-white/[0.1] text-[10px]">
+              {snapshots.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab("children");
+            loadChildren();
+          }}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm transition-colors border-b-2 -mb-[1px] ${
+            activeTab === "children"
+              ? "border-emerald-500 text-white"
+              : "border-transparent text-gray-500 hover:text-gray-300"
+          }`}
+        >
+          <GitBranch className="w-3.5 h-3.5" />
+          Children
+          {children.length > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full bg-white/[0.1] text-[10px]">
+              {children.length}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Logs Tab */}
@@ -679,6 +791,132 @@ export default function AgentDetailPage({
               No metrics available.
             </p>
           )}
+        </div>
+      )}
+
+      {/* Snapshots Tab (Time Travel) */}
+      {activeTab === "snapshots" && (
+        <div className="glass-card !p-0">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08]">
+            <h2 className="text-sm font-medium flex items-center gap-2">
+              <Camera className="w-3.5 h-3.5 text-emerald-400" />
+              Time Travel Snapshots
+            </h2>
+            <button
+              onClick={captureSnapshot}
+              disabled={snapshotLoading}
+              className="px-3 py-1.5 rounded-lg text-xs bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 disabled:opacity-30 transition-colors"
+            >
+              {snapshotLoading ? "Capturing..." : "Capture Snapshot"}
+            </button>
+          </div>
+          <div className="divide-y divide-white/[0.06]">
+            {snapshots.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-6">
+                No snapshots captured yet.
+              </p>
+            ) : (
+              snapshots.map((snap) => (
+                <div
+                  key={snap.id}
+                  className="flex items-center justify-between px-4 py-3"
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-mono text-gray-300">
+                        #{snap.seq}
+                      </span>
+                      {snap.label && (
+                        <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 text-xs">
+                          {snap.label}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-gray-600">
+                      {new Date(snap.created_at).toLocaleString()}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => restoreSnapshotSeq(snap.seq)}
+                    disabled={restoringSeq === snap.seq}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-white/[0.05] text-gray-400 hover:bg-white/[0.1] hover:text-white disabled:opacity-30 transition-colors"
+                  >
+                    <RotateCw className="w-3 h-3" />
+                    {restoringSeq === snap.seq ? "Restoring..." : "Restore"}
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Children Tab (Spawn Chain) */}
+      {activeTab === "children" && (
+        <div className="glass-card !p-0">
+          <div className="px-4 py-3 border-b border-white/[0.08]">
+            <h2 className="text-sm font-medium flex items-center gap-2">
+              <GitBranch className="w-3.5 h-3.5 text-emerald-400" />
+              Spawn Chain
+              {agent?.parent_id && (
+                <span className="text-xs text-gray-500 ml-2">
+                  (depth: {agent.spawn_depth ?? 0})
+                </span>
+              )}
+            </h2>
+          </div>
+          {agent?.parent_id && (
+            <div className="px-4 py-2 bg-white/[0.02] border-b border-white/[0.06] text-xs text-gray-500">
+              Parent:{" "}
+              <a
+                href={`/agents/${agent.parent_id}`}
+                className="text-emerald-400 hover:underline"
+              >
+                {agent.parent_id}
+              </a>
+            </div>
+          )}
+          <div className="divide-y divide-white/[0.06]">
+            {children.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-6">
+                No child agents spawned.
+              </p>
+            ) : (
+              children.map((child) => {
+                const childStatus =
+                  child.status === "running"
+                    ? "bg-emerald-500"
+                    : child.status === "error"
+                      ? "bg-red-500"
+                      : "bg-gray-500";
+                return (
+                  <a
+                    key={child.id}
+                    href={`/agents/${child.id}`}
+                    className="flex items-center justify-between px-4 py-3 hover:bg-white/[0.02] transition-colors"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${childStatus}`} />
+                        <span className="text-sm text-gray-300">
+                          {child.name}
+                        </span>
+                        <span className="text-xs text-gray-600">
+                          depth: {child.spawn_depth}
+                        </span>
+                      </div>
+                      <span className="text-xs text-gray-600">
+                        {child.id}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500 capitalize">
+                      {child.status}
+                    </span>
+                  </a>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
     </div>

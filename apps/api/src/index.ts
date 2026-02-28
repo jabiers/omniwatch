@@ -8,6 +8,9 @@ import { configRoutes } from './routes/config.js';
 import { chatRoutes } from './routes/chat.js';
 import { usageRoutes } from './routes/usage.js';
 import { recipeRoutes } from './routes/recipes.js';
+import { meshRoutes } from './routes/mesh.js';
+import { snapshotRoutes } from './routes/snapshots.js';
+import { mcpRoutes } from './routes/mcp.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { requestLogger } from './middleware/logger.js';
 import { initWebSocket } from './ws.js';
@@ -26,6 +29,9 @@ app.route('/api', configRoutes);
 app.route('/api', chatRoutes);
 app.route('/api', usageRoutes);
 app.route('/api', recipeRoutes);
+app.route('/api', meshRoutes);
+app.route('/api', snapshotRoutes);
+app.route('/api', mcpRoutes);
 
 // Health check
 app.get('/health', (c) =>

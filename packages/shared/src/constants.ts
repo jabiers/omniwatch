@@ -30,3 +30,14 @@ export const FORBIDDEN_APIS = [
   'fs', 'net', 'tls', 'vm', 'worker_threads',
   'eval', 'Function',
 ];
+
+// v0.5: Agent Mesh
+export const MESH_RATE_LIMIT = 100;          // max events per minute per agent
+export const MESH_MAX_PAYLOAD_SIZE = 65_536; // 64KB max payload
+
+// v0.5: Spawn Chain
+export const MAX_SPAWN_DEPTH = 3;            // max nesting depth
+export const SPAWN_RATE_LIMIT = 5;           // max spawns per minute per agent
+
+// v0.5: Time Travel
+export const MAX_SNAPSHOTS_PER_AGENT = 50;   // FIFO rotation
