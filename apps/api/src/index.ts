@@ -11,14 +11,19 @@ import { recipeRoutes } from './routes/recipes.js';
 import { meshRoutes } from './routes/mesh.js';
 import { snapshotRoutes } from './routes/snapshots.js';
 import { mcpRoutes } from './routes/mcp.js';
+import { queueRoutes } from './routes/queue.js';
+import { analyticsRoutes } from './routes/analytics.js';
+import { tenantRoutes } from './routes/tenants.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { requestLogger } from './middleware/logger.js';
+import { authMiddleware } from './middleware/auth.js';
 import { initWebSocket } from './ws.js';
 
 const app = new Hono();
 
 app.use('*', cors());
 app.use('*', requestLogger);
+app.use('/api/*', authMiddleware);
 app.onError(errorHandler);
 
 // Mount route groups
@@ -32,6 +37,9 @@ app.route('/api', recipeRoutes);
 app.route('/api', meshRoutes);
 app.route('/api', snapshotRoutes);
 app.route('/api', mcpRoutes);
+app.route('/api', queueRoutes);
+app.route('/api', analyticsRoutes);
+app.route('/api', tenantRoutes);
 
 // Health check
 app.get('/health', (c) =>

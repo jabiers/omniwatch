@@ -31,6 +31,9 @@ export interface Agent {
   // v0.5: Spawn Chain
   parent_id: string | null;
   spawn_depth: number;
+  // v0.6: Multi-Tenant + Sandbox
+  tenant_id: string;
+  sandbox_level: SandboxLevel;
 }
 
 export interface AgentConfig {
@@ -134,4 +137,103 @@ export interface PreviewResult {
   code: string;
   dependencies: string[];
   validation: { valid: boolean; issues: string[] };
+}
+
+// v0.6: Agent Sandbox
+export type SandboxLevel = 'strict' | 'standard' | 'permissive';
+
+export interface SecurityEvent {
+  id: number;
+  agent_id: string;
+  event_type: 'fs_violation' | 'net_violation' | 'resource_exceeded' | 'api_blocked';
+  detail: string | null;
+  created_at: string;
+}
+
+// v0.6: Persistent Queue
+export interface QueueMessage {
+  id: number;
+  topic: string;
+  payload: string;
+  from_agent: string;
+  status: 'pending' | 'processing' | 'done' | 'failed';
+  retry_count: number;
+  created_at: string;
+  processed_at: string | null;
+}
+
+export interface DeadLetter {
+  id: number;
+  original_id: number | null;
+  topic: string;
+  payload: string;
+  error: string | null;
+  created_at: string;
+}
+
+export interface QueueStats {
+  pending: number;
+  processing: number;
+  done_today: number;
+  dead_letters: number;
+}
+
+// v0.6: Multi-Tenant
+export interface Tenant {
+  id: string;
+  name: string;
+  plan: 'free' | 'pro' | 'enterprise';
+  max_agents: number;
+  created_at: string;
+}
+
+export type UserRole = 'admin' | 'operator' | 'viewer';
+
+export interface User {
+  id: string;
+  tenant_id: string;
+  email: string;
+  role: UserRole;
+  api_key_hash: string;
+  created_at: string;
+}
+
+export interface AuthContext {
+  userId: string;
+  tenantId: string;
+  role: UserRole;
+}
+
+// v0.6: Analytics
+export interface MetricRollup {
+  id: number;
+  agent_id: string;
+  metric_name: string;
+  period: 'hourly' | 'daily' | 'weekly';
+  min_value: number;
+  max_value: number;
+  avg_value: number;
+  count: number;
+  period_start: string;
+}
+
+export interface AlertRule {
+  id: number;
+  tenant_id: string;
+  metric_name: string;
+  operator: 'gt' | 'lt' | 'gte' | 'lte';
+  threshold: number;
+  window_minutes: number;
+  notify_channels: string; // JSON array
+  enabled: boolean;
+  created_at: string;
+}
+
+export interface AnomalyAlert {
+  agent_id: string;
+  metric_name: string;
+  current_value: number;
+  mean: number;
+  stddev: number;
+  z_score: number;
 }

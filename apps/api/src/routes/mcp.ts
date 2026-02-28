@@ -12,7 +12,7 @@ export const mcpRoutes = new Hono();
 function createMcpServer(): McpServer {
   const server = new McpServer({
     name: 'OmniWatch',
-    version: '0.5.0',
+    version: '0.6.0',
   });
 
   // Tool: list agents

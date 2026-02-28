@@ -6,6 +6,10 @@ import { restoreRunningAgents } from './agent-manager.js';
 import { startHealthMonitor, stopHealthMonitor } from './health-monitor.js';
 import { startScheduler, stopScheduler } from './scheduler.js';
 import { restoreMeshSubscriptions } from './event-bus.js';
+import { resetStaleProcessing } from './message-queue.js';
+import { performHourlyRollup } from './metrics-collector.js';
+import { checkAlertRules } from './anomaly-detector.js';
+import { METRIC_ROLLUP_INTERVAL, ALERT_CHECK_INTERVAL } from '@omniwatch/shared';
 import { registerChannel } from './notification-channels/registry.js';
 import { WebhookChannel } from './notification-channels/webhook.js';
 import { SystemChannel } from './notification-channels/system.js';
@@ -73,6 +77,19 @@ async function main(): Promise<void> {
 
   // Restore mesh subscriptions from DB
   restoreMeshSubscriptions();
+
+  // v0.6: Reset stale queue messages from previous session
+  resetStaleProcessing();
+
+  // v0.6: Start metric rollup cron (hourly)
+  const rollupTimer = setInterval(() => {
+    performHourlyRollup();
+  }, METRIC_ROLLUP_INTERVAL);
+
+  // v0.6: Start alert check cron (every 5 min)
+  const alertTimer = setInterval(() => {
+    checkAlertRules().catch(() => {});
+  }, ALERT_CHECK_INTERVAL);
 
   log('info', 'Daemon ready');
 

@@ -15,6 +15,19 @@ export type {
   ChatMessage,
   ChatResponse,
   PreviewResult,
+  // v0.6
+  SandboxLevel,
+  SecurityEvent,
+  QueueMessage,
+  DeadLetter,
+  QueueStats,
+  Tenant,
+  UserRole,
+  User,
+  AuthContext,
+  MetricRollup,
+  AlertRule,
+  AnomalyAlert,
 } from './types.js';
 
 // Constants
@@ -40,6 +53,26 @@ export {
   MAX_SPAWN_DEPTH,
   SPAWN_RATE_LIMIT,
   MAX_SNAPSHOTS_PER_AGENT,
+  // v0.6
+  SANDBOX_TIMEOUT_STRICT,
+  SANDBOX_TIMEOUT_STANDARD,
+  SANDBOX_TIMEOUT_PERMISSIVE,
+  SANDBOX_MEMORY_STRICT,
+  SANDBOX_MEMORY_STANDARD,
+  SANDBOX_MEMORY_PERMISSIVE,
+  QUEUE_MAX_RETRIES,
+  QUEUE_BACKPRESSURE_LIMIT,
+  QUEUE_CLEANUP_DAYS,
+  QUEUE_BATCH_SIZE,
+  API_KEY_PREFIX,
+  API_KEY_LENGTH,
+  DEFAULT_TENANT_ID,
+  MAX_AGENTS_FREE,
+  MAX_AGENTS_PRO,
+  METRIC_ROLLUP_INTERVAL,
+  ANOMALY_Z_THRESHOLD,
+  ANOMALY_WINDOW_HOURS,
+  ALERT_CHECK_INTERVAL,
 } from './constants.js';
 
 // Errors
@@ -63,3 +96,6 @@ export { initLogger, log } from './logger.js';
 // Recipes
 export type { AgentRecipe } from './recipes.js';
 export { BUILT_IN_RECIPES, listRecipes, getRecipe, searchRecipes } from './recipes.js';
+
+// Auth utilities
+export { generateApiKey, hashApiKey, isValidApiKeyFormat } from './auth.js';

@@ -15,12 +15,16 @@ import {
   DollarSign,
   BookOpen,
   Network,
+  BarChart3,
+  Layers,
 } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/agents", label: "Agents", icon: Bot },
   { href: "/mesh", label: "Mesh", icon: Network },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/queue", label: "Queue", icon: Layers },
   { href: "/recipes", label: "Recipes", icon: BookOpen },
   { href: "/usage", label: "Usage", icon: DollarSign },
   { href: "/notifications", label: "Notifications", icon: Bell },
@@ -114,7 +118,7 @@ export default function RootLayout({
             <div className="flex-1" />
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              v0.5.0
+              v0.6.0
             </div>
           </header>
 

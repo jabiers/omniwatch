@@ -41,3 +41,30 @@ export const SPAWN_RATE_LIMIT = 5;           // max spawns per minute per agent
 
 // v0.5: Time Travel
 export const MAX_SNAPSHOTS_PER_AGENT = 50;   // FIFO rotation
+
+// v0.6: Agent Sandbox
+export const SANDBOX_TIMEOUT_STRICT = 10_000;       // 10s
+export const SANDBOX_TIMEOUT_STANDARD = 30_000;      // 30s
+export const SANDBOX_TIMEOUT_PERMISSIVE = 60_000;    // 60s
+export const SANDBOX_MEMORY_STRICT = 64;             // MB
+export const SANDBOX_MEMORY_STANDARD = 128;          // MB
+export const SANDBOX_MEMORY_PERMISSIVE = 256;        // MB
+
+// v0.6: Persistent Queue
+export const QUEUE_MAX_RETRIES = 3;
+export const QUEUE_BACKPRESSURE_LIMIT = 1000;        // max pending per agent
+export const QUEUE_CLEANUP_DAYS = 7;
+export const QUEUE_BATCH_SIZE = 50;
+
+// v0.6: Multi-Tenant
+export const API_KEY_PREFIX = 'omni_';
+export const API_KEY_LENGTH = 32;                    // hex chars after prefix
+export const DEFAULT_TENANT_ID = 'default';
+export const MAX_AGENTS_FREE = 10;
+export const MAX_AGENTS_PRO = 50;
+
+// v0.6: Analytics
+export const METRIC_ROLLUP_INTERVAL = 3_600_000;    // 1 hour
+export const ANOMALY_Z_THRESHOLD = 2.5;
+export const ANOMALY_WINDOW_HOURS = 24;
+export const ALERT_CHECK_INTERVAL = 300_000;         // 5 min

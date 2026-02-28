@@ -17,6 +17,9 @@ import { handleSystemRPC } from './handlers/system.js';
 import { handleChatRPC } from './handlers/chat.js';
 import { handleMeshRPC } from './handlers/mesh.js';
 import { handleSnapshotRPC } from './handlers/snapshot.js';
+import { handleQueueRPC } from './handlers/queue.js';
+import { handleAnalyticsRPC } from './handlers/analytics.js';
+import { handleSecurityRPC } from './handlers/security.js';
 
 let server: Server | null = null;
 const clients = new Set<Socket>();
@@ -54,6 +57,27 @@ function registerHandlers(): void {
   handlers['snapshot.capture'] = handleSnapshotRPC.capture;
   handlers['snapshot.restore'] = handleSnapshotRPC.restore;
   handlers['snapshot.list'] = handleSnapshotRPC.list;
+
+  // v0.6: Queue handlers
+  handlers['queue.stats'] = async (params) => handleQueueRPC.stats(params);
+  handlers['queue.deadLetters'] = async (params) => handleQueueRPC.deadLetters(params);
+  handlers['queue.retryDeadLetter'] = async (params) => handleQueueRPC.retryDeadLetter(params);
+  handlers['queue.cleanup'] = async (params) => handleQueueRPC.cleanup(params);
+  handlers['queue.resetStale'] = async (params) => handleQueueRPC.resetStale(params);
+
+  // v0.6: Analytics handlers
+  handlers['analytics.metrics'] = async (params) => handleAnalyticsRPC.metrics(params);
+  handlers['analytics.metricsByName'] = async (params) => handleAnalyticsRPC.metricsByName(params);
+  handlers['analytics.anomalies'] = async (params) => handleAnalyticsRPC.anomalies(params);
+  handlers['analytics.rollup'] = async (params) => handleAnalyticsRPC.rollup(params);
+  handlers['analytics.alertRules'] = async (params) => handleAnalyticsRPC.alertRules(params);
+  handlers['analytics.createAlert'] = async (params) => handleAnalyticsRPC.createAlert(params);
+  handlers['analytics.updateAlert'] = async (params) => handleAnalyticsRPC.updateAlert(params);
+  handlers['analytics.deleteAlert'] = async (params) => handleAnalyticsRPC.deleteAlert(params);
+  handlers['analytics.checkAlerts'] = handleAnalyticsRPC.checkAlerts as RPCHandler;
+
+  // v0.6: Security handlers
+  handlers['security.events'] = async (params) => handleSecurityRPC.events(params);
 
   // System handlers
   handlers['system.stats'] = handleSystemRPC.stats;
