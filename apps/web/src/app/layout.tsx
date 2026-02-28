@@ -13,11 +13,13 @@ import {
   Menu,
   X,
   DollarSign,
+  BookOpen,
 } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/agents", label: "Agents", icon: Bot },
+  { href: "/recipes", label: "Recipes", icon: BookOpen },
   { href: "/usage", label: "Usage", icon: DollarSign },
   { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/settings", label: "Settings", icon: Settings },

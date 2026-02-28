@@ -54,3 +54,7 @@ export {
 // Logger
 export type { LogLevel } from './logger.js';
 export { initLogger, log } from './logger.js';
+
+// Recipes
+export type { AgentRecipe } from './recipes.js';
+export { BUILT_IN_RECIPES, listRecipes, getRecipe, searchRecipes } from './recipes.js';
