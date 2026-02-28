@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { statSync } from 'node:fs';
-import { getDb } from '@omniwatch/db';
+import { getDb, loadConfig } from '@omniwatch/db';
 import { DB_PATH } from '@omniwatch/shared';
 import { isDaemonRunning, getDaemonPid } from '../lib/rpc-bridge.js';
 
@@ -36,4 +36,43 @@ systemRoutes.get('/system/status', (c) => {
     dbSize,
     uptime: process.uptime(),
   });
+});
+
+interface OllamaModel {
+  name: string;
+  size: number;
+  parameter_size: string;
+  digest: string;
+  modified_at: string;
+}
+
+/** GET /system/ollama - check Ollama status and list available models */
+systemRoutes.get('/system/ollama', async (c) => {
+  const config = loadConfig();
+  const baseUrl = (config.ai.ollama_url || 'http://localhost:11434').replace(/\/$/, '');
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+
+    const res = await fetch(`${baseUrl}/api/tags`, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      return c.json({ available: false, error: `Ollama returned ${res.status}`, models: [] });
+    }
+
+    const data = await res.json() as { models?: OllamaModel[] };
+    const models = (data.models || []).map((m: OllamaModel) => ({
+      name: m.name,
+      size: m.size,
+      parameter_size: m.parameter_size,
+      modified_at: m.modified_at,
+    }));
+
+    return c.json({ available: true, url: baseUrl, models });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return c.json({ available: false, error: message, models: [] });
+  }
 });

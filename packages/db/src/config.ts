@@ -9,6 +9,7 @@ export interface OmniConfig {
     provider: string;
     api_key: string;
     model: string;
+    ollama_url: string;
   };
   notification: {
     webhook_url: string;
@@ -37,6 +38,7 @@ const DEFAULT_CONFIG: OmniConfig = {
     provider: 'anthropic',
     api_key: '',
     model: 'claude-sonnet-4-20250514',
+    ollama_url: 'http://localhost:11434',
   },
   notification: {
     webhook_url: '',

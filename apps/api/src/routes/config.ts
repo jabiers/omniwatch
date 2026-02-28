@@ -42,6 +42,7 @@ configRoutes.put('/config', async (c) => {
     if (updates.ai.api_key && !updates.ai.api_key.startsWith('••••')) {
       current.ai.api_key = updates.ai.api_key;
     }
+    if (updates.ai.ollama_url !== undefined) current.ai.ollama_url = updates.ai.ollama_url;
   }
 
   // Merge notification settings

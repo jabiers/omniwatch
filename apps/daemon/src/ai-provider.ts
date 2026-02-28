@@ -65,11 +65,63 @@ class OpenAIProvider implements AIProvider {
   }
 }
 
+/** Ollama provider — local AI via Ollama HTTP API (no API key needed) */
+class OllamaProvider implements AIProvider {
+  private baseUrl: string;
+
+  constructor(baseUrl: string) {
+    this.baseUrl = baseUrl.replace(/\/$/, '');
+  }
+
+  async chat(system: string, messages: ChatMessage[], maxTokens = 4096): Promise<string> {
+    const model = loadConfig().ai.model || 'llama3.2';
+
+    const response = await fetch(`${this.baseUrl}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: system + '\n\nIMPORTANT: Always respond with valid JSON only.' },
+          ...messages,
+        ],
+        stream: false,
+        options: { num_predict: maxTokens },
+        format: 'json',
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      throw new Error(`Ollama request failed (${response.status}): ${errText}`);
+    }
+
+    const data = await response.json() as { message?: { content?: string } };
+    if (!data.message?.content) {
+      throw new Error('Unexpected response from Ollama');
+    }
+    return data.message.content;
+  }
+}
+
+/** Known Ollama model prefixes */
+const OLLAMA_MODEL_PREFIXES = [
+  'llama', 'mistral', 'mixtral', 'codellama', 'qwen', 'deepseek',
+  'gemma', 'phi', 'vicuna', 'orca', 'neural-chat', 'starling',
+  'yi', 'solar', 'nous-hermes', 'dolphin', 'wizardlm', 'zephyr',
+  'tinyllama', 'starcoder', 'command-r', 'granite',
+];
+
 /** Detect provider from model name */
 function detectProvider(model: string): string {
   if (model.startsWith('gpt-') || model.startsWith('o1') || model.startsWith('o3')) return 'openai';
   if (model.startsWith('claude-')) return 'anthropic';
   if (model.startsWith('gemini-')) return 'google';
+  // Check if model matches any known Ollama model prefix
+  const lower = model.toLowerCase();
+  if (OLLAMA_MODEL_PREFIXES.some(p => lower.startsWith(p))) return 'ollama';
+  // Explicit ollama: prefix for arbitrary models
+  if (lower.startsWith('ollama:')) return 'ollama';
   return 'anthropic';
 }
 
@@ -93,6 +145,21 @@ export function getAIProvider(): AIProvider {
   const model = config.ai.model || 'claude-sonnet-4-20250514';
   // Always detect provider from model name (config.ai.provider is ignored)
   const provider = detectProvider(model);
+  // Ollama: no API key needed (local)
+  if (provider === 'ollama') {
+    const ollamaUrl = config.ai.ollama_url || 'http://localhost:11434';
+    const cacheKey = `ollama:${ollamaUrl}`;
+    if (cachedProvider?.key === cacheKey) {
+      return cachedProvider.provider;
+    }
+    const instance = new OllamaProvider(ollamaUrl);
+    // Strip "ollama:" prefix if used
+    const displayModel = model.startsWith('ollama:') ? model.slice(7) : model;
+    log('info', `AI provider: Ollama @ ${ollamaUrl} (${displayModel})`);
+    cachedProvider = { key: cacheKey, provider: instance };
+    return instance;
+  }
+
   const apiKey = resolveApiKey(provider);
 
   if (!apiKey) {

@@ -11,11 +11,18 @@ import {
 } from "lucide-react";
 
 /** Shape matches the actual API response (snake_case) */
+interface OllamaModel {
+  name: string;
+  size: number;
+  parameter_size: string;
+}
+
 interface ApiConfig {
   ai?: {
     provider?: string;
     api_key?: string;
     model?: string;
+    ollama_url?: string;
   };
   notification?: {
     webhook_url?: string;
@@ -33,7 +40,7 @@ interface ApiConfig {
   };
 }
 
-const providerGroups = [
+const CLOUD_PROVIDERS = [
   {
     label: "Anthropic (Claude)",
     models: [
@@ -64,6 +71,12 @@ export default function SettingsPage() {
   const [aiApiKey, setAiApiKey] = useState("");
   const [aiModel, setAiModel] = useState("claude-sonnet-4-20250514");
   const [showKey, setShowKey] = useState(false);
+
+  // Ollama
+  const [ollamaUrl, setOllamaUrl] = useState("http://localhost:11434");
+  const [ollamaAvailable, setOllamaAvailable] = useState<boolean | null>(null);
+  const [ollamaModels, setOllamaModels] = useState<OllamaModel[]>([]);
+  const [ollamaChecking, setOllamaChecking] = useState(false);
 
   // Notification config
   const [slackWebhook, setSlackWebhook] = useState("");
@@ -97,6 +110,7 @@ export default function SettingsPage() {
           // AI
           setAiApiKey(cfg.ai?.api_key ?? "");
           setAiModel(cfg.ai?.model ?? "claude-sonnet-4-20250514");
+          setOllamaUrl(cfg.ai?.ollama_url ?? "http://localhost:11434");
 
           // Notifications
           setSlackWebhook(cfg.notification?.slack_webhook ?? "");
@@ -119,6 +133,38 @@ export default function SettingsPage() {
     load();
   }, []);
 
+  /** Check Ollama status and available models */
+  async function checkOllama() {
+    setOllamaChecking(true);
+    try {
+      const res = await fetch("/api/system/ollama");
+      if (res.ok) {
+        const data = await res.json();
+        setOllamaAvailable(data.available);
+        setOllamaModels(data.models || []);
+      }
+    } catch {
+      setOllamaAvailable(false);
+      setOllamaModels([]);
+    } finally {
+      setOllamaChecking(false);
+    }
+  }
+
+  // Check Ollama on mount
+  useEffect(() => {
+    checkOllama();
+  }, []);
+
+  const isOllamaModel = (() => {
+    const prefixes = [
+      "llama", "mistral", "mixtral", "codellama", "qwen", "deepseek",
+      "gemma", "phi", "vicuna", "yi", "solar", "dolphin", "tinyllama",
+    ];
+    const lower = aiModel.toLowerCase();
+    return prefixes.some((p) => lower.startsWith(p)) || lower.startsWith("ollama:");
+  })();
+
   /** Show toast and auto-dismiss */
   function showToast(type: "success" | "error", message: string) {
     setToast({ type, message });
@@ -134,6 +180,12 @@ export default function SettingsPage() {
     const detectProvider = (m: string) => {
       if (m.startsWith("gpt-") || m.startsWith("o1") || m.startsWith("o3")) return "openai";
       if (m.startsWith("gemini-")) return "google";
+      const lower = m.toLowerCase();
+      const ollamaPrefixes = [
+        "llama", "mistral", "mixtral", "codellama", "qwen", "deepseek",
+        "gemma", "phi", "vicuna", "yi", "solar", "dolphin", "tinyllama",
+      ];
+      if (ollamaPrefixes.some((p) => lower.startsWith(p)) || lower.startsWith("ollama:")) return "ollama";
       return "anthropic";
     };
 
@@ -142,6 +194,7 @@ export default function SettingsPage() {
         provider: detectProvider(aiModel),
         api_key: aiApiKey || undefined,
         model: aiModel,
+        ollama_url: ollamaUrl || undefined,
       },
       notification: {
         slack_webhook: slackWebhook || undefined,
@@ -212,34 +265,36 @@ export default function SettingsPage() {
         <div className="glass-card space-y-4">
           <h2 className="text-lg font-medium">AI Configuration</h2>
 
-          <div>
-            <label className="text-sm text-gray-400 mb-1 block">
-              API Key
-            </label>
-            <div className="relative">
-              <input
-                type={showKey ? "text" : "password"}
-                value={aiApiKey}
-                onChange={(e) => setAiApiKey(e.target.value)}
-                placeholder="sk-ant-..."
-                className="w-full px-3 py-2 pr-10 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm font-mono focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
-              />
-              <button
-                type="button"
-                onClick={() => setShowKey(!showKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
-              >
-                {showKey ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </button>
+          {!isOllamaModel && (
+            <div>
+              <label className="text-sm text-gray-400 mb-1 block">
+                API Key
+              </label>
+              <div className="relative">
+                <input
+                  type={showKey ? "text" : "password"}
+                  value={aiApiKey}
+                  onChange={(e) => setAiApiKey(e.target.value)}
+                  placeholder="sk-ant-..."
+                  className="w-full px-3 py-2 pr-10 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm font-mono focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowKey(!showKey)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                >
+                  {showKey ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              <p className="text-xs text-gray-600 mt-1">
+                Masked values from the server indicate the key is already set.
+              </p>
             </div>
-            <p className="text-xs text-gray-600 mt-1">
-              Masked values from the server indicate the key is already set.
-            </p>
-          </div>
+          )}
 
           <div>
             <label className="text-sm text-gray-400 mb-1 block">
@@ -250,7 +305,7 @@ export default function SettingsPage() {
               onChange={(e) => setAiModel(e.target.value)}
               className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50"
             >
-              {providerGroups.map((group) => (
+              {CLOUD_PROVIDERS.map((group) => (
                 <optgroup key={group.label} label={group.label}>
                   {group.models.map((m) => (
                     <option key={m.value} value={m.value}>
@@ -259,9 +314,59 @@ export default function SettingsPage() {
                   ))}
                 </optgroup>
               ))}
+              {ollamaModels.length > 0 && (
+                <optgroup label="Local (Ollama)">
+                  {ollamaModels.map((m) => (
+                    <option key={m.name} value={m.name}>
+                      {m.name} ({m.parameter_size})
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
+          </div>
+
+          {/* Ollama Section */}
+          <div className="pt-2 border-t border-white/[0.06]">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm text-gray-400">
+                Local AI (Ollama)
+              </label>
+              <div className="flex items-center gap-2">
+                {ollamaChecking ? (
+                  <Loader2 className="w-3 h-3 animate-spin text-gray-500" />
+                ) : ollamaAvailable ? (
+                  <span className="flex items-center gap-1 text-xs text-emerald-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Connected ({ollamaModels.length} models)
+                  </span>
+                ) : ollamaAvailable === false ? (
+                  <span className="flex items-center gap-1 text-xs text-gray-500">
+                    <span className="w-1.5 h-1.5 rounded-full bg-gray-500" />
+                    Not running
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={checkOllama}
+                  disabled={ollamaChecking}
+                  className="px-2 py-0.5 text-xs rounded bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.08] transition-colors disabled:opacity-40"
+                >
+                  Detect
+                </button>
+              </div>
+            </div>
+            <input
+              type="url"
+              value={ollamaUrl}
+              onChange={(e) => setOllamaUrl(e.target.value)}
+              placeholder="http://localhost:11434"
+              className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm font-mono focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
+            />
             <p className="text-xs text-gray-600 mt-1">
-              Currently only Anthropic models are supported. Other providers coming soon.
+              {isOllamaModel
+                ? "Using local AI — no API key or cloud costs required."
+                : "Install Ollama to run AI agents fully offline and free."}
             </p>
           </div>
         </div>

@@ -78,3 +78,16 @@ describe('setConfigValue', () => {
     expect(existsSync(testConfigFile)).toBe(true);
   });
 });
+
+describe('ollama config', () => {
+  it('has default ollama_url', () => {
+    const config = loadConfig();
+    expect(config.ai.ollama_url).toBe('http://localhost:11434');
+  });
+
+  it('sets and gets ollama_url', () => {
+    loadConfig();
+    setConfigValue('ai.ollama_url', 'http://192.168.1.100:11434');
+    expect(getConfigValue('ai.ollama_url')).toBe('http://192.168.1.100:11434');
+  });
+});
