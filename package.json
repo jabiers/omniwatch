@@ -22,7 +22,7 @@
     "node": ">=20.0.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["better-sqlite3", "esbuild", "sharp"]
+    "onlyBuiltDependencies": ["better-sqlite3", "esbuild", "sharp", "isolated-vm"]
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

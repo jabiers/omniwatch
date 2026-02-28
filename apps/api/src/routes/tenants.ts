@@ -1,10 +1,25 @@
 /** Tenant and user management routes */
 import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
 import { generateApiKey, hashApiKey } from '@omniwatch/shared';
 import type { Tenant, User } from '@omniwatch/shared';
 import { requireRole } from '../middleware/auth.js';
 import { nanoid } from 'nanoid';
+
+/** Schema: POST /tenants request body */
+const createTenantSchema = z.object({
+  name: z.string().min(1, 'name is required').max(100),
+  plan: z.enum(['free', 'pro', 'enterprise']).default('free'),
+  max_agents: z.number().int().min(1).max(1000).default(10),
+});
+
+/** Schema: POST /users request body */
+const createUserSchema = z.object({
+  email: z.string().email('invalid email format'),
+  role: z.enum(['admin', 'operator', 'viewer']).default('viewer'),
+});
 
 export const tenantRoutes = new Hono();
 
@@ -16,15 +31,14 @@ tenantRoutes.get('/tenants', requireRole('admin'), (c) => {
 });
 
 /** POST /tenants — Create a new tenant (admin only) */
-tenantRoutes.post('/tenants', requireRole('admin'), async (c) => {
-  const body = await c.req.json().catch(() => ({})) as { name?: string; plan?: string; max_agents?: number };
-  if (!body.name) return c.json({ error: 'name is required' }, 400);
+tenantRoutes.post('/tenants', requireRole('admin'), zValidator('json', createTenantSchema), async (c) => {
+  const body = c.req.valid('json');
 
   const db = getDb();
   const id = nanoid(8);
   db.prepare(
     'INSERT INTO tenants (id, name, plan, max_agents) VALUES (?, ?, ?, ?)'
-  ).run(id, body.name, body.plan || 'free', body.max_agents || 10);
+  ).run(id, body.name, body.plan, body.max_agents);
 
   const tenant = db.prepare('SELECT * FROM tenants WHERE id = ?').get(id) as Tenant;
   return c.json(tenant, 201);
@@ -41,10 +55,9 @@ tenantRoutes.get('/users', requireRole('admin'), (c) => {
 });
 
 /** POST /users — Create a new user + API key (admin only) */
-tenantRoutes.post('/users', requireRole('admin'), async (c) => {
+tenantRoutes.post('/users', requireRole('admin'), zValidator('json', createUserSchema), async (c) => {
   const auth = c.get('auth');
-  const body = await c.req.json().catch(() => ({})) as { email?: string; role?: string };
-  if (!body.email) return c.json({ error: 'email is required' }, 400);
+  const body = c.req.valid('json');
 
   const db = getDb();
   // Check for duplicate email
@@ -54,7 +67,7 @@ tenantRoutes.post('/users', requireRole('admin'), async (c) => {
   const id = nanoid(8);
   const apiKey = generateApiKey();
   const keyHash = hashApiKey(apiKey);
-  const role = body.role || 'viewer';
+  const role = body.role;
 
   db.prepare(
     'INSERT INTO users (id, tenant_id, email, role, api_key_hash) VALUES (?, ?, ?, ?, ?)'

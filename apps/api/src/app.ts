@@ -14,6 +14,8 @@ import { mcpRoutes } from './routes/mcp.js';
 import { queueRoutes } from './routes/queue.js';
 import { analyticsRoutes } from './routes/analytics.js';
 import { tenantRoutes } from './routes/tenants.js';
+import { marketplaceRoutes } from './routes/marketplace.js';
+import { oauthRoutes } from './routes/oauth.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { requestLogger } from './middleware/logger.js';
 import { authMiddleware } from './middleware/auth.js';
@@ -26,6 +28,9 @@ export function createApp(): Hono {
   app.use('*', requestLogger);
   app.use('/api/*', authMiddleware);
   app.onError(errorHandler);
+
+  // OAuth routes (no auth required — mounted before /api auth middleware)
+  app.route('/', oauthRoutes);
 
   // Mount route groups
   app.route('/api', agentRoutes);
@@ -41,6 +46,7 @@ export function createApp(): Hono {
   app.route('/api', queueRoutes);
   app.route('/api', analyticsRoutes);
   app.route('/api', tenantRoutes);
+  app.route('/api', marketplaceRoutes);
 
   // Health check
   app.get('/health', (c) =>

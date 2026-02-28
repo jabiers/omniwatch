@@ -1,7 +1,14 @@
 /** Queue monitoring routes */
 import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
 import { rpcCall, isDaemonRunning } from '../lib/rpc-bridge.js';
 import { requireRole } from '../middleware/auth.js';
+
+/** Schema: GET /queue/dead-letters query params */
+const deadLettersQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(500).default(50),
+});
 
 export const queueRoutes = new Hono();
 
@@ -13,9 +20,9 @@ queueRoutes.get('/queue/stats', requireRole('admin', 'operator', 'viewer'), asyn
 });
 
 /** GET /queue/dead-letters — Dead letter queue */
-queueRoutes.get('/queue/dead-letters', requireRole('admin', 'operator'), async (c) => {
+queueRoutes.get('/queue/dead-letters', requireRole('admin', 'operator'), zValidator('query', deadLettersQuerySchema), async (c) => {
   if (!isDaemonRunning()) return c.json({ error: 'Daemon not running' }, 503);
-  const limit = Number(c.req.query('limit') || 50);
+  const { limit } = c.req.valid('query');
   const letters = await rpcCall('queue.deadLetters', { limit });
   return c.json(letters);
 });

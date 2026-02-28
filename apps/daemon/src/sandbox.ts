@@ -1,5 +1,4 @@
-/** Agent Sandbox — Isolated execution environment using node:vm */
-import { createContext, Script, type Context } from 'node:vm';
+/** Agent Sandbox — Isolated execution environment */
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'node:fs';
 import { join, resolve, relative } from 'node:path';
 import { getDb } from '@omniwatch/db';
@@ -174,4 +173,39 @@ export const SANDBOX_BLOCKED_APIS = [
 /** Check if a require call is sandbox-safe */
 export function isSafeRequire(moduleName: string): boolean {
   return !SANDBOX_BLOCKED_APIS.some(api => moduleName === api || moduleName.startsWith(`${api}/`));
+}
+
+/**
+ * Run code in an isolated-vm sandbox for strict security.
+ * Used for 'strict' sandbox level agents that need maximum isolation.
+ */
+export async function runInIsolate(
+  code: string,
+  agentId: string,
+  options: { timeout?: number; memoryLimitMb?: number } = {},
+): Promise<unknown> {
+  const ivm = await import('isolated-vm');
+  const isolate = new ivm.Isolate({
+    memoryLimit: options.memoryLimitMb || SANDBOX_MEMORY_STRICT,
+  });
+
+  try {
+    const context = await isolate.createContext();
+    const jail = context.global;
+
+    // Provide minimal console.log
+    await jail.set('_log', new ivm.Callback((msg: string) => {
+      log('info', `[Isolate:${agentId}] ${msg}`);
+    }));
+    await context.eval('globalThis.console = { log: (...args) => _log(args.join(" ")) }');
+
+    const script = await isolate.compileScript(code);
+    const result = await script.run(context, {
+      timeout: options.timeout || SANDBOX_TIMEOUT_STRICT,
+    });
+
+    return result;
+  } finally {
+    isolate.dispose();
+  }
 }

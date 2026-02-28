@@ -1,20 +1,54 @@
 import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
 import type { Agent, AgentLog } from '@omniwatch/shared';
 import { rpcCall } from '../lib/rpc-bridge.js';
+import { requireRole } from '../middleware/auth.js';
+
+/** Schema: POST /agents request body */
+const createAgentSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  prompt: z.string().min(1, 'prompt is required').max(5000),
+  type: z.enum(['watcher', 'doer', 'auto']).default('watcher'),
+});
+
+/** Schema: GET /agents query params */
+const listAgentsQuerySchema = z.object({
+  status: z.enum(['creating', 'ready', 'running', 'stopped', 'error', 'healing', 'destroyed']).optional(),
+  tenant: z.string().optional(),
+});
+
+/** Schema: GET /agents/:id/logs query params */
+const agentLogsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(500).default(50),
+  level: z.enum(['debug', 'info', 'warn', 'error']).optional(),
+});
 
 export const agentRoutes = new Hono();
 
-/** GET /agents - list all agents with optional status filter */
-agentRoutes.get('/agents', (c) => {
+/** GET /agents - list all agents filtered by tenant */
+agentRoutes.get('/agents', zValidator('query', listAgentsQuerySchema), (c) => {
   const db = getDb();
-  const status = c.req.query('status');
+  const auth = c.get('auth');
+  const { status, tenant } = c.req.valid('query');
 
   let agents: Agent[];
-  if (status) {
-    agents = db.prepare('SELECT * FROM agents WHERE status = ? ORDER BY created_at DESC').all(status) as Agent[];
+  if (auth.role === 'admin' && !tenant) {
+    // Admin can see all agents
+    if (status) {
+      agents = db.prepare('SELECT * FROM agents WHERE status = ? ORDER BY created_at DESC').all(status) as Agent[];
+    } else {
+      agents = db.prepare("SELECT * FROM agents WHERE status != ? ORDER BY created_at DESC").all('destroyed') as Agent[];
+    }
   } else {
-    agents = db.prepare('SELECT * FROM agents WHERE status != ? ORDER BY created_at DESC').all('destroyed') as Agent[];
+    // Non-admin: filter by tenant_id
+    const tenantId = tenant || auth.tenantId;
+    if (status) {
+      agents = db.prepare('SELECT * FROM agents WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC').all(tenantId, status) as Agent[];
+    } else {
+      agents = db.prepare("SELECT * FROM agents WHERE tenant_id = ? AND status != ? ORDER BY created_at DESC").all(tenantId, 'destroyed') as Agent[];
+    }
   }
 
   return c.json({ agents });
@@ -23,6 +57,7 @@ agentRoutes.get('/agents', (c) => {
 /** GET /agents/:id - single agent detail */
 agentRoutes.get('/agents/:id', (c) => {
   const db = getDb();
+  const auth = c.get('auth');
   const { id } = c.req.param();
 
   const agent = db.prepare('SELECT * FROM agents WHERE id = ?').get(id) as Agent | undefined;
@@ -30,22 +65,25 @@ agentRoutes.get('/agents/:id', (c) => {
     return c.json({ error: `Agent '${id}' not found` }, 404);
   }
 
+  // Tenant isolation: non-admin can only access own tenant's agents
+  if (auth.role !== 'admin' && agent.tenant_id !== auth.tenantId) {
+    return c.json({ error: `Agent '${id}' not found` }, 404);
+  }
+
   return c.json({ agent });
 });
 
-/** POST /agents - create agent via daemon IPC */
-agentRoutes.post('/agents', async (c) => {
-  const body = await c.req.json<{ name?: string; prompt?: string; type?: string }>();
+/** POST /agents - create agent via daemon IPC (operator+) */
+agentRoutes.post('/agents', requireRole('admin', 'operator'), zValidator('json', createAgentSchema), async (c) => {
+  const body = c.req.valid('json');
 
-  if (!body.prompt) {
-    return c.json({ error: 'prompt is required' }, 400);
-  }
-
+  const auth = c.get('auth');
   try {
     const result = await rpcCall('agent.create', {
       name: body.name,
       prompt: body.prompt,
-      type: body.type || 'watcher',
+      type: body.type,
+      tenantId: auth.tenantId,
     });
     return c.json({ agent: result }, 201);
   } catch (err) {
@@ -54,8 +92,8 @@ agentRoutes.post('/agents', async (c) => {
   }
 });
 
-/** DELETE /agents/:id - destroy agent via daemon IPC */
-agentRoutes.delete('/agents/:id', async (c) => {
+/** DELETE /agents/:id - destroy agent via daemon IPC (operator+) */
+agentRoutes.delete('/agents/:id', requireRole('admin', 'operator'), async (c) => {
   const { id } = c.req.param();
 
   try {
@@ -67,8 +105,8 @@ agentRoutes.delete('/agents/:id', async (c) => {
   }
 });
 
-/** POST /agents/:id/start - start agent via daemon IPC */
-agentRoutes.post('/agents/:id/start', async (c) => {
+/** POST /agents/:id/start - start agent (operator+) */
+agentRoutes.post('/agents/:id/start', requireRole('admin', 'operator'), async (c) => {
   const { id } = c.req.param();
 
   try {
@@ -80,8 +118,8 @@ agentRoutes.post('/agents/:id/start', async (c) => {
   }
 });
 
-/** POST /agents/:id/stop - stop agent via daemon IPC */
-agentRoutes.post('/agents/:id/stop', async (c) => {
+/** POST /agents/:id/stop - stop agent (operator+) */
+agentRoutes.post('/agents/:id/stop', requireRole('admin', 'operator'), async (c) => {
   const { id } = c.req.param();
 
   try {
@@ -93,8 +131,8 @@ agentRoutes.post('/agents/:id/stop', async (c) => {
   }
 });
 
-/** POST /agents/:id/restart - restart agent via daemon IPC */
-agentRoutes.post('/agents/:id/restart', async (c) => {
+/** POST /agents/:id/restart - restart agent (operator+) */
+agentRoutes.post('/agents/:id/restart', requireRole('admin', 'operator'), async (c) => {
   const { id } = c.req.param();
 
   try {
@@ -107,13 +145,11 @@ agentRoutes.post('/agents/:id/restart', async (c) => {
 });
 
 /** GET /agents/:id/logs - get agent logs with optional filters */
-agentRoutes.get('/agents/:id/logs', (c) => {
+agentRoutes.get('/agents/:id/logs', zValidator('query', agentLogsQuerySchema), (c) => {
   const db = getDb();
   const { id } = c.req.param();
-  const limit = Math.min(parseInt(c.req.query('limit') || '50', 10), 500);
-  const level = c.req.query('level');
+  const { limit, level } = c.req.valid('query');
 
-  // Verify agent exists
   const agent = db.prepare('SELECT id FROM agents WHERE id = ?').get(id);
   if (!agent) {
     return c.json({ error: `Agent '${id}' not found` }, 404);
@@ -138,7 +174,6 @@ agentRoutes.get('/agents/:id/metrics', (c) => {
   const db = getDb();
   const { id } = c.req.param();
 
-  // Verify agent exists
   const agent = db.prepare('SELECT id FROM agents WHERE id = ?').get(id);
   if (!agent) {
     return c.json({ error: `Agent '${id}' not found` }, 404);

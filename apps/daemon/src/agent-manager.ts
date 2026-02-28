@@ -13,6 +13,9 @@ import { attemptHeal } from './self-healer.js';
 import { meshPublish, meshSubscribe, meshUnsubscribe, meshRemoveAgent } from './event-bus.js';
 import { spawnChildAgent, getChildAgents } from './spawn-manager.js';
 import { captureSnapshot } from './time-travel.js';
+import { getSandboxMemoryLimit, getSandboxTimeout, logSecurityEvent } from './sandbox.js';
+import { recordAgentStart, recordAgentStop, recordAgentError, recordAgentHeal } from './metrics-collector.js';
+import type { SandboxLevel } from '@omniwatch/shared';
 
 /** Auto-capture snapshot with error suppression (best-effort) */
 function autoSnapshot(agentId: string, label: string): void {
@@ -109,10 +112,15 @@ export async function startAgent(id: string): Promise<void> {
 
   const agentDir = join(AGENTS_DIR, id);
 
+  // Determine sandbox policy from agent's sandbox_level
+  const sandboxLevel = (agent.sandbox_level || 'standard') as SandboxLevel;
+  const memoryLimit = getSandboxMemoryLimit(sandboxLevel);
+  const timeout = getSandboxTimeout(sandboxLevel);
+
+  logSecurityEvent(agent.id, 'sandbox_start', `level=${sandboxLevel} memory=${memoryLimit}MB timeout=${timeout}ms`);
+
   // runtime.js is in the same dist directory: dist/agent/runtime.js
-  // When running from dist/index.js, resolve relative to current file
   const distRuntime = resolve(new URL('./agent/runtime.js', import.meta.url).pathname);
-  // Fallback for dev mode (tsx): resolve from source
   const srcRuntime = resolve(new URL('../agent/runtime.ts', import.meta.url).pathname);
   const scriptPath = existsSync(distRuntime) ? distRuntime : srcRuntime;
 
@@ -122,11 +130,21 @@ export async function startAgent(id: string): Promise<void> {
       ...process.env,
       OMNI_AGENT_ID: id,
       OMNI_AGENT_DIR: agentDir,
+      OMNI_SANDBOX_LEVEL: sandboxLevel,
       NODE_ENV: 'production',
     },
-    execArgv: [`--max-old-space-size=${AGENT_MEMORY_LIMIT}`],
+    execArgv: [`--max-old-space-size=${memoryLimit}`],
     stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
   });
+
+  // Auto-kill if agent exceeds sandbox timeout (for long-running init)
+  const initTimeout = setTimeout(() => {
+    if (child.exitCode === null) {
+      logSecurityEvent(id, 'timeout_violation', `Init exceeded ${timeout}ms`);
+      child.kill('SIGKILL');
+    }
+  }, timeout);
+  child.once('message', () => clearTimeout(initTimeout));
 
   processes.set(id, child);
 
@@ -160,6 +178,7 @@ export async function startAgent(id: string): Promise<void> {
   // v0.5: Auto-capture snapshot on start
   autoSnapshot(id, 'start');
 
+  recordAgentStart(id);
   log('info', `Agent ${id} started (PID: ${child.pid})`);
 }
 
@@ -187,6 +206,7 @@ export async function stopAgent(id: string): Promise<void> {
     child.kill('SIGTERM');
     processes.delete(id);
     updateAgent(id, { status: 'stopped', pid: null } as Partial<Agent>);
+    recordAgentStop(id);
     log('info', `Agent ${id} stopped`);
   });
 }
@@ -291,6 +311,7 @@ function handleAgentExit(agentId: string, code: number | null, signal: string | 
   if (!agent || agent.status === 'stopped' || agent.status === 'destroyed') return;
 
   log('warn', `Agent ${agentId} exited (code: ${code}, signal: ${signal})`);
+  recordAgentError(agentId);
   updateAgent(agentId, {
     status: 'error',
     pid: null,
@@ -298,9 +319,12 @@ function handleAgentExit(agentId: string, code: number | null, signal: string | 
   } as Partial<Agent>);
 
   // Trigger self-healing immediately on crash
-  attemptHeal(agentId).catch((err) => {
-    log('error', `Auto-heal on exit failed for ${agentId}: ${err}`);
-  });
+  attemptHeal(agentId)
+    .then((healed) => { recordAgentHeal(agentId, !!healed); })
+    .catch((err) => {
+      recordAgentHeal(agentId, false);
+      log('error', `Auto-heal on exit failed for ${agentId}: ${err}`);
+    });
 }
 
 /** Handle spawn.create messages from agents */
