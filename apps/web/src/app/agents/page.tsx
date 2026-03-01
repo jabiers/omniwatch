@@ -13,6 +13,8 @@ import {
   CheckSquare,
   XSquare,
 } from "lucide-react";
+import { apiFetch } from "../../lib/api";
+import { Pagination } from "../../components/pagination";
 
 interface Agent {
   id: string;
@@ -31,6 +33,7 @@ const statusConfig: Record<string, { dot: string; text: string }> = {
 };
 
 const statusOptions = ["all", "running", "stopped", "error", "healing"];
+const PAGE_LIMIT = 20;
 
 export default function AgentsPage() {
   const router = useRouter();
@@ -41,20 +44,26 @@ export default function AgentsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [bulkAction, setBulkAction] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
 
   const loadAgents = useCallback(async () => {
     try {
-      const res = await fetch("/api/agents");
+      const offset = (page - 1) * PAGE_LIMIT;
+      const res = await apiFetch(`/api/agents?limit=${PAGE_LIMIT}&offset=${offset}`);
       if (res.ok) {
         const data = await res.json();
-        setAgents(Array.isArray(data) ? data : data.agents ?? []);
+        const list = Array.isArray(data) ? data : data.agents ?? [];
+        setAgents(list);
+        // If we got exactly PAGE_LIMIT results, there may be more pages
+        setHasNextPage(list.length === PAGE_LIMIT);
       }
     } catch {
       // API not available
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page]);
 
   // Initial load + auto-refresh every 5s
   useEffect(() => {
@@ -66,12 +75,15 @@ export default function AgentsPage() {
   const filtered =
     filter === "all" ? agents : agents.filter((a) => a.status === filter);
 
+  // Calculate total pages — if hasNextPage, allow at least one more page
+  const totalPages = hasNextPage ? page + 1 : page;
+
   /** Send an action to a single agent */
   async function sendAction(agentId: string, action: string) {
     setActionLoading(`${agentId}-${action}`);
     try {
       if (action === "destroy") {
-        const res = await fetch(`/api/agents/${agentId}`, {
+        const res = await apiFetch(`/api/agents/${agentId}`, {
           method: "DELETE",
         });
         if (res.ok) {
@@ -83,11 +95,11 @@ export default function AgentsPage() {
           });
         }
       } else {
-        await fetch(`/api/agents/${agentId}/${action}`, { method: "POST" });
+        await apiFetch(`/api/agents/${agentId}/${action}`, { method: "POST" });
         await loadAgents();
       }
     } catch {
-      // handle error
+      // Errors handled by apiFetch toast
     } finally {
       setActionLoading(null);
       setConfirmDelete(null);
@@ -102,7 +114,7 @@ export default function AgentsPage() {
       if (action === "destroy") {
         await Promise.allSettled(
           ids.map((id) =>
-            fetch(`/api/agents/${id}`, { method: "DELETE" })
+            apiFetch(`/api/agents/${id}`, { method: "DELETE" })
           )
         );
         setAgents((prev) => prev.filter((a) => !selected.has(a.id)));
@@ -110,13 +122,13 @@ export default function AgentsPage() {
       } else {
         await Promise.allSettled(
           ids.map((id) =>
-            fetch(`/api/agents/${id}/${action}`, { method: "POST" })
+            apiFetch(`/api/agents/${id}/${action}`, { method: "POST" })
           )
         );
         await loadAgents();
       }
     } catch {
-      // handle error
+      // Errors handled by apiFetch toast
     } finally {
       setBulkAction(false);
     }
@@ -336,7 +348,7 @@ export default function AgentsPage() {
                     <td className="px-4 py-3 text-sm text-gray-500">
                       {agent.lastRun
                         ? new Date(agent.lastRun).toLocaleString()
-                        : "—"}
+                        : "\u2014"}
                     </td>
                     {/* Actions */}
                     <td className="px-4 py-3">
@@ -410,6 +422,19 @@ export default function AgentsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {!loading && agents.length > 0 && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={(p) => {
+            setPage(p);
+            setSelected(new Set());
+            setLoading(true);
+          }}
+        />
+      )}
     </div>
   );
 }

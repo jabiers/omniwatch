@@ -22,6 +22,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { AuthGuard } from "../components/auth-guard";
+import { ToastContainer } from "../components/toast";
 import { useAuthStore } from "../lib/auth-store";
 
 const navItems = [
@@ -57,6 +58,7 @@ export default function RootLayout({
             <AppShell>{children}</AppShell>
           </AuthGuard>
         )}
+        <ToastContainer />
       </body>
     </html>
   );

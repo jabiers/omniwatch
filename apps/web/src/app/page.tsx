@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import {
   Bot,
@@ -12,6 +12,7 @@ import {
   Wifi,
   WifiOff,
 } from "lucide-react";
+import { useWebSocket } from "../lib/ws";
 
 interface Agent {
   id: string;
@@ -52,9 +53,6 @@ export default function DashboardPage() {
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [wsConnected, setWsConnected] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
-
   const loadData = useCallback(async () => {
     try {
       const [agentsRes, notifsRes, statusRes] = await Promise.allSettled([
@@ -94,43 +92,28 @@ export default function DashboardPage() {
   }, [loadData]);
 
   // WebSocket for real-time updates
-  useEffect(() => {
-    function connectWs() {
-      try {
-        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const wsHost = process.env.NEXT_PUBLIC_WS_HOST || window.location.host;
-        const ws = new WebSocket(`${protocol}//${wsHost}/ws`);
-        wsRef.current = ws;
+  const wsUrl = useMemo(() => {
+    if (typeof window === "undefined") return "ws://localhost:3456/ws";
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsHost = process.env.NEXT_PUBLIC_WS_HOST || window.location.host;
+    return `${protocol}//${wsHost}/ws`;
+  }, []);
 
-        ws.onopen = () => setWsConnected(true);
-        ws.onclose = () => {
-          setWsConnected(false);
-          // Reconnect after 5s
-          setTimeout(connectWs, 5000);
-        };
-        ws.onerror = () => setWsConnected(false);
-        ws.onmessage = (event) => {
-          try {
-            const msg = JSON.parse(event.data);
-            if (msg.type === "agent:status" || msg.type === "agent:update") {
-              loadData();
-            } else if (msg.type === "notification") {
-              loadData();
-            }
-          } catch {
-            // Ignore malformed messages
-          }
-        };
-      } catch {
-        // WebSocket not available
+  const handleWsMessage = useCallback(
+    (msg: unknown) => {
+      const data = msg as { type?: string };
+      if (
+        data.type === "agent:status" ||
+        data.type === "agent:update" ||
+        data.type === "notification"
+      ) {
+        loadData();
       }
-    }
+    },
+    [loadData]
+  );
 
-    connectWs();
-    return () => {
-      wsRef.current?.close();
-    };
-  }, [loadData]);
+  const { connected: wsConnected } = useWebSocket(wsUrl, handleWsMessage);
 
   /** Send start/stop action for an agent */
   async function sendAction(agentId: string, action: "start" | "stop") {

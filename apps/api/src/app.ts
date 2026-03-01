@@ -19,6 +19,7 @@ import { oauthRoutes } from './routes/oauth.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { requestLogger } from './middleware/logger.js';
 import { authMiddleware } from './middleware/auth.js';
+import { registerOpenAPI } from './openapi.js';
 
 /** Create a configured Hono app instance */
 export function createApp(): Hono {
@@ -52,6 +53,9 @@ export function createApp(): Hono {
   app.get('/health', (c) =>
     c.json({ status: 'ok', timestamp: new Date().toISOString() }),
   );
+
+  // OpenAPI spec + Swagger UI
+  registerOpenAPI(app);
 
   return app;
 }
