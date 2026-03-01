@@ -19,7 +19,7 @@ const PUBLIC_PATHS = ['/health', '/api/system/status', '/auth', '/api/docs'];
 export const authMiddleware = createMiddleware(async (c, next) => {
   // Skip auth for public paths, MCP, and OAuth routes
   if (
-    PUBLIC_PATHS.some(p => c.req.path === p || c.req.path.startsWith(p + '/')) ||
+    PUBLIC_PATHS.some((p) => c.req.path === p || c.req.path.startsWith(p + '/')) ||
     c.req.path.startsWith('/api/mcp')
   ) {
     c.set('auth', { userId: 'anonymous', tenantId: 'default', role: 'viewer' as UserRole });
@@ -34,12 +34,16 @@ export const authMiddleware = createMiddleware(async (c, next) => {
     const token = authHeader.slice(7);
     const tokenHash = hashToken(token);
     const db = getDb();
-    const session = db.prepare(`
+    const session = db
+      .prepare(
+        `
       SELECT u.id, u.tenant_id, u.role
       FROM oauth_sessions s
       JOIN users u ON u.id = s.user_id
       WHERE s.token = ? AND s.expires_at > datetime('now')
-    `).get(tokenHash) as { id: string; tenant_id: string; role: UserRole } | null;
+    `,
+      )
+      .get(tokenHash) as { id: string; tenant_id: string; role: UserRole } | null;
 
     if (session) {
       c.set('auth', { userId: session.id, tenantId: session.tenant_id, role: session.role });
@@ -48,10 +52,10 @@ export const authMiddleware = createMiddleware(async (c, next) => {
     // Bearer token provided but invalid — fall through to dev-mode or 401
   }
 
-  // Dev mode: allow unauthenticated access with admin role
+  // Dev mode: allow unauthenticated access only with explicit opt-in
   if (!apiKey && !authHeader) {
-    const isDev = process.env.NODE_ENV !== 'production';
-    if (isDev) {
+    const devAuth = process.env.OMNIWATCH_DEV_AUTH;
+    if (devAuth === '1' || devAuth === 'true') {
       c.set('auth', { userId: 'anonymous', tenantId: 'default', role: 'admin' as UserRole });
       return next();
     }
@@ -62,9 +66,9 @@ export const authMiddleware = createMiddleware(async (c, next) => {
   if (apiKey) {
     const db = getDb();
     const keyHash = hashApiKey(apiKey);
-    const user = db.prepare(
-      'SELECT u.id, u.tenant_id, u.role FROM users u WHERE u.api_key_hash = ?'
-    ).get(keyHash) as { id: string; tenant_id: string; role: UserRole } | null;
+    const user = db
+      .prepare('SELECT u.id, u.tenant_id, u.role FROM users u WHERE u.api_key_hash = ?')
+      .get(keyHash) as { id: string; tenant_id: string; role: UserRole } | null;
 
     if (!user) {
       return c.json({ error: 'Invalid API key' }, 401);

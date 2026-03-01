@@ -32,17 +32,18 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const res = await fetch(`${API_BASE}/api/agents`, {
-        headers: { 'X-API-Key': apiKey.trim() },
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: apiKey.trim() }),
       });
 
       if (res.ok) {
-        // Consume the body to verify the response is valid JSON
-        await res.json();
-        // The API returns successfully - key is valid
-        // Role and tenantId can be fetched from a /api/auth/me endpoint later;
-        // for now we store what we know
-        setAuth(apiKey.trim(), 'admin', 'default');
+        const data = (await res.json()) as {
+          token: string;
+          user: { id: string; email: string; role: string; tenant_id: string };
+        };
+        setAuth(data.token, data.user.role, data.user.tenant_id);
         router.replace('/');
       } else if (res.status === 401 || res.status === 403) {
         setError('Invalid API key. Please check and try again.');

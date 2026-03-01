@@ -3,14 +3,14 @@ import { useToastStore } from './toast-store';
 
 /**
  * Authenticated fetch wrapper with automatic error toasting.
- * Attaches API key from auth store and shows toast on non-ok responses.
+ * Attaches Bearer token from auth store and shows toast on non-ok responses.
  * Includes a 15-second timeout via AbortController.
  */
 export async function apiFetch(path: string, options?: RequestInit): Promise<Response> {
-  const { apiKey } = useAuthStore.getState();
+  const { token } = useAuthStore.getState();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(apiKey ? { 'X-API-Key': apiKey } : {}),
+    ...(token ? { Authorization: 'Bearer ' + token } : {}),
     ...((options?.headers as Record<string, string>) || {}),
   };
 

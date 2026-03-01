@@ -1,11 +1,11 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface AuthState {
-  apiKey: string | null;
+  token: string | null;
   role: string | null;
   tenantId: string | null;
-  setAuth: (apiKey: string, role: string, tenantId: string) => void;
+  setAuth: (token: string, role: string, tenantId: string) => void;
   clearAuth: () => void;
   isAuthenticated: () => boolean;
   getAuthHeaders: () => Record<string, string>;
@@ -14,35 +14,35 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      apiKey: null,
+      token: null,
       role: null,
       tenantId: null,
 
-      setAuth: (apiKey: string, role: string, tenantId: string) => {
-        set({ apiKey, role, tenantId });
+      setAuth: (token: string, role: string, tenantId: string) => {
+        set({ token, role, tenantId });
       },
 
       clearAuth: () => {
-        set({ apiKey: null, role: null, tenantId: null });
+        set({ token: null, role: null, tenantId: null });
       },
 
       isAuthenticated: () => {
-        return get().apiKey !== null;
+        return get().token !== null;
       },
 
       getAuthHeaders: (): Record<string, string> => {
-        const key = get().apiKey;
-        if (!key) return {};
-        return { "X-API-Key": key };
+        const t = get().token;
+        if (!t) return {};
+        return { Authorization: 'Bearer ' + t };
       },
     }),
     {
-      name: "omniwatch-auth",
+      name: 'omniwatch-auth',
       partialize: (state) => ({
-        apiKey: state.apiKey,
+        token: state.token,
         role: state.role,
         tenantId: state.tenantId,
       }),
-    }
-  )
+    },
+  ),
 );

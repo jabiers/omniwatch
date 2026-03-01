@@ -14,9 +14,9 @@ describe('apiFetch', () => {
     useToastStore.setState({ toasts: [] });
   });
 
-  it('should attach API key header when authenticated', async () => {
+  it('should attach Bearer token header when authenticated', async () => {
     const { useAuthStore } = await import('../../lib/auth-store');
-    useAuthStore.getState().setAuth('test-key', 'admin', 'tenant');
+    useAuthStore.getState().setAuth('test-token', 'admin', 'tenant');
     mockFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
 
     const { apiFetch } = await import('../../lib/api');
@@ -25,7 +25,7 @@ describe('apiFetch', () => {
     expect(mockFetch).toHaveBeenCalledWith(
       '/api/agents',
       expect.objectContaining({
-        headers: expect.objectContaining({ 'X-API-Key': 'test-key' }),
+        headers: expect.objectContaining({ Authorization: 'Bearer test-token' }),
       }),
     );
   });
