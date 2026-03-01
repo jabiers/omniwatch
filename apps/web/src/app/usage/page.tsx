@@ -8,6 +8,7 @@ import {
   TrendingUp,
   Loader2,
 } from "lucide-react";
+import { apiFetch } from "../../lib/api";
 
 interface UsageSummary {
   total_cost: number;
@@ -48,9 +49,9 @@ export default function UsagePage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/usage?days=${days}`)
+    apiFetch(`/api/usage?days=${days}`)
       .then((r) => r.json())
-      .then(setData)
+      .then((d) => setData(d as UsageSummary))
       .catch(() => setData(null))
       .finally(() => setLoading(false));
   }, [days]);

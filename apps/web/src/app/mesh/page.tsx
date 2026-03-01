@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Network, Radio, ArrowRight, RefreshCw } from "lucide-react";
+import { Pagination } from "../../components/pagination";
+import { apiFetch } from "../../lib/api";
 
 interface MeshEvent {
   id: number;
@@ -17,33 +19,40 @@ interface Subscription {
   topic: string;
 }
 
+const PAGE_LIMIT = 20;
+
 export default function MeshPage() {
   const [events, setEvents] = useState<MeshEvent[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [topicFilter, setTopicFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
+      const offset = (page - 1) * PAGE_LIMIT;
       const [evRes, subRes] = await Promise.allSettled([
-        fetch("/api/mesh/events?limit=100"),
-        fetch("/api/mesh/subscriptions"),
+        apiFetch(`/api/mesh/events?limit=${PAGE_LIMIT}&offset=${offset}`),
+        apiFetch("/api/mesh/subscriptions"),
       ]);
 
       if (evRes.status === "fulfilled" && evRes.value.ok) {
-        const data = await evRes.value.json();
-        setEvents(data.events ?? []);
+        const data = (await evRes.value.json()) as { events?: MeshEvent[] };
+        const list = data.events ?? [];
+        setEvents(list);
+        setHasNextPage(list.length === PAGE_LIMIT);
       }
       if (subRes.status === "fulfilled" && subRes.value.ok) {
-        const data = await subRes.value.json();
+        const data = (await subRes.value.json()) as { subscriptions?: Subscription[] };
         setSubscriptions(data.subscriptions ?? []);
       }
-    } catch {
+    } catch (_) {
       // API not available
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page]);
 
   useEffect(() => {
     loadData();
@@ -142,7 +151,7 @@ export default function MeshPage() {
           <div className="flex items-center gap-2">
             <select
               value={topicFilter}
-              onChange={(e) => setTopicFilter(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setTopicFilter(e.target.value)}
               className="px-2 py-1 rounded text-xs bg-white/[0.05] border border-white/[0.08] text-gray-400 focus:outline-none"
             >
               <option value="">All topics</option>
@@ -188,6 +197,18 @@ export default function MeshPage() {
           )}
         </div>
       </div>
+
+      {/* Pagination */}
+      {!loading && events.length > 0 && (
+        <Pagination
+          page={page}
+          totalPages={hasNextPage ? page + 1 : page}
+          onPageChange={(p) => {
+            setPage(p);
+            setTopicFilter("");
+          }}
+        />
+      )}
     </div>
   );
 }

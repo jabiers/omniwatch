@@ -13,6 +13,7 @@ import {
   Share2,
   Database,
 } from "lucide-react";
+import { apiFetch } from "../../lib/api";
 
 interface Recipe {
   id: string;
@@ -54,9 +55,9 @@ export default function RecipesPage() {
     if (search) params.set("q", search);
     if (category) params.set("category", category);
 
-    fetch(`/api/recipes?${params}`)
+    apiFetch(`/api/recipes?${params}`)
       .then((r) => r.json())
-      .then((d) => setRecipes(d.recipes || []))
+      .then((d) => setRecipes((d as { recipes?: Recipe[] }).recipes || []))
       .catch(() => setRecipes([]))
       .finally(() => setLoading(false));
   }, [search, category]);
@@ -64,11 +65,11 @@ export default function RecipesPage() {
   async function install(id: string) {
     setInstalling(id);
     try {
-      const res = await fetch(`/api/recipes/${id}/install`, { method: "POST" });
+      const res = await apiFetch(`/api/recipes/${id}/install`, { method: "POST" });
       if (res.ok) {
         setInstalled((prev) => new Set([...prev, id]));
       }
-    } catch {
+    } catch (_) {
       // API error
     } finally {
       setInstalling(null);
@@ -101,7 +102,7 @@ export default function RecipesPage() {
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
             placeholder="Search recipes..."
             className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
           />

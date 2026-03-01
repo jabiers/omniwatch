@@ -37,8 +37,8 @@ export default function LoginPage() {
       });
 
       if (res.ok) {
-        // Extract role and tenant info from response headers or default
-        const data = await res.json();
+        // Consume the body to verify the response is valid JSON
+        await res.json();
         // The API returns successfully - key is valid
         // Role and tenantId can be fetched from a /api/auth/me endpoint later;
         // for now we store what we know
@@ -49,7 +49,7 @@ export default function LoginPage() {
       } else {
         setError(`Server error (${res.status}). Please try again.`);
       }
-    } catch (err) {
+    } catch (_) {
       setError("Cannot connect to OmniWatch API. Is the daemon running?");
     } finally {
       setLoading(false);
@@ -94,7 +94,7 @@ export default function LoginPage() {
                   id="apiKey"
                   type="password"
                   value={apiKey}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setApiKey(e.target.value);
                     setError("");
                   }}

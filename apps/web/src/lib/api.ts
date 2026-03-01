@@ -16,7 +16,7 @@ export async function apiFetch(path: string, options?: RequestInit): Promise<Res
   const res = await fetch(path, { ...options, headers });
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({ error: 'Request failed' }));
+    const body = (await res.json().catch(() => ({ error: 'Request failed' }))) as Record<string, string>;
     useToastStore.getState().addToast(body.error || `Error ${res.status}`, 'error');
   }
 

@@ -11,6 +11,8 @@ import {
   AlertTriangle,
   Inbox,
 } from "lucide-react";
+import { Pagination } from "../../components/pagination";
+import { apiFetch } from "../../lib/api";
 
 interface QueueStats {
   pending: number;
@@ -27,6 +29,8 @@ interface DeadLetter {
   created_at: string;
 }
 
+const PAGE_LIMIT = 20;
+
 const defaultStats: QueueStats = {
   pending: 0,
   processing: 0,
@@ -40,35 +44,38 @@ export default function QueuePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<number | null>(null);
+  const [dlPage, setDlPage] = useState(1);
+  const [dlHasNextPage, setDlHasNextPage] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
+      const dlOffset = (dlPage - 1) * PAGE_LIMIT;
       const [statsRes, dlRes] = await Promise.allSettled([
-        fetch("/api/queue/stats"),
-        fetch("/api/queue/dead-letters"),
+        apiFetch("/api/queue/stats"),
+        apiFetch(`/api/queue/dead-letters?limit=${PAGE_LIMIT}&offset=${dlOffset}`),
       ]);
 
       if (statsRes.status === "fulfilled" && statsRes.value.ok) {
-        const data = await statsRes.value.json();
+        const data = (await statsRes.value.json()) as QueueStats;
         setStats(data ?? defaultStats);
       }
 
       if (dlRes.status === "fulfilled" && dlRes.value.ok) {
-        const data = await dlRes.value.json();
-        setDeadLetters(
-          Array.isArray(data)
-            ? data
-            : data.dead_letters ?? data.deadLetters ?? []
-        );
+        const data = (await dlRes.value.json()) as DeadLetter[] | { dead_letters?: DeadLetter[]; deadLetters?: DeadLetter[] };
+        const list = Array.isArray(data)
+          ? data
+          : data.dead_letters ?? data.deadLetters ?? [];
+        setDeadLetters(list);
+        setDlHasNextPage(list.length === PAGE_LIMIT);
       }
 
       setError(null);
-    } catch {
+    } catch (_) {
       setError("Failed to connect to API server");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [dlPage]);
 
   // Initial load + auto-refresh every 10s
   useEffect(() => {
@@ -81,7 +88,7 @@ export default function QueuePage() {
   async function handleRetry(id: number) {
     setRetrying(id);
     try {
-      const res = await fetch(`/api/queue/dead-letters/${id}/retry`, {
+      const res = await apiFetch(`/api/queue/dead-letters/${id}/retry`, {
         method: "POST",
       });
       if (res.ok) {
@@ -89,7 +96,7 @@ export default function QueuePage() {
         setDeadLetters((prev) => prev.filter((d) => d.id !== id));
         await loadData();
       }
-    } catch {
+    } catch (_) {
       // Retry failed silently
     } finally {
       setRetrying(null);
@@ -235,6 +242,17 @@ export default function QueuePage() {
               </div>
             ))}
           </div>
+        )}
+
+        {/* Dead Letter Pagination */}
+        {deadLetters.length > 0 && (
+          <Pagination
+            page={dlPage}
+            totalPages={dlHasNextPage ? dlPage + 1 : dlPage}
+            onPageChange={(p) => {
+              setDlPage(p);
+            }}
+          />
         )}
       </div>
     </div>

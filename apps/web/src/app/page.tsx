@@ -13,6 +13,7 @@ import {
   WifiOff,
 } from "lucide-react";
 import { useWebSocket } from "../lib/ws";
+import { apiFetch } from "../lib/api";
 
 interface Agent {
   id: string;
@@ -56,28 +57,28 @@ export default function DashboardPage() {
   const loadData = useCallback(async () => {
     try {
       const [agentsRes, notifsRes, statusRes] = await Promise.allSettled([
-        fetch("/api/agents"),
-        fetch("/api/notifications"),
-        fetch("/api/system/status"),
+        apiFetch("/api/agents"),
+        apiFetch("/api/notifications"),
+        apiFetch("/api/system/status"),
       ]);
 
       if (agentsRes.status === "fulfilled" && agentsRes.value.ok) {
-        const data = await agentsRes.value.json();
+        const data = (await agentsRes.value.json()) as Agent[] | { agents?: Agent[] };
         setAgents(Array.isArray(data) ? data : data.agents ?? []);
       }
 
       if (notifsRes.status === "fulfilled" && notifsRes.value.ok) {
-        const data = await notifsRes.value.json();
+        const data = (await notifsRes.value.json()) as Notification[] | { notifications?: Notification[] };
         setNotifications(
           Array.isArray(data) ? data : data.notifications ?? []
         );
       }
 
       if (statusRes.status === "fulfilled" && statusRes.value.ok) {
-        const data = await statusRes.value.json();
+        const data = (await statusRes.value.json()) as SystemStatus;
         setSystemStatus(data);
       }
-    } catch {
+    } catch (_) {
       // API might not be available yet
     } finally {
       setLoading(false);
@@ -119,13 +120,13 @@ export default function DashboardPage() {
   async function sendAction(agentId: string, action: "start" | "stop") {
     setActionLoading(`${agentId}-${action}`);
     try {
-      const res = await fetch(`/api/agents/${agentId}/${action}`, {
+      const res = await apiFetch(`/api/agents/${agentId}/${action}`, {
         method: "POST",
       });
       if (res.ok) {
         await loadData();
       }
-    } catch {
+    } catch (_) {
       // handle error
     } finally {
       setActionLoading(null);

@@ -9,6 +9,7 @@ import {
   XCircle,
   Loader2,
 } from "lucide-react";
+import { apiFetch } from "../../lib/api";
 
 /** Shape matches the actual API response (snake_case) */
 interface OllamaModel {
@@ -102,10 +103,10 @@ export default function SettingsPage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch("/api/config");
+        const res = await apiFetch("/api/config");
         if (res.ok) {
-          const data = await res.json();
-          const cfg: ApiConfig = data.config ?? data;
+          const data = (await res.json()) as ApiConfig | { config?: ApiConfig };
+          const cfg: ApiConfig = 'config' in data && data.config ? data.config : data as ApiConfig;
 
           // AI
           setAiApiKey(cfg.ai?.api_key ?? "");
@@ -124,7 +125,7 @@ export default function SettingsPage() {
           setMemoryLimit(cfg.agent?.memory_limit_mb ?? 128);
           setMaxHealAttempts(cfg.agent?.max_heal_attempts ?? 3);
         }
-      } catch {
+      } catch (_) {
         // API not available
       } finally {
         setLoading(false);
@@ -137,13 +138,13 @@ export default function SettingsPage() {
   async function checkOllama() {
     setOllamaChecking(true);
     try {
-      const res = await fetch("/api/system/ollama");
+      const res = await apiFetch("/api/system/ollama");
       if (res.ok) {
-        const data = await res.json();
-        setOllamaAvailable(data.available);
+        const data = (await res.json()) as { available?: boolean; models?: OllamaModel[] };
+        setOllamaAvailable(data.available ?? false);
         setOllamaModels(data.models || []);
       }
-    } catch {
+    } catch (_) {
       setOllamaAvailable(false);
       setOllamaModels([]);
     } finally {
@@ -211,19 +212,18 @@ export default function SettingsPage() {
     };
 
     try {
-      const res = await fetch("/api/config", {
+      const res = await apiFetch("/api/config", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ config }),
       });
 
       if (res.ok) {
         showToast("success", "Settings saved successfully.");
       } else {
-        const data = await res.json().catch(() => ({}));
+        const data = (await res.json().catch(() => ({}))) as { message?: string };
         showToast("error", data.message ?? `Failed to save (${res.status})`);
       }
-    } catch {
+    } catch (_) {
       showToast("error", "Failed to save. API may be unavailable.");
     } finally {
       setSaving(false);
@@ -274,7 +274,7 @@ export default function SettingsPage() {
                 <input
                   type={showKey ? "text" : "password"}
                   value={aiApiKey}
-                  onChange={(e) => setAiApiKey(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAiApiKey(e.target.value)}
                   placeholder="sk-ant-..."
                   className="w-full px-3 py-2 pr-10 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm font-mono focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
                 />
@@ -302,7 +302,7 @@ export default function SettingsPage() {
             </label>
             <select
               value={aiModel}
-              onChange={(e) => setAiModel(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAiModel(e.target.value)}
               className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50"
             >
               {CLOUD_PROVIDERS.map((group) => (
@@ -359,7 +359,7 @@ export default function SettingsPage() {
             <input
               type="url"
               value={ollamaUrl}
-              onChange={(e) => setOllamaUrl(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOllamaUrl(e.target.value)}
               placeholder="http://localhost:11434"
               className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm font-mono focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
             />
@@ -382,7 +382,7 @@ export default function SettingsPage() {
             <input
               type="url"
               value={slackWebhook}
-              onChange={(e) => setSlackWebhook(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlackWebhook(e.target.value)}
               placeholder="https://hooks.slack.com/services/..."
               className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
             />
@@ -395,7 +395,7 @@ export default function SettingsPage() {
             <input
               type="url"
               value={discordWebhook}
-              onChange={(e) => setDiscordWebhook(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDiscordWebhook(e.target.value)}
               placeholder="https://discord.com/api/webhooks/..."
               className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
             />
@@ -409,7 +409,7 @@ export default function SettingsPage() {
               <input
                 type="password"
                 value={telegramToken}
-                onChange={(e) => setTelegramToken(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTelegramToken(e.target.value)}
                 placeholder="123456:ABC..."
                 className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm font-mono focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
               />
@@ -421,7 +421,7 @@ export default function SettingsPage() {
               <input
                 type="text"
                 value={telegramChatId}
-                onChange={(e) => setTelegramChatId(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTelegramChatId(e.target.value)}
                 placeholder="-100123456789"
                 className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm font-mono focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
               />
@@ -432,7 +432,7 @@ export default function SettingsPage() {
             <input
               type="checkbox"
               checked={systemNotifications}
-              onChange={(e) => setSystemNotifications(e.target.checked)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSystemNotifications(e.target.checked)}
               className="w-4 h-4 rounded border-white/20 bg-white/5 accent-emerald-500"
             />
             <div>
@@ -457,7 +457,7 @@ export default function SettingsPage() {
               min={1}
               max={100}
               value={maxAgents}
-              onChange={(e) => setMaxAgents(Number(e.target.value))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMaxAgents(Number(e.target.value))}
               className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50"
             />
             <p className="text-xs text-gray-600 mt-1">
@@ -475,7 +475,7 @@ export default function SettingsPage() {
               max={2048}
               step={64}
               value={memoryLimit}
-              onChange={(e) => setMemoryLimit(Number(e.target.value))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMemoryLimit(Number(e.target.value))}
               className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50"
             />
             <p className="text-xs text-gray-600 mt-1">
@@ -492,7 +492,7 @@ export default function SettingsPage() {
               min={0}
               max={10}
               value={maxHealAttempts}
-              onChange={(e) => setMaxHealAttempts(Number(e.target.value))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMaxHealAttempts(Number(e.target.value))}
               className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50"
             />
             <p className="text-xs text-gray-600 mt-1">

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { apiFetch } from "../../lib/api";
 import { Pagination } from "../../components/pagination";
+import { useToastStore } from "../../lib/toast-store";
 
 interface Agent {
   id: string;
@@ -37,6 +38,7 @@ const PAGE_LIMIT = 20;
 
 export default function AgentsPage() {
   const router = useRouter();
+  const { addToast } = useToastStore();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
@@ -58,7 +60,7 @@ export default function AgentsPage() {
         // If we got exactly PAGE_LIMIT results, there may be more pages
         setHasNextPage(list.length === PAGE_LIMIT);
       }
-    } catch {
+    } catch (_) {
       // API not available
     } finally {
       setLoading(false);
@@ -93,12 +95,17 @@ export default function AgentsPage() {
             next.delete(agentId);
             return next;
           });
+          addToast("Agent destroyed", "success");
         }
       } else {
-        await apiFetch(`/api/agents/${agentId}/${action}`, { method: "POST" });
+        const res = await apiFetch(`/api/agents/${agentId}/${action}`, { method: "POST" });
+        if (res.ok) {
+          const label = action === "start" ? "started" : action === "stop" ? "stopped" : "restarted";
+          addToast(`Agent ${label}`, "success");
+        }
         await loadAgents();
       }
-    } catch {
+    } catch (_) {
       // Errors handled by apiFetch toast
     } finally {
       setActionLoading(null);
@@ -127,7 +134,7 @@ export default function AgentsPage() {
         );
         await loadAgents();
       }
-    } catch {
+    } catch (_) {
       // Errors handled by apiFetch toast
     } finally {
       setBulkAction(false);

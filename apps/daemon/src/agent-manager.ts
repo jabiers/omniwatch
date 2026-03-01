@@ -19,7 +19,7 @@ import type { SandboxLevel } from '@omniwatch/shared';
 
 /** Auto-capture snapshot with error suppression (best-effort) */
 function autoSnapshot(agentId: string, label: string): void {
-  try { captureSnapshot(agentId, label); } catch { /* ignore - agent may not exist yet */ }
+  try { captureSnapshot(agentId, label); } catch (_) { /* ignore - agent may not exist yet */ }
 }
 
 // In-memory map of running agent processes

@@ -20,6 +20,8 @@ import {
   GitBranch,
   RotateCw,
 } from "lucide-react";
+import { apiFetch } from "../../../lib/api";
+import { useToastStore } from "../../../lib/toast-store";
 
 interface MetricsData {
   run_count: number;
@@ -90,6 +92,7 @@ export default function AgentDetailPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
+  const { addToast } = useToastStore();
   const [agent, setAgent] = useState<AgentDetail | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
@@ -124,12 +127,12 @@ export default function AgentDetailPage({
 
   const loadAgent = useCallback(async () => {
     try {
-      const res = await fetch(`/api/agents/${id}`);
+      const res = await apiFetch(`/api/agents/${id}`);
       if (res.ok) {
-        const data = await res.json();
-        setAgent(data.agent ?? data);
+        const data = (await res.json()) as AgentDetail | { agent?: AgentDetail };
+        setAgent('agent' in data && data.agent ? data.agent : data as AgentDetail);
       }
-    } catch {
+    } catch (_) {
       // API not available
     }
   }, [id]);
@@ -137,50 +140,50 @@ export default function AgentDetailPage({
   const loadLogs = useCallback(async () => {
     try {
       const levelParam = logFilter !== "all" ? `?level=${logFilter}` : "";
-      const res = await fetch(`/api/agents/${id}/logs${levelParam}`);
+      const res = await apiFetch(`/api/agents/${id}/logs${levelParam}`);
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as LogEntry[] | { logs?: LogEntry[] };
         const raw: LogEntry[] = Array.isArray(data) ? data : data.logs ?? [];
         // API returns DESC order, reverse to show oldest first (newest at bottom)
         setLogs(raw.reverse());
       }
-    } catch {
+    } catch (_) {
       // API not available
     }
   }, [id, logFilter]);
 
   const loadMetrics = useCallback(async () => {
     try {
-      const res = await fetch(`/api/agents/${id}/metrics`);
+      const res = await apiFetch(`/api/agents/${id}/metrics`);
       if (res.ok) {
-        const data = await res.json();
-        setMetrics(data.metrics ?? data);
+        const data = (await res.json()) as MetricsData | { metrics?: MetricsData };
+        setMetrics('metrics' in data && data.metrics ? data.metrics : data as MetricsData);
       }
-    } catch {
+    } catch (_) {
       // API not available
     }
   }, [id]);
 
   const loadSnapshots = useCallback(async () => {
     try {
-      const res = await fetch(`/api/agents/${id}/snapshots`);
+      const res = await apiFetch(`/api/agents/${id}/snapshots`);
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as { snapshots?: SnapshotMeta[] };
         setSnapshots(data.snapshots ?? []);
       }
-    } catch {
+    } catch (_) {
       // API not available
     }
   }, [id]);
 
   const loadChildren = useCallback(async () => {
     try {
-      const res = await fetch(`/api/agents/${id}/children`);
+      const res = await apiFetch(`/api/agents/${id}/children`);
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as { children?: ChildAgent[] };
         setChildren(data.children ?? []);
       }
-    } catch {
+    } catch (_) {
       // API not available
     }
   }, [id]);
@@ -218,12 +221,13 @@ export default function AgentDetailPage({
     if (action === "destroy") {
       setActionLoading("destroy");
       try {
-        const res = await fetch(`/api/agents/${id}`, { method: "DELETE" });
+        const res = await apiFetch(`/api/agents/${id}`, { method: "DELETE" });
         if (res.ok) {
+          addToast("Agent destroyed", "success");
           router.push("/agents");
           return;
         }
-      } catch {
+      } catch (_) {
         // handle error
       } finally {
         setActionLoading(null);
@@ -234,9 +238,13 @@ export default function AgentDetailPage({
 
     setActionLoading(action);
     try {
-      await fetch(`/api/agents/${id}/${action}`, { method: "POST" });
+      const res = await apiFetch(`/api/agents/${id}/${action}`, { method: "POST" });
+      if (res.ok) {
+        const label = action === "start" ? "started" : action === "stop" ? "stopped" : "restarted";
+        addToast(`Agent ${label}`, "success");
+      }
       await loadAgent();
-    } catch {
+    } catch (_) {
       // handle error
     } finally {
       setActionLoading(null);
@@ -247,9 +255,9 @@ export default function AgentDetailPage({
   async function captureSnapshot() {
     setSnapshotLoading(true);
     try {
-      await fetch(`/api/agents/${id}/snapshots`, { method: "POST" });
+      await apiFetch(`/api/agents/${id}/snapshots`, { method: "POST" });
       await loadSnapshots();
-    } catch { /* ignore */ } finally {
+    } catch (_) { /* ignore */ } finally {
       setSnapshotLoading(false);
     }
   }
@@ -258,9 +266,9 @@ export default function AgentDetailPage({
   async function restoreSnapshotSeq(seq: number) {
     setRestoringSeq(seq);
     try {
-      await fetch(`/api/agents/${id}/snapshots/${seq}/restore`, { method: "POST" });
+      await apiFetch(`/api/agents/${id}/snapshots/${seq}/restore`, { method: "POST" });
       await loadAgent();
-    } catch { /* ignore */ } finally {
+    } catch (_) { /* ignore */ } finally {
       setRestoringSeq(null);
     }
   }
@@ -280,14 +288,13 @@ export default function AgentDetailPage({
     setChatSending(true);
 
     try {
-      const res = await fetch(`/api/agents/${id}/chat`, {
+      const res = await apiFetch(`/api/agents/${id}/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMessage.content }),
       });
 
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as { message?: string; response?: string; modifiedCode?: string; code?: string };
         const assistantMessage: ChatMessage = {
           role: "assistant",
           content: data.message ?? data.response ?? "OK",
@@ -296,7 +303,7 @@ export default function AgentDetailPage({
         };
         setChatMessages((prev) => [...prev, assistantMessage]);
       } else {
-        const err = await res.json().catch(() => ({}));
+        const err = (await res.json().catch(() => ({}))) as { message?: string };
         const errMessage: ChatMessage = {
           role: "assistant",
           content: `Error: ${err.message ?? res.statusText}`,
@@ -304,7 +311,7 @@ export default function AgentDetailPage({
         };
         setChatMessages((prev) => [...prev, errMessage]);
       }
-    } catch {
+    } catch (_) {
       const errMessage: ChatMessage = {
         role: "assistant",
         content: "Failed to send message. API may be unavailable.",
@@ -321,16 +328,15 @@ export default function AgentDetailPage({
     setApplyingCode(messageIndex);
     setApplyResult(null);
     try {
-      const res = await fetch(`/api/agents/${id}/apply`, {
+      const res = await apiFetch(`/api/agents/${id}/apply`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code }),
       });
       setApplyResult({ index: messageIndex, success: res.ok });
       if (res.ok) {
         await loadAgent();
       }
-    } catch {
+    } catch (_) {
       setApplyResult({ index: messageIndex, success: false });
     } finally {
       setApplyingCode(null);
@@ -720,7 +726,7 @@ export default function AgentDetailPage({
             <input
               type="text"
               value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setChatInput(e.target.value)}
               placeholder="Ask to modify this agent..."
               disabled={chatSending}
               className="flex-1 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600 disabled:opacity-50"

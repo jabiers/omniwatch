@@ -145,7 +145,7 @@ export type SandboxLevel = 'strict' | 'standard' | 'permissive';
 export interface SecurityEvent {
   id: number;
   agent_id: string;
-  event_type: 'fs_violation' | 'net_violation' | 'resource_exceeded' | 'api_blocked';
+  event_type: 'fs_violation' | 'net_violation' | 'resource_exceeded' | 'api_blocked' | 'sandbox_start' | 'timeout_violation';
   detail: string | null;
   created_at: string;
 }

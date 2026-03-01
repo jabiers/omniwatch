@@ -66,11 +66,11 @@ export function useWebSocket(url: string, onMessage: (data: unknown) => void): U
           }
 
           onMessageRef.current(msg);
-        } catch {
+        } catch (_) {
           // Ignore malformed messages
         }
       };
-    } catch {
+    } catch (_) {
       // WebSocket not available
       setConnected(false);
     }

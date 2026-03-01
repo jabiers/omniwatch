@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Filter, Calendar, Check, Eye } from "lucide-react";
+import { Pagination } from "../../components/pagination";
+import { apiFetch } from "../../lib/api";
 
 interface Notification {
   id: number;
@@ -37,7 +39,7 @@ const severityConfig: Record<
 
 const severityOptions = ["all", "critical", "warning", "info"];
 
-const PAGE_SIZE = 20;
+const PAGE_LIMIT = 20;
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -47,23 +49,25 @@ export default function NotificationsPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [page, setPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
 
   const loadNotifications = useCallback(async () => {
     try {
-      const res = await fetch("/api/notifications");
+      const offset = (page - 1) * PAGE_LIMIT;
+      const res = await apiFetch(`/api/notifications?limit=${PAGE_LIMIT}&offset=${offset}`);
       if (res.ok) {
-        const data = await res.json();
-        setNotifications(
-          Array.isArray(data) ? data : data.notifications ?? []
-        );
+        const data = (await res.json()) as Notification[] | { notifications?: Notification[] };
+        const list = Array.isArray(data) ? data : data.notifications ?? [];
+        setNotifications(list);
+        setHasNextPage(list.length === PAGE_LIMIT);
       }
-    } catch {
+    } catch (_) {
       // API not available
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page]);
 
   // Initial load + auto-refresh every 5s
   useEffect(() => {
@@ -77,7 +81,7 @@ export default function NotificationsPage() {
     new Set(notifications.map((n) => n.agent_id))
   );
 
-  // Filter notifications
+  // Filter notifications (client-side filtering applied on the current page)
   const filtered = notifications.filter((n) => {
     if (filterSeverity !== "all" && n.severity !== filterSeverity) return false;
     if (filterAgent !== "all" && (n.agent_id) !== filterAgent)
@@ -99,9 +103,7 @@ export default function NotificationsPage() {
     return true;
   });
 
-  // Paginated results
-  const visible = filtered.slice(0, visibleCount);
-  const hasMore = visibleCount < filtered.length;
+  const totalPages = hasNextPage ? page + 1 : page;
 
   /** Mark a single notification as read (local state) */
   function markAsRead(id: number) {
@@ -112,14 +114,9 @@ export default function NotificationsPage() {
   function markAllAsRead() {
     setReadIds((prev) => {
       const next = new Set(prev);
-      visible.forEach((n) => next.add(String(n.id)));
+      filtered.forEach((n) => next.add(String(n.id)));
       return next;
     });
-  }
-
-  /** Load more notifications */
-  function loadMore() {
-    setVisibleCount((prev) => prev + PAGE_SIZE);
   }
 
   const unreadCount = filtered.filter((n) => !readIds.has(String(n.id))).length;
@@ -151,7 +148,7 @@ export default function NotificationsPage() {
                 key={s}
                 onClick={() => {
                   setFilterSeverity(s);
-                  setVisibleCount(PAGE_SIZE);
+                  setPage(1);
                 }}
                 className={`px-3 py-1 rounded-md text-xs capitalize transition-colors ${
                   filterSeverity === s
@@ -171,9 +168,9 @@ export default function NotificationsPage() {
             <span className="text-xs text-gray-500">Agent:</span>
             <select
               value={filterAgent}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                 setFilterAgent(e.target.value);
-                setVisibleCount(PAGE_SIZE);
+                setPage(1);
               }}
               className="px-3 py-1 rounded-md text-xs bg-white/[0.05] border border-white/[0.08] text-gray-300 focus:outline-none"
             >
@@ -194,9 +191,9 @@ export default function NotificationsPage() {
           <input
             type="date"
             value={dateFrom}
-            onChange={(e) => {
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setDateFrom(e.target.value);
-              setVisibleCount(PAGE_SIZE);
+              setPage(1);
             }}
             className="px-2 py-1 rounded-md text-xs bg-white/[0.05] border border-white/[0.08] text-gray-300 focus:outline-none [color-scheme:dark]"
           />
@@ -204,9 +201,9 @@ export default function NotificationsPage() {
           <input
             type="date"
             value={dateTo}
-            onChange={(e) => {
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setDateTo(e.target.value);
-              setVisibleCount(PAGE_SIZE);
+              setPage(1);
             }}
             className="px-2 py-1 rounded-md text-xs bg-white/[0.05] border border-white/[0.08] text-gray-300 focus:outline-none [color-scheme:dark]"
           />
@@ -267,7 +264,7 @@ export default function NotificationsPage() {
                   Loading...
                 </td>
               </tr>
-            ) : visible.length === 0 ? (
+            ) : filtered.length === 0 ? (
               <tr>
                 <td
                   colSpan={6}
@@ -277,7 +274,7 @@ export default function NotificationsPage() {
                 </td>
               </tr>
             ) : (
-              visible.map((n) => {
+              filtered.map((n) => {
                 const sc = severityConfig[n.severity] ?? severityConfig.info;
                 const isRead = readIds.has(String(n.id));
                 return (
@@ -343,16 +340,16 @@ export default function NotificationsPage() {
         </table>
       </div>
 
-      {/* Load More */}
-      {hasMore && (
-        <div className="text-center">
-          <button
-            onClick={loadMore}
-            className="px-6 py-2 rounded-lg bg-white/[0.05] text-gray-400 text-sm hover:bg-white/[0.08] transition-colors"
-          >
-            Load more ({filtered.length - visibleCount} remaining)
-          </button>
-        </div>
+      {/* Pagination */}
+      {!loading && notifications.length > 0 && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={(p) => {
+            setPage(p);
+            setLoading(true);
+          }}
+        />
       )}
     </div>
   );

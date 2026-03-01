@@ -12,6 +12,8 @@ import {
   CheckCircle,
   X,
 } from "lucide-react";
+import { Pagination } from "../../components/pagination";
+import { apiFetch } from "../../lib/api";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -68,6 +70,8 @@ const SORT_OPTIONS = [
   { key: "newest", label: "Newest" },
 ] as const;
 
+const PAGE_LIMIT = 20;
+
 const DEFAULT_FORM: PublishForm = {
   name: "",
   description: "",
@@ -114,6 +118,8 @@ export default function MarketplacePage() {
   const [sort, setSort] = useState<string>("downloads");
   const [installing, setInstalling] = useState<string | null>(null);
   const [installed, setInstalled] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
 
   // Publish modal state
   const [showPublish, setShowPublish] = useState(false);
@@ -127,25 +133,32 @@ export default function MarketplacePage() {
 
   const loadRecipes = useCallback(async () => {
     setLoading(true);
+    const offset = (page - 1) * PAGE_LIMIT;
     const params = new URLSearchParams();
+    params.set("limit", String(PAGE_LIMIT));
+    params.set("offset", String(offset));
     if (search) params.set("search", search);
     if (category) params.set("category", category);
     if (sort) params.set("sort", sort);
 
     try {
-      const res = await fetch(`/api/marketplace?${params}`);
+      const res = await apiFetch(`/api/marketplace?${params}`);
       if (res.ok) {
-        const data = await res.json();
-        setRecipes(data.recipes || []);
+        const data = (await res.json()) as { recipes?: MarketplaceRecipe[] };
+        const list = data.recipes || [];
+        setRecipes(list);
+        setHasNextPage(list.length === PAGE_LIMIT);
       } else {
         setRecipes([]);
+        setHasNextPage(false);
       }
-    } catch {
+    } catch (_) {
       setRecipes([]);
+      setHasNextPage(false);
     } finally {
       setLoading(false);
     }
-  }, [search, category, sort]);
+  }, [search, category, sort, page]);
 
   useEffect(() => {
     loadRecipes();
@@ -158,7 +171,7 @@ export default function MarketplacePage() {
   async function handleInstall(id: string) {
     setInstalling(id);
     try {
-      const res = await fetch(`/api/marketplace/${id}/install`, { method: "POST" });
+      const res = await apiFetch(`/api/marketplace/${id}/install`, { method: "POST" });
       if (res.ok) {
         setInstalled((prev) => new Set([...prev, id]));
         // Update download count locally
@@ -166,7 +179,7 @@ export default function MarketplacePage() {
           prev.map((r) => (r.id === id ? { ...r, downloads: r.downloads + 1 } : r))
         );
       }
-    } catch {
+    } catch (_) {
       // API error — silently fail
     } finally {
       setInstalling(null);
@@ -200,9 +213,8 @@ export default function MarketplacePage() {
       .filter(Boolean);
 
     try {
-      const res = await fetch("/api/marketplace", {
+      const res = await apiFetch("/api/marketplace", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: publishForm.name,
           description: publishForm.description || undefined,
@@ -216,10 +228,10 @@ export default function MarketplacePage() {
         closePublish();
         await loadRecipes();
       } else {
-        const data = await res.json().catch(() => ({ error: "Failed to publish recipe" }));
+        const data = (await res.json().catch(() => ({ error: "Failed to publish recipe" }))) as { error?: string };
         setPublishError(data.error || "Failed to publish recipe");
       }
-    } catch {
+    } catch (_) {
       setPublishError("Network error. Please try again.");
     } finally {
       setPublishing(false);
@@ -261,7 +273,7 @@ export default function MarketplacePage() {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Search marketplace..."
               className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
             />
@@ -270,7 +282,7 @@ export default function MarketplacePage() {
           {/* Sort dropdown */}
           <select
             value={sort}
-            onChange={(e) => setSort(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setSort(e.target.value); setPage(1); }}
             className="px-3 py-2 rounded-lg text-sm bg-white/[0.04] border border-white/[0.08] text-gray-300 focus:outline-none focus:border-emerald-500/50 transition-colors"
           >
             {SORT_OPTIONS.map((opt) => (
@@ -286,7 +298,7 @@ export default function MarketplacePage() {
           {CATEGORIES.map((c) => (
             <button
               key={c.key}
-              onClick={() => setCategory(c.key)}
+              onClick={() => { setCategory(c.key); setPage(1); }}
               className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                 category === c.key
                   ? "bg-emerald-500/20 text-emerald-400"
@@ -410,6 +422,18 @@ export default function MarketplacePage() {
         </div>
       )}
 
+      {/* Pagination */}
+      {!loading && recipes.length > 0 && (
+        <Pagination
+          page={page}
+          totalPages={hasNextPage ? page + 1 : page}
+          onPageChange={(p) => {
+            setPage(p);
+            setLoading(true);
+          }}
+        />
+      )}
+
       {/* ============================================================ */}
       {/*  Publish Modal                                                */}
       {/* ============================================================ */}
@@ -455,7 +479,7 @@ export default function MarketplacePage() {
                   type="text"
                   required
                   value={publishForm.name}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setPublishForm({ ...publishForm, name: e.target.value })
                   }
                   placeholder="e.g. CPU Monitor Agent"
@@ -470,7 +494,7 @@ export default function MarketplacePage() {
                 </label>
                 <textarea
                   value={publishForm.description}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                     setPublishForm({ ...publishForm, description: e.target.value })
                   }
                   rows={2}
@@ -487,7 +511,7 @@ export default function MarketplacePage() {
                 <textarea
                   required
                   value={publishForm.prompt}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                     setPublishForm({ ...publishForm, prompt: e.target.value })
                   }
                   rows={4}
@@ -505,7 +529,7 @@ export default function MarketplacePage() {
                   </label>
                   <select
                     value={publishForm.category}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                       setPublishForm({ ...publishForm, category: e.target.value })
                     }
                     className="w-full px-3 py-2 rounded-lg text-sm bg-white/[0.04] border border-white/[0.08] text-gray-300 focus:outline-none focus:border-emerald-500/50 transition-colors"
@@ -526,7 +550,7 @@ export default function MarketplacePage() {
                   <input
                     type="text"
                     value={publishForm.tags}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setPublishForm({ ...publishForm, tags: e.target.value })
                     }
                     placeholder="cpu, linux, alert"

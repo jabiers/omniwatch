@@ -25,6 +25,7 @@ import {
   X,
   Check,
 } from "lucide-react";
+import { apiFetch } from "../../lib/api";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -124,16 +125,16 @@ export default function AnalyticsPage() {
   /** Load agent list for the selector */
   const loadAgents = useCallback(async () => {
     try {
-      const res = await fetch("/api/agents");
+      const res = await apiFetch("/api/agents");
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as Agent[] | { agents?: Agent[] };
         const list: Agent[] = Array.isArray(data) ? data : data.agents ?? [];
         setAgents(list);
         if (!selectedAgent && list.length > 0) {
           setSelectedAgent(list[0].id);
         }
       }
-    } catch {
+    } catch (_) {
       // API not available
     }
   }, [selectedAgent]);
@@ -143,13 +144,13 @@ export default function AnalyticsPage() {
     setError(null);
     try {
       const fetches: Promise<Response>[] = [
-        fetch("/api/analytics/anomalies"),
-        fetch("/api/analytics/alerts"),
+        apiFetch("/api/analytics/anomalies"),
+        apiFetch("/api/analytics/alerts"),
       ];
 
       if (selectedAgent) {
         fetches.push(
-          fetch(
+          apiFetch(
             `/api/analytics/metrics?agentId=${selectedAgent}&period=hourly`
           )
         );
@@ -159,26 +160,26 @@ export default function AnalyticsPage() {
 
       // Anomalies
       if (results[0].status === "fulfilled" && results[0].value.ok) {
-        const data = await results[0].value.json();
+        const data = (await results[0].value.json()) as Anomaly[];
         setAnomalies(Array.isArray(data) ? data : []);
       }
 
       // Alert Rules
       if (results[1].status === "fulfilled" && results[1].value.ok) {
-        const data = await results[1].value.json();
+        const data = (await results[1].value.json()) as AlertRule[];
         setAlertRules(Array.isArray(data) ? data : []);
       }
 
       // Metrics
       if (results[2]?.status === "fulfilled" && results[2].value.ok) {
-        const data = await results[2].value.json();
+        const data = (await results[2].value.json()) as MetricRow[];
         setMetrics(Array.isArray(data) ? data : []);
       } else if (selectedAgent) {
         setMetrics([]);
       }
 
       setLastRefresh(new Date());
-    } catch {
+    } catch (_) {
       setError("Failed to load analytics data. API may be unavailable.");
     } finally {
       setLoading(false);
@@ -266,9 +267,9 @@ export default function AnalyticsPage() {
     setEditingRule(rule);
     let channels = "log";
     try {
-      const parsed = JSON.parse(rule.notify_channels);
+      const parsed = JSON.parse(rule.notify_channels) as unknown;
       channels = Array.isArray(parsed) ? parsed.join(", ") : String(parsed);
-    } catch {
+    } catch (_) {
       channels = rule.notify_channels || "log";
     }
     setAlertForm({
@@ -311,9 +312,8 @@ export default function AnalyticsPage() {
         : "/api/analytics/alerts";
       const method = editingRule ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const res = await apiFetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
 
@@ -324,7 +324,7 @@ export default function AnalyticsPage() {
         const err = await res.text();
         setError(`Failed to ${editingRule ? "update" : "create"} rule: ${err}`);
       }
-    } catch {
+    } catch (_) {
       setError("Network error while saving alert rule.");
     } finally {
       setAlertSaving(false);
@@ -334,7 +334,7 @@ export default function AnalyticsPage() {
   async function handleDeleteRule(id: number) {
     setDeletingId(id);
     try {
-      const res = await fetch(`/api/analytics/alerts/${id}`, {
+      const res = await apiFetch(`/api/analytics/alerts/${id}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -342,7 +342,7 @@ export default function AnalyticsPage() {
       } else {
         setError("Failed to delete alert rule.");
       }
-    } catch {
+    } catch (_) {
       setError("Network error while deleting alert rule.");
     } finally {
       setDeletingId(null);
@@ -444,7 +444,7 @@ export default function AnalyticsPage() {
         <label className="text-sm text-gray-400">Agent:</label>
         <select
           value={selectedAgent}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
             setSelectedAgent(e.target.value);
             setLoading(true);
           }}
@@ -756,7 +756,7 @@ export default function AnalyticsPage() {
                     type="text"
                     required
                     value={alertForm.metric_name}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setAlertForm({ ...alertForm, metric_name: e.target.value })
                     }
                     placeholder="cpu_usage"
@@ -771,7 +771,7 @@ export default function AnalyticsPage() {
                   </label>
                   <select
                     value={alertForm.operator}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                       setAlertForm({ ...alertForm, operator: e.target.value })
                     }
                     className="w-full px-3 py-1.5 rounded-lg text-sm bg-white/[0.04] border border-white/[0.08] text-gray-300 focus:outline-none focus:border-emerald-500/50 transition-colors"
@@ -794,7 +794,7 @@ export default function AnalyticsPage() {
                     step="any"
                     required
                     value={alertForm.threshold}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setAlertForm({
                         ...alertForm,
                         threshold: Number(e.target.value),
@@ -814,7 +814,7 @@ export default function AnalyticsPage() {
                     min={1}
                     required
                     value={alertForm.window_minutes}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setAlertForm({
                         ...alertForm,
                         window_minutes: Number(e.target.value),
@@ -833,7 +833,7 @@ export default function AnalyticsPage() {
                     type="text"
                     required
                     value={alertForm.notify_channels}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setAlertForm({
                         ...alertForm,
                         notify_channels: e.target.value,
@@ -906,9 +906,9 @@ export default function AnalyticsPage() {
                 {alertRules.map((rule) => {
                   let channels: string[] = [];
                   try {
-                    const parsed = JSON.parse(rule.notify_channels);
-                    channels = Array.isArray(parsed) ? parsed : [String(parsed)];
-                  } catch {
+                    const parsed = JSON.parse(rule.notify_channels) as unknown;
+                    channels = Array.isArray(parsed) ? parsed as string[] : [String(parsed)];
+                  } catch (_) {
                     channels = [rule.notify_channels || "log"];
                   }
 

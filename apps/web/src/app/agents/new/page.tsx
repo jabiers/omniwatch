@@ -11,6 +11,8 @@ import {
   Code,
   Rocket,
 } from "lucide-react";
+import { apiFetch } from "../../../lib/api";
+import { useToastStore } from "../../../lib/toast-store";
 
 const agentTypes = [
   {
@@ -41,6 +43,7 @@ interface PreviewResult {
 
 export default function NewAgentPage() {
   const router = useRouter();
+  const { addToast } = useToastStore();
   const [prompt, setPrompt] = useState("");
   const [name, setName] = useState("");
   const [type, setType] = useState("auto");
@@ -70,18 +73,17 @@ export default function NewAgentPage() {
       };
       if (type !== "auto") body.template = type;
 
-      const res = await fetch("/api/agents/preview", {
+      const res = await apiFetch("/api/agents/preview", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const data = (await res.json().catch(() => ({}))) as { message?: string };
         throw new Error(data.message ?? `Preview failed (${res.status})`);
       }
 
-      const data = await res.json();
+      const data = (await res.json()) as { result?: { code?: string; generatedCode?: string; type?: string; name?: string }; code?: string; generatedCode?: string; type?: string; name?: string };
       const r = data.result ?? data;
       setPreview({
         code: r.code ?? r.generatedCode ?? "",
@@ -114,18 +116,18 @@ export default function NewAgentPage() {
       if (once) body.once = true;
       if (schedule.trim()) body.schedule = schedule.trim();
 
-      const res = await fetch("/api/agents", {
+      const res = await apiFetch("/api/agents", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
+        const data = (await res.json().catch(() => ({}))) as { message?: string };
         throw new Error(data.message ?? `Failed (${res.status})`);
       }
 
-      const data = await res.json();
+      const data = (await res.json()) as { id?: string };
+      addToast("Agent created successfully", "success");
       router.push(`/agents/${data.id ?? ""}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create agent");
@@ -160,7 +162,7 @@ export default function NewAgentPage() {
           </div>
           <textarea
             value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPrompt(e.target.value)}
             placeholder="쿠팡에서 에어팟 프로 25만원 이하면 알려줘"
             className="w-full bg-transparent px-4 py-4 text-sm resize-none h-32 focus:outline-none placeholder:text-gray-600"
           />
@@ -174,7 +176,7 @@ export default function NewAgentPage() {
           <input
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
             placeholder="my-price-watcher"
             className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
           />
@@ -215,7 +217,7 @@ export default function NewAgentPage() {
             <input
               type="checkbox"
               checked={once}
-              onChange={(e) => setOnce(e.target.checked)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOnce(e.target.checked)}
               className="w-4 h-4 rounded border-white/20 bg-white/5 accent-emerald-500"
             />
             <div>
@@ -231,7 +233,7 @@ export default function NewAgentPage() {
             <input
               type="text"
               value={schedule}
-              onChange={(e) => setSchedule(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSchedule(e.target.value)}
               placeholder="e.g. */30 * * * * (every 30 min)"
               className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
             />

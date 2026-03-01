@@ -13,6 +13,7 @@ import {
   Copy,
   CheckCircle,
 } from "lucide-react";
+import { apiFetch } from "../../lib/api";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -100,9 +101,9 @@ export default function TenantsPage() {
 
   const loadTenants = useCallback(async () => {
     try {
-      const res = await fetch("/api/tenants");
+      const res = await apiFetch("/api/tenants");
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as Tenant[] | { tenants?: Tenant[] };
         const list: Tenant[] = Array.isArray(data)
           ? data
           : data.tenants ?? [];
@@ -112,7 +113,7 @@ export default function TenantsPage() {
           setSelectedTenantId(list[0].id);
         }
       }
-    } catch {
+    } catch (_) {
       setError("Failed to load tenants. API may be unavailable.");
     } finally {
       setLoading(false);
@@ -123,12 +124,12 @@ export default function TenantsPage() {
     if (!tenantId) return;
     setUsersLoading(true);
     try {
-      const res = await fetch(`/api/users?tenant_id=${tenantId}`);
+      const res = await apiFetch(`/api/users?tenant_id=${tenantId}`);
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as User[] | { users?: User[] };
         setUsers(Array.isArray(data) ? data : data.users ?? []);
       }
-    } catch {
+    } catch (_) {
       // API not available
     } finally {
       setUsersLoading(false);
@@ -156,9 +157,8 @@ export default function TenantsPage() {
     setTenantCreating(true);
     setError(null);
     try {
-      const res = await fetch("/api/tenants", {
+      const res = await apiFetch("/api/tenants", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(tenantForm),
       });
       if (res.ok) {
@@ -166,10 +166,10 @@ export default function TenantsPage() {
         setTenantForm({ name: "", plan: "free", max_agents: 10 });
         await loadTenants();
       } else {
-        const data = await res.json().catch(() => ({}));
+        const data = (await res.json().catch(() => ({}))) as { message?: string };
         setError(data.message ?? `Failed to create tenant (${res.status})`);
       }
-    } catch {
+    } catch (_) {
       setError("Failed to create tenant. API may be unavailable.");
     } finally {
       setTenantCreating(false);
@@ -181,13 +181,12 @@ export default function TenantsPage() {
     setUserCreating(true);
     setError(null);
     try {
-      const res = await fetch("/api/users", {
+      const res = await apiFetch("/api/users", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(userForm),
       });
       if (res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as { apiKey?: string };
         setShowCreateUser(false);
         setUserForm({ tenant_id: "", email: "", role: "viewer" });
         // Show API key in modal
@@ -197,10 +196,10 @@ export default function TenantsPage() {
         }
         await loadUsers(selectedTenantId);
       } else {
-        const data = await res.json().catch(() => ({}));
+        const data = (await res.json().catch(() => ({}))) as { message?: string };
         setError(data.message ?? `Failed to create user (${res.status})`);
       }
-    } catch {
+    } catch (_) {
       setError("Failed to create user. API may be unavailable.");
     } finally {
       setUserCreating(false);
@@ -210,14 +209,14 @@ export default function TenantsPage() {
   /** Delete a user */
   async function handleDeleteUser(userId: string) {
     try {
-      const res = await fetch(`/api/users/${userId}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/users/${userId}`, { method: "DELETE" });
       if (res.ok) {
         setUsers((prev) => prev.filter((u) => u.id !== userId));
       } else {
-        const data = await res.json().catch(() => ({}));
+        const data = (await res.json().catch(() => ({}))) as { message?: string };
         setError(data.message ?? `Failed to delete user (${res.status})`);
       }
-    } catch {
+    } catch (_) {
       setError("Failed to delete user. API may be unavailable.");
     } finally {
       setConfirmDeleteUser(null);
@@ -231,7 +230,7 @@ export default function TenantsPage() {
       await navigator.clipboard.writeText(revealedApiKey);
       setKeyCopied(true);
       setTimeout(() => setKeyCopied(false), 2000);
-    } catch {
+    } catch (_) {
       // Fallback: select text
     }
   }
@@ -529,7 +528,7 @@ export default function TenantsPage() {
                 <input
                   type="text"
                   value={tenantForm.name}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setTenantForm((f) => ({ ...f, name: e.target.value }))
                   }
                   placeholder="Acme Corp"
@@ -544,7 +543,7 @@ export default function TenantsPage() {
                 </label>
                 <select
                   value={tenantForm.plan}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                     setTenantForm((f) => ({ ...f, plan: e.target.value }))
                   }
                   className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50"
@@ -564,7 +563,7 @@ export default function TenantsPage() {
                   min={1}
                   max={1000}
                   value={tenantForm.max_agents}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setTenantForm((f) => ({
                       ...f,
                       max_agents: Number(e.target.value),
@@ -629,7 +628,7 @@ export default function TenantsPage() {
                 </label>
                 <select
                   value={userForm.tenant_id}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                     setUserForm((f) => ({ ...f, tenant_id: e.target.value }))
                   }
                   className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50"
@@ -650,7 +649,7 @@ export default function TenantsPage() {
                 <input
                   type="email"
                   value={userForm.email}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setUserForm((f) => ({ ...f, email: e.target.value }))
                   }
                   placeholder="user@example.com"
@@ -664,7 +663,7 @@ export default function TenantsPage() {
                 </label>
                 <select
                   value={userForm.role}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                     setUserForm((f) => ({
                       ...f,
                       role: e.target.value as "admin" | "operator" | "viewer",
