@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "turbo build",
-    "dev": "turbo dev",
+    "dev": "turbo dev --filter=@omniwatch/api --filter=@omniwatch/web",
     "test": "turbo test",
     "lint": "eslint .",
     "format": "prettier --write 'apps/**/*.{ts,tsx}' 'packages/**/*.ts'",
