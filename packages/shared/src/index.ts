@@ -6,10 +6,6 @@ export type {
   AgentConfig,
   AgentLog,
   Notification,
-  RPCRequest,
-  RPCResponse,
-  RPCError,
-  RPCNotification,
   AgentMessage,
   DaemonToAgentMessage,
   ChatMessage,
@@ -34,8 +30,6 @@ export type {
 export {
   OMNI_HOME,
   DB_PATH,
-  SOCKET_PATH,
-  PID_FILE,
   CONFIG_FILE,
   AGENTS_DIR,
   LOGS_DIR,
@@ -78,17 +72,6 @@ export {
 
 // Errors
 export { OmniError, Errors } from './errors.js';
-
-// IPC Protocol
-export {
-  createRequest,
-  createResponse,
-  createErrorResponse,
-  createNotification,
-  RPC_ERRORS,
-  encodeMessage,
-  parseMessages,
-} from './ipc-protocol.js';
 
 // Logger
 export type { LogLevel } from './logger.js';

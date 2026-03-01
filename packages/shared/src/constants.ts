@@ -3,8 +3,6 @@ import { join } from 'node:path';
 
 export const OMNI_HOME = join(homedir(), '.omniwatch');
 export const DB_PATH = join(OMNI_HOME, 'omniwatch.db');
-export const SOCKET_PATH = join(OMNI_HOME, 'omnid.sock');
-export const PID_FILE = join(OMNI_HOME, 'omnid.pid');
 export const CONFIG_FILE = join(OMNI_HOME, 'config.json');
 export const AGENTS_DIR = join(OMNI_HOME, 'agents');
 export const LOGS_DIR = join(OMNI_HOME, 'logs');
@@ -78,7 +76,7 @@ export const MAX_AGENTS_FREE = 10;
 export const MAX_AGENTS_PRO = 50;
 
 // App version (synced via scripts/sync-version.mjs)
-export const APP_VERSION = '2.2.0';
+export const APP_VERSION = '2.3.0';
 
 // v0.6: Analytics
 export const METRIC_ROLLUP_INTERVAL = 3_600_000; // 1 hour

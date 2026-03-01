@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   OMNI_HOME,
   DB_PATH,
-  SOCKET_PATH,
   HEARTBEAT_INTERVAL,
   HEARTBEAT_TIMEOUT,
   MAX_AGENTS,
@@ -19,10 +18,6 @@ describe('constants', () => {
   it('DB_PATH is under OMNI_HOME', () => {
     expect(DB_PATH).toContain('.omniwatch');
     expect(DB_PATH).toContain('omniwatch.db');
-  });
-
-  it('SOCKET_PATH is under OMNI_HOME', () => {
-    expect(SOCKET_PATH).toContain('omnid.sock');
   });
 
   it('heartbeat values are reasonable', () => {

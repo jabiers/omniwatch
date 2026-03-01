@@ -43,7 +43,7 @@ vi.mock('node:child_process', () => ({
 // Mock internal daemon dependencies
 vi.mock('../apps/daemon/src/notifier.js', () => ({ sendNotification: vi.fn() }));
 vi.mock('../apps/daemon/src/health-monitor.js', () => ({ recordHeartbeat: vi.fn() }));
-vi.mock('../apps/daemon/src/handlers/log.js', () => ({ broadcastLogEntry: vi.fn() }));
+
 vi.mock('../apps/daemon/src/self-healer.js', () => ({ attemptHeal: vi.fn() }));
 vi.mock('../apps/daemon/src/event-bus.js', () => ({
   meshPublish: vi.fn(),

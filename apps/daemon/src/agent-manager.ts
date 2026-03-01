@@ -15,7 +15,7 @@ import type {
 import { getDb } from '@omniwatch/db';
 import { sendNotification } from './notifier.js';
 import { recordHeartbeat } from './health-monitor.js';
-import { broadcastLogEntry } from './handlers/log.js';
+
 import { attemptHeal } from './self-healer.js';
 import { meshPublish, meshSubscribe, meshUnsubscribe, meshRemoveAgent } from './event-bus.js';
 import { spawnChildAgent, getChildAgents } from './spawn-manager.js';
@@ -452,14 +452,4 @@ function insertLog(
     VALUES (?, ?, ?, ?)
   `,
   ).run(agentId, level, message, metaJson);
-
-  // Broadcast to streaming clients
-  broadcastLogEntry(agentId, {
-    id: 0,
-    agent_id: agentId,
-    level: level as 'debug' | 'info' | 'warn' | 'error',
-    message,
-    metadata: metaJson,
-    created_at: new Date().toISOString(),
-  });
 }

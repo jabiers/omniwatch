@@ -64,38 +64,15 @@ export interface Notification {
   created_at: string;
 }
 
-// IPC Protocol
-export interface RPCRequest {
-  jsonrpc: '2.0';
-  id: number;
-  method: string;
-  params: Record<string, unknown>;
-}
-
-export interface RPCResponse {
-  jsonrpc: '2.0';
-  id: number;
-  result?: unknown;
-  error?: RPCError;
-}
-
-export interface RPCError {
-  code: number;
-  message: string;
-  data?: unknown;
-}
-
-export interface RPCNotification {
-  jsonrpc: '2.0';
-  method: 'stream';
-  params: { type: string; data: unknown };
-}
-
 // Agent Runtime Messages (child_process IPC)
 export type AgentMessage =
   | { type: 'heartbeat'; timestamp: number }
   | { type: 'log'; level: string; message: string; metadata?: Record<string, unknown> }
-  | { type: 'notify'; message: string; options?: { title?: string; severity?: 'critical' | 'warning' | 'info' } }
+  | {
+      type: 'notify';
+      message: string;
+      options?: { title?: string; severity?: 'critical' | 'warning' | 'info' };
+    }
   | { type: 'store.get'; key: string; requestId: string }
   | { type: 'store.set'; key: string; value: unknown; requestId: string }
   | { type: 'store.delete'; key: string; requestId: string }
@@ -105,7 +82,12 @@ export type AgentMessage =
   | { type: 'mesh.subscribe'; topic: string }
   | { type: 'mesh.unsubscribe'; topic: string }
   // v0.5: Spawn Chain
-  | { type: 'spawn.create'; prompt: string; options?: { name?: string; type?: AgentType; schedule?: string }; requestId: string }
+  | {
+      type: 'spawn.create';
+      prompt: string;
+      options?: { name?: string; type?: AgentType; schedule?: string };
+      requestId: string;
+    }
   // v0.5: Time Travel
   | { type: 'snapshot'; label?: string; requestId: string };
 
@@ -145,7 +127,13 @@ export type SandboxLevel = 'strict' | 'standard' | 'permissive';
 export interface SecurityEvent {
   id: number;
   agent_id: string;
-  event_type: 'fs_violation' | 'net_violation' | 'resource_exceeded' | 'api_blocked' | 'sandbox_start' | 'timeout_violation';
+  event_type:
+    | 'fs_violation'
+    | 'net_violation'
+    | 'resource_exceeded'
+    | 'api_blocked'
+    | 'sandbox_start'
+    | 'timeout_violation';
   detail: string | null;
   created_at: string;
 }

@@ -1,6 +1,6 @@
 /** OmniWatch Daemon Engine — exports core handlers and initialization for API integration */
-import { writeFileSync, mkdirSync, existsSync, unlinkSync } from 'node:fs';
-import { OMNI_HOME, PID_FILE, AGENTS_DIR, LOGS_DIR, initLogger, log } from '@omniwatch/shared';
+import { mkdirSync } from 'node:fs';
+import { OMNI_HOME, AGENTS_DIR, LOGS_DIR, initLogger, log } from '@omniwatch/shared';
 import { getDb, loadConfig } from '@omniwatch/db';
 import { METRIC_ROLLUP_INTERVAL, ALERT_CHECK_INTERVAL } from '@omniwatch/shared';
 
@@ -43,9 +43,6 @@ export async function initEngine(): Promise<void> {
   loadConfig();
   getDb();
 
-  // Write PID file
-  writeFileSync(PID_FILE, String(process.pid));
-
   // Register notification channels
   registerChannel(new WebhookChannel());
   registerChannel(new SystemChannel());
@@ -81,10 +78,4 @@ export function shutdownEngine(): void {
   stopHealthMonitor();
   if (rollupTimer) clearInterval(rollupTimer);
   if (alertTimer) clearInterval(alertTimer);
-
-  try {
-    if (existsSync(PID_FILE)) unlinkSync(PID_FILE);
-  } catch {
-    /* ignore */
-  }
 }
