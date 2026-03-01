@@ -88,9 +88,10 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
 - **Real-time WebSocket** -- Live agent status updates with heartbeat and auto-reconnect
 - **Success Toasts** -- Instant feedback on agent lifecycle actions
 
-### Unified Architecture (v2.0)
+### Unified Architecture (v2.0-v2.2)
 - **Single Process** -- Daemon engine embedded in API server, eliminating IPC overhead
 - **Direct Function Calls** -- No more Unix Socket RPC; all engine calls are in-process
+- **CLI HTTP API** -- CLI communicates via HTTP (no daemon spawn, no Unix Socket)
 
 ## Architecture
 
@@ -113,7 +114,7 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
 
 | Layer | Role |
 |-------|------|
-| **CLI** (`omni`) | Lightweight terminal client. 15 commands + Ink TUI. |
+| **CLI** (`omni`) | Lightweight HTTP client. 15 commands + Ink TUI. Talks to API via HTTP. |
 | **API Server** (`apps/api`) | Unified Hono server (65+ endpoints) + embedded daemon engine + WebSocket + MCP. |
 | **Engine** (`apps/daemon`) | Agent lifecycle, health, AI, sandbox, queue, metrics — runs in-process within API. |
 | **Web** (`apps/web`) | Next.js 15 Glass Console. 14 pages with auth, charts, admin. |
@@ -308,7 +309,7 @@ omniwatch/
 | Sandbox | node:vm + isolated-vm |
 | Auth | API Key + OAuth (GitHub/Google) |
 | MCP | @modelcontextprotocol/sdk |
-| IPC | Direct function calls (in-process since v2.0) |
+| IPC | HTTP API (CLI → API) + direct function calls (engine in-process since v2.0) |
 | Build | tsup (esbuild) + next build |
 | Test | Vitest |
 | CI/CD | GitHub Actions |

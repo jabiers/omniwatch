@@ -88,9 +88,10 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
 - **실시간 WebSocket** -- 하트비트 및 자동 재연결이 포함된 실시간 에이전트 상태 업데이트
 - **성공 토스트** -- 에이전트 라이프사이클 작업에 대한 즉각적인 피드백
 
-### 통합 아키텍처 (v2.0)
+### 통합 아키텍처 (v2.0-v2.2)
 - **단일 프로세스** -- 데몬 엔진이 API 서버에 내장되어 IPC 오버헤드 제거
 - **직접 함수 호출** -- Unix Socket RPC 제거, 모든 엔진 호출이 인프로세스로 수행
+- **CLI HTTP API** -- CLI가 HTTP로 통신 (데몬 스폰 없음, Unix Socket 없음)
 
 ## 아키텍처
 
@@ -113,7 +114,7 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
 
 | 레이어 | 역할 |
 |-------|------|
-| **CLI** (`omni`) | 경량 터미널 클라이언트. 15개 명령어 + Ink TUI. |
+| **CLI** (`omni`) | 경량 HTTP 클라이언트. 15개 명령어 + Ink TUI. HTTP로 API와 통신. |
 | **API 서버** (`apps/api`) | 통합 Hono 서버 (65개 이상 엔드포인트) + 내장 데몬 엔진 + WebSocket + MCP. |
 | **Engine** (`apps/daemon`) | 에이전트 라이프사이클, 헬스 체크, AI, 샌드박스, 큐, 메트릭 — API 내부에서 인프로세스 실행. |
 | **Web** (`apps/web`) | Next.js 15 Glass Console. 인증, 차트, 관리자 기능을 갖춘 14개 페이지. |
@@ -308,7 +309,7 @@ omniwatch/
 | 샌드박스 | node:vm + isolated-vm |
 | 인증 | API Key + OAuth (GitHub/Google) |
 | MCP | @modelcontextprotocol/sdk |
-| IPC | 직접 함수 호출 (v2.0부터 인프로세스) |
+| IPC | HTTP API (CLI → API) + 직접 함수 호출 (v2.0부터 엔진 인프로세스) |
 | 빌드 | tsup (esbuild) + next build |
 | 테스트 | Vitest |
 | CI/CD | GitHub Actions |

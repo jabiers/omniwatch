@@ -110,7 +110,9 @@ export const VERSIONS: Version[] = [
   { version: 'v1.7', theme: 'Tenant Mgmt', highlight: 'Tenant Mgmt + Marketplace UX' },
   { version: 'v1.8', theme: 'Sync & Auth', highlight: 'CLI Auth + Login Flow + Docs Sync' },
   { version: 'v1.9', theme: 'Isolation', highlight: 'Tenant Isolation + WS Logs + E2E' },
-  { version: 'v2.0', theme: 'Current', highlight: 'Unified Architecture (Single Process)' },
+  { version: 'v2.0', theme: 'Unified', highlight: 'Unified Architecture (Single Process)' },
+  { version: 'v2.1', theme: 'Security', highlight: 'RBAC Fix + Type Safety' },
+  { version: 'v2.2', theme: 'Current', highlight: 'Complete Daemon Removal (CLI HTTP)' },
 ];
 
 export interface Stat {
@@ -120,12 +122,12 @@ export interface Stat {
 }
 
 export const STATS: Stat[] = [
-  { value: 375, suffix: '+', label: 'Tests Passing' },
+  { value: 351, suffix: '+', label: 'Tests Passing' },
   { value: 65, suffix: '+', label: 'API Endpoints' },
   { value: 18, suffix: '', label: 'Database Tables' },
   { value: 14, suffix: '', label: 'Dashboard Pages' },
   { value: 15, suffix: '', label: 'CLI Commands' },
-  { value: 16, suffix: '', label: 'Releases' },
+  { value: 18, suffix: '', label: 'Releases' },
 ];
 
 export interface TechCategory {
