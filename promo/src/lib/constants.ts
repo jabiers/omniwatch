@@ -2,7 +2,9 @@ import type { TerminalStep } from '../hooks/useTypingAnimation';
 
 export const NAV_ITEMS = [
   { href: '#features', label: 'Features' },
+  { href: '#usecases', label: 'Use Cases' },
   { href: '#architecture', label: 'Architecture' },
+  { href: '#quickstart', label: 'Quick Start' },
   { href: '#timeline', label: 'Timeline' },
   { href: '#tech', label: 'Tech Stack' },
 ];

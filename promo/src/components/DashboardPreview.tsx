@@ -30,7 +30,7 @@ export default function DashboardPreview() {
   const [hovered, setHovered] = useState(false);
 
   return (
-    <section className="py-24 px-4 sm:px-6 lg:px-8">
+    <section id="dashboard" className="py-24 px-4 sm:px-6 lg:px-8">
       <div ref={ref} className={`max-w-6xl mx-auto reveal ${isVisible ? 'visible' : ''}`}>
         {/* Section header */}
         <div className="text-center mb-16">
