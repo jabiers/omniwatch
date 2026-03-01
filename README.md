@@ -93,10 +93,16 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
 - **Direct Function Calls** -- No more Unix Socket RPC; all engine calls are in-process
 - **CLI HTTP API** -- CLI communicates via HTTP (no daemon spawn, no Unix Socket)
 
+### Package Consolidation (v4.0)
+- **Single Package** -- Daemon engine merged into API server package (`apps/api/src/engine/`)
+- **Zero IPC** -- All engine calls are direct function imports, no separate daemon process
+- **Simplified Build** -- 5 packages (was 6), single tsup config with multiple entry points
+
 ### Quality & Security (v3.0+)
 - **Test Suite** -- 511 tests across 60 files (390 root + 121 web)
 - **Query Optimization** -- Zero SELECT * in production code; all queries use explicit columns
 - **Input Validation** -- Zod schemas on all API routes via @hono/zod-validator
+- **Error Handling** -- try-catch on all async route handlers with structured JSON errors
 - **Security Hardening** -- Tenant isolation on bulk ops, SSRF prevention, webhook masking
 - **Dashboard Tests** -- All 14 pages covered with render tests
 
