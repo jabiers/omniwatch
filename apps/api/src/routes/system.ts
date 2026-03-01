@@ -2,7 +2,6 @@ import { Hono } from 'hono';
 import { statSync } from 'node:fs';
 import { getDb, loadConfig } from '@omniwatch/db';
 import { DB_PATH, APP_VERSION } from '@omniwatch/shared';
-import { isDaemonRunning, getDaemonPid } from '../lib/rpc-bridge.js';
 
 export const systemRoutes = new Hono();
 
@@ -33,7 +32,7 @@ systemRoutes.get('/system/health/detailed', (c) => {
   });
 });
 
-/** GET /system/status - system overview stats */
+/** GET /system/status - system overview stats (engine runs in-process) */
 systemRoutes.get('/system/status', (c) => {
   const db = getDb();
 
@@ -49,9 +48,6 @@ systemRoutes.get('/system/status', (c) => {
     }
   ).count;
 
-  const daemonPid = getDaemonPid();
-  const daemonRunning = isDaemonRunning();
-
   let dbSize = 0;
   try {
     dbSize = statSync(DB_PATH).size;
@@ -62,8 +58,8 @@ systemRoutes.get('/system/status', (c) => {
   return c.json({
     agentCount,
     runningCount,
-    daemonPid,
-    daemonRunning,
+    daemonPid: process.pid,
+    daemonRunning: true,
     dbSize,
     uptime: process.uptime(),
   });

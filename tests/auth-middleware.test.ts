@@ -33,7 +33,7 @@ vi.mock('@omniwatch/shared', async (importOriginal) => {
   };
 });
 
-// Mock node:fs used by system routes and rpc-bridge
+// Mock node:fs used by system routes
 vi.mock('node:fs', () => ({
   existsSync: vi.fn().mockReturnValue(false),
   readFileSync: vi.fn().mockReturnValue(''),
@@ -43,11 +43,38 @@ vi.mock('node:fs', () => ({
   rmSync: vi.fn(),
 }));
 
-// Mock rpc-bridge to avoid socket connections
-vi.mock('../apps/api/src/lib/rpc-bridge.js', () => ({
-  rpcCall: vi.fn().mockRejectedValue(new Error('Daemon is not running')),
-  isDaemonRunning: vi.fn().mockReturnValue(false),
-  getDaemonPid: vi.fn().mockReturnValue(null),
+// Mock daemon engine handlers
+const mockEngineAgentCreate = vi.fn().mockRejectedValue(new Error('Daemon is not running'));
+vi.mock('@omniwatch/daemon/engine', () => ({
+  handleAgentRPC: {
+    create: (...args: unknown[]) => mockEngineAgentCreate(...args),
+    list: vi.fn(),
+    get: vi.fn(),
+    start: vi.fn().mockRejectedValue(new Error('Daemon is not running')),
+    stop: vi.fn().mockRejectedValue(new Error('Daemon is not running')),
+    restart: vi.fn().mockRejectedValue(new Error('Daemon is not running')),
+    destroy: vi.fn().mockRejectedValue(new Error('Daemon is not running')),
+  },
+  handleChatRPC: { chat: vi.fn(), preview: vi.fn(), apply: vi.fn() },
+  handleSnapshotRPC: { capture: vi.fn(), restore: vi.fn(), list: vi.fn() },
+  handleQueueRPC: {
+    stats: vi.fn().mockReturnValue({}),
+    deadLetters: vi.fn().mockReturnValue({ letters: [] }),
+    retryDeadLetter: vi.fn(),
+    cleanup: vi.fn(),
+    resetStale: vi.fn(),
+  },
+  handleAnalyticsRPC: {
+    metrics: vi.fn().mockReturnValue({ metrics: [] }),
+    anomalies: vi.fn(),
+    alertRules: vi.fn(),
+    createAlert: vi.fn(),
+    updateAlert: vi.fn(),
+    deleteAlert: vi.fn(),
+    checkAlerts: vi.fn(),
+  },
+  handleMeshRPC: { topology: vi.fn().mockResolvedValue({ nodes: [], edges: [] }) },
+  handleSecurityRPC: { events: vi.fn().mockReturnValue({ events: [] }) },
 }));
 
 // Mock nanoid used by oauth routes
@@ -328,8 +355,7 @@ describe('Auth Middleware', () => {
       // 2. POST /api/agents: requireRole('admin', 'operator') passes
       //    rpcCall is mocked → either resolves or rejects
 
-      const { rpcCall } = await import('../apps/api/src/lib/rpc-bridge.js');
-      vi.mocked(rpcCall).mockResolvedValueOnce({ id: 'agent-new' });
+      mockEngineAgentCreate.mockResolvedValueOnce({ id: 'agent-new' });
 
       const res = await app.request('/api/agents', {
         method: 'POST',
@@ -369,8 +395,7 @@ describe('Auth Middleware', () => {
       // 1. Auth middleware: admin user lookup
       mockGet.mockReturnValueOnce({ id: 'admin-2', tenant_id: 'default', role: 'admin' });
 
-      const { rpcCall } = await import('../apps/api/src/lib/rpc-bridge.js');
-      vi.mocked(rpcCall).mockResolvedValueOnce({ id: 'agent-new' });
+      mockEngineAgentCreate.mockResolvedValueOnce({ id: 'agent-new' });
 
       const res = await app.request('/api/agents', {
         method: 'POST',

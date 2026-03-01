@@ -27,7 +27,7 @@ vi.mock('@omniwatch/shared', async (importOriginal) => {
   };
 });
 
-// Mock node:fs used by system routes and rpc-bridge
+// Mock node:fs used by system routes
 vi.mock('node:fs', () => ({
   existsSync: vi.fn().mockReturnValue(false),
   readFileSync: vi.fn().mockReturnValue(''),
@@ -37,11 +37,55 @@ vi.mock('node:fs', () => ({
   rmSync: vi.fn(),
 }));
 
-// Mock rpc-bridge to avoid socket connections
-vi.mock('../apps/api/src/lib/rpc-bridge.js', () => ({
-  rpcCall: vi.fn().mockRejectedValue(new Error('Daemon is not running')),
-  isDaemonRunning: vi.fn().mockReturnValue(false),
-  getDaemonPid: vi.fn().mockReturnValue(null),
+// Mock daemon engine handlers
+const mockAgentCreate = vi.fn().mockRejectedValue(new Error('Daemon is not running'));
+const mockAgentDestroy = vi.fn().mockRejectedValue(new Error('Daemon is not running'));
+const mockAgentStart = vi.fn().mockRejectedValue(new Error('Daemon is not running'));
+const mockAgentStop = vi.fn().mockRejectedValue(new Error('Daemon is not running'));
+const mockAgentRestart = vi.fn().mockRejectedValue(new Error('Daemon is not running'));
+
+vi.mock('@omniwatch/daemon/engine', () => ({
+  handleAgentRPC: {
+    create: (...args: unknown[]) => mockAgentCreate(...args),
+    list: vi.fn(),
+    get: vi.fn(),
+    start: (...args: unknown[]) => mockAgentStart(...args),
+    stop: (...args: unknown[]) => mockAgentStop(...args),
+    restart: (...args: unknown[]) => mockAgentRestart(...args),
+    destroy: (...args: unknown[]) => mockAgentDestroy(...args),
+  },
+  handleChatRPC: {
+    chat: vi.fn().mockRejectedValue(new Error('Daemon is not running')),
+    preview: vi.fn().mockRejectedValue(new Error('Daemon is not running')),
+    apply: vi.fn().mockRejectedValue(new Error('Daemon is not running')),
+  },
+  handleSnapshotRPC: {
+    capture: vi.fn().mockRejectedValue(new Error('Daemon is not running')),
+    restore: vi.fn().mockRejectedValue(new Error('Daemon is not running')),
+    list: vi.fn(),
+  },
+  handleQueueRPC: {
+    stats: vi.fn().mockReturnValue({ pending: 0, processing: 0, completed: 0 }),
+    deadLetters: vi.fn().mockReturnValue({ letters: [] }),
+    retryDeadLetter: vi.fn().mockReturnValue({ success: true }),
+    cleanup: vi.fn(),
+    resetStale: vi.fn(),
+  },
+  handleAnalyticsRPC: {
+    metrics: vi.fn().mockReturnValue({ metrics: [] }),
+    anomalies: vi.fn().mockReturnValue({ anomalies: [] }),
+    alertRules: vi.fn().mockReturnValue({ rules: [] }),
+    createAlert: vi.fn(),
+    updateAlert: vi.fn(),
+    deleteAlert: vi.fn(),
+    checkAlerts: vi.fn(),
+  },
+  handleMeshRPC: {
+    topology: vi.fn().mockResolvedValue({ nodes: [], edges: [] }),
+  },
+  handleSecurityRPC: {
+    events: vi.fn().mockReturnValue({ events: [] }),
+  },
 }));
 
 // Mock nanoid used by oauth routes
@@ -161,10 +205,8 @@ describe('POST /api/agents', () => {
     expect(res.status).toBe(400);
   });
 
-  it('should return 502 when daemon is not running', async () => {
-    // rpcCall is mocked to reject with "Daemon is not running"
-    const { rpcCall } = await import('../apps/api/src/lib/rpc-bridge.js');
-    vi.mocked(rpcCall).mockRejectedValueOnce(new Error('Daemon is not running'));
+  it('should return 502 when engine throws', async () => {
+    mockAgentCreate.mockRejectedValueOnce(new Error('Daemon is not running'));
 
     const res = await app.request('/api/agents', {
       method: 'POST',
@@ -178,9 +220,8 @@ describe('POST /api/agents', () => {
   });
 
   it('should return 201 when agent is created successfully', async () => {
-    const { rpcCall } = await import('../apps/api/src/lib/rpc-bridge.js');
     const createdAgent = { id: 'agent-new', name: 'cpu-mon', status: 'creating' };
-    vi.mocked(rpcCall).mockResolvedValueOnce(createdAgent);
+    mockAgentCreate.mockResolvedValueOnce(createdAgent);
 
     const res = await app.request('/api/agents', {
       method: 'POST',
@@ -209,8 +250,8 @@ describe('GET /api/system/status', () => {
     const body = await res.json();
     expect(body.agentCount).toBe(5);
     expect(body.runningCount).toBe(2);
-    expect(body.daemonPid).toBe(null);
-    expect(body.daemonRunning).toBe(false);
+    expect(typeof body.daemonPid).toBe('number');
+    expect(body.daemonRunning).toBe(true);
     expect(typeof body.dbSize).toBe('number');
     expect(typeof body.uptime).toBe('number');
   });
@@ -293,25 +334,12 @@ describe('GET /api/marketplace', () => {
 // ─── Analytics ───────────────────────────────────────────────────────
 
 describe('GET /api/analytics/metrics', () => {
-  it('should return 503 when daemon is not running', async () => {
-    // isDaemonRunning returns false (default mock)
-    const res = await app.request('/api/analytics/metrics?agentId=agent-1');
-    expect(res.status).toBe(503);
-
-    const body = await res.json();
-    expect(body.error).toBe('Daemon not running');
-  });
-
   it('should return 400 when agentId is missing', async () => {
     const res = await app.request('/api/analytics/metrics');
     expect(res.status).toBe(400);
   });
 
-  it('should return metrics when daemon is running', async () => {
-    const { isDaemonRunning, rpcCall } = await import('../apps/api/src/lib/rpc-bridge.js');
-    vi.mocked(isDaemonRunning).mockReturnValueOnce(true);
-    vi.mocked(rpcCall).mockResolvedValueOnce({ metrics: [] });
-
+  it('should return metrics from engine', async () => {
     const res = await app.request('/api/analytics/metrics?agentId=agent-1');
     expect(res.status).toBe(200);
 
@@ -437,15 +465,14 @@ describe('POST /api/agents validation', () => {
   });
 
   it('should accept valid agent types', async () => {
-    const { rpcCall } = await import('../apps/api/src/lib/rpc-bridge.js');
-    vi.mocked(rpcCall).mockResolvedValueOnce({ id: 'agent-1' });
+    mockAgentCreate.mockResolvedValueOnce({ id: 'agent-1' });
 
     const res = await app.request('/api/agents', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt: 'test prompt', type: 'doer' }),
     });
-    // Should not fail validation — either 201 (success) or 502 (daemon not running)
+    // Should not fail validation — either 201 (success) or 502 (engine error)
     expect([201, 502]).toContain(res.status);
   });
 });

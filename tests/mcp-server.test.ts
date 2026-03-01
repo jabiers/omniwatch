@@ -25,19 +25,61 @@ vi.mock('@omniwatch/db', () => ({
   }),
 }));
 
-// Mock rpc-bridge
-const mockRpcCall = vi.fn();
-vi.mock('../apps/api/src/lib/rpc-bridge.js', () => ({
-  rpcCall: (...args: unknown[]) => mockRpcCall(...args),
-  isDaemonRunning: () => true,
+// Mock daemon engine handlers
+const mockEngineCreate = vi.fn();
+const mockEngineStart = vi.fn();
+const mockEngineStop = vi.fn();
+const mockEngineRestart = vi.fn();
+const mockSnapshotCapture = vi.fn();
+vi.mock('@omniwatch/daemon/engine', () => ({
+  handleAgentRPC: {
+    create: (...args: unknown[]) => mockEngineCreate(...args),
+    start: (...args: unknown[]) => mockEngineStart(...args),
+    stop: (...args: unknown[]) => mockEngineStop(...args),
+    restart: (...args: unknown[]) => mockEngineRestart(...args),
+    list: vi.fn(),
+    get: vi.fn(),
+    destroy: vi.fn(),
+  },
+  handleSnapshotRPC: {
+    capture: (...args: unknown[]) => mockSnapshotCapture(...args),
+    restore: vi.fn(),
+    list: vi.fn(),
+  },
+  handleChatRPC: { chat: vi.fn(), preview: vi.fn(), apply: vi.fn() },
+  handleQueueRPC: { stats: vi.fn(), deadLetters: vi.fn(), retryDeadLetter: vi.fn() },
+  handleAnalyticsRPC: {
+    metrics: vi.fn(),
+    anomalies: vi.fn(),
+    alertRules: vi.fn(),
+    createAlert: vi.fn(),
+    updateAlert: vi.fn(),
+    deleteAlert: vi.fn(),
+  },
+  handleMeshRPC: { topology: vi.fn() },
+  handleSecurityRPC: { events: vi.fn() },
 }));
 
 describe('MCP Server', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDbRows.agents = [
-      { id: 'agent-1', name: 'BTC Watcher', type: 'watcher', status: 'running', description: 'Monitors BTC', created_at: '2026-01-01' },
-      { id: 'agent-2', name: 'ETH Tracker', type: 'watcher', status: 'stopped', description: 'Tracks ETH', created_at: '2026-01-02' },
+      {
+        id: 'agent-1',
+        name: 'BTC Watcher',
+        type: 'watcher',
+        status: 'running',
+        description: 'Monitors BTC',
+        created_at: '2026-01-01',
+      },
+      {
+        id: 'agent-2',
+        name: 'ETH Tracker',
+        type: 'watcher',
+        status: 'stopped',
+        description: 'Tracks ETH',
+        created_at: '2026-01-02',
+      },
     ];
     mockDbRows.agent_logs = [
       { level: 'info', message: 'Agent started', created_at: '2026-01-01T00:00:00Z' },
@@ -72,34 +114,46 @@ describe('MCP Server', () => {
     it('get_agent_logs should return log entries', async () => {
       const { getDb } = await import('@omniwatch/db');
       const db = getDb();
-      const logs = db.prepare('SELECT * FROM agent_logs WHERE agent_id = ? LIMIT ?').all('agent-1', 20);
+      const logs = db
+        .prepare('SELECT * FROM agent_logs WHERE agent_id = ? LIMIT ?')
+        .all('agent-1', 20);
       expect(logs).toHaveLength(2);
     });
 
-    it('control_agent should call rpcCall with correct params', async () => {
-      mockRpcCall.mockResolvedValue({ id: 'agent-1', status: 'running' });
-      const result = await mockRpcCall('agent.start', { id: 'agent-1' });
+    it('control_agent should call engine handler with correct params', async () => {
+      mockEngineStart.mockResolvedValue({ id: 'agent-1', status: 'running' });
+      const result = await mockEngineStart({ id: 'agent-1' }, null);
       expect(result).toHaveProperty('status', 'running');
-      expect(mockRpcCall).toHaveBeenCalledWith('agent.start', { id: 'agent-1' });
+      expect(mockEngineStart).toHaveBeenCalledWith({ id: 'agent-1' }, null);
     });
 
-    it('create_agent should call rpcCall with prompt and timeout', async () => {
-      mockRpcCall.mockResolvedValue({ id: 'agent-3', name: 'New Agent', status: 'running' });
-      const result = await mockRpcCall('agent.create', { prompt: 'Monitor API health', name: 'API Monitor' }, { timeout: 60_000 });
+    it('create_agent should call engine handler with prompt', async () => {
+      mockEngineCreate.mockResolvedValue({ id: 'agent-3', name: 'New Agent', status: 'running' });
+      const result = await mockEngineCreate(
+        { prompt: 'Monitor API health', name: 'API Monitor' },
+        null,
+      );
       expect(result).toHaveProperty('id', 'agent-3');
-      expect(mockRpcCall).toHaveBeenCalledWith('agent.create', { prompt: 'Monitor API health', name: 'API Monitor' }, { timeout: 60_000 });
+      expect(mockEngineCreate).toHaveBeenCalledWith(
+        { prompt: 'Monitor API health', name: 'API Monitor' },
+        null,
+      );
     });
 
     it('system_stats should return correct agent count', async () => {
       const { getDb } = await import('@omniwatch/db');
       const db = getDb();
-      const total = (db.prepare("SELECT COUNT(*) as c FROM agents WHERE status != 'destroyed'").get() as { c: number }).c;
+      const total = (
+        db.prepare("SELECT COUNT(*) as c FROM agents WHERE status != 'destroyed'").get() as {
+          c: number;
+        }
+      ).c;
       expect(total).toBe(2);
     });
 
-    it('snapshot_capture should call rpcCall and return seq', async () => {
-      mockRpcCall.mockResolvedValue({ seq: 1 });
-      const result = await mockRpcCall('snapshot.capture', { agentId: 'agent-1', label: 'test' });
+    it('snapshot_capture should call engine handler and return seq', async () => {
+      mockSnapshotCapture.mockResolvedValue({ seq: 1 });
+      const result = await mockSnapshotCapture({ agentId: 'agent-1', label: 'test' }, null);
       expect(result).toHaveProperty('seq', 1);
     });
   });
@@ -137,11 +191,13 @@ describe('MCP Server', () => {
   describe('MCP resource response format', () => {
     it('should return contents array with uri and mimeType', () => {
       const response = {
-        contents: [{
-          uri: 'omniwatch://agents',
-          text: JSON.stringify([{ id: 'agent-1' }]),
-          mimeType: 'application/json',
-        }],
+        contents: [
+          {
+            uri: 'omniwatch://agents',
+            text: JSON.stringify([{ id: 'agent-1' }]),
+            mimeType: 'application/json',
+          },
+        ],
       };
       expect(response.contents).toHaveLength(1);
       expect(response.contents[0].uri).toBe('omniwatch://agents');
@@ -152,11 +208,13 @@ describe('MCP Server', () => {
       const agentId = 'agent-1';
       const uri = `agent://${agentId}/status`;
       const response = {
-        contents: [{
-          uri,
-          text: JSON.stringify({ id: agentId, status: 'running' }),
-          mimeType: 'application/json',
-        }],
+        contents: [
+          {
+            uri,
+            text: JSON.stringify({ id: agentId, status: 'running' }),
+            mimeType: 'application/json',
+          },
+        ],
       };
       expect(response.contents[0].uri).toBe('agent://agent-1/status');
       const parsed = JSON.parse(response.contents[0].text);
@@ -166,11 +224,13 @@ describe('MCP Server', () => {
     it('should support per-agent logs resource URI', () => {
       const agentId = 'agent-1';
       const response = {
-        contents: [{
-          uri: `agent://${agentId}/logs`,
-          text: JSON.stringify(mockDbRows.agent_logs),
-          mimeType: 'application/json',
-        }],
+        contents: [
+          {
+            uri: `agent://${agentId}/logs`,
+            text: JSON.stringify(mockDbRows.agent_logs),
+            mimeType: 'application/json',
+          },
+        ],
       };
       const parsed = JSON.parse(response.contents[0].text);
       expect(parsed).toHaveLength(2);
@@ -180,18 +240,21 @@ describe('MCP Server', () => {
 
   describe('MCP RPC integration patterns', () => {
     it('control_agent should support start/stop/restart actions', async () => {
-      for (const action of ['start', 'stop', 'restart']) {
-        mockRpcCall.mockResolvedValueOnce({ id: 'agent-1', status: action === 'stop' ? 'stopped' : 'running' });
-        const result = await mockRpcCall(`agent.${action}`, { id: 'agent-1' });
+      const handlers = { start: mockEngineStart, stop: mockEngineStop, restart: mockEngineRestart };
+      for (const action of ['start', 'stop', 'restart'] as const) {
+        handlers[action].mockResolvedValueOnce({
+          id: 'agent-1',
+          status: action === 'stop' ? 'stopped' : 'running',
+        });
+        const result = await handlers[action]({ id: 'agent-1' }, null);
         expect(result).toHaveProperty('id', 'agent-1');
       }
-      expect(mockRpcCall).toHaveBeenCalledTimes(3);
     });
 
-    it('should handle RPC errors gracefully', async () => {
-      mockRpcCall.mockRejectedValue(new Error('Connection refused'));
+    it('should handle engine errors gracefully', async () => {
+      mockEngineStart.mockRejectedValue(new Error('Connection refused'));
       try {
-        await mockRpcCall('agent.start', { id: 'agent-1' });
+        await mockEngineStart({ id: 'agent-1' }, null);
       } catch (err) {
         expect(err).toBeInstanceOf(Error);
         expect((err as Error).message).toBe('Connection refused');
@@ -199,10 +262,10 @@ describe('MCP Server', () => {
     });
 
     it('snapshot.restore should accept agentId and seq', async () => {
-      mockRpcCall.mockResolvedValue({ restored: true, seq: 3 });
-      const result = await mockRpcCall('snapshot.restore', { agentId: 'agent-1', seq: 3 });
+      const { handleSnapshotRPC } = await import('@omniwatch/daemon/engine');
+      vi.mocked(handleSnapshotRPC.restore).mockResolvedValue({ restored: true, seq: 3 });
+      const result = await handleSnapshotRPC.restore({ agentId: 'agent-1', seq: 3 }, null as any);
       expect(result).toHaveProperty('restored', true);
-      expect(mockRpcCall).toHaveBeenCalledWith('snapshot.restore', { agentId: 'agent-1', seq: 3 });
     });
   });
 });

@@ -1,7 +1,7 @@
 /** Snapshot (Time Travel) API routes */
 import { Hono } from 'hono';
 import { getDb } from '@omniwatch/db';
-import { rpcCall } from '../lib/rpc-bridge.js';
+import { handleSnapshotRPC } from '@omniwatch/daemon/engine';
 
 export const snapshotRoutes = new Hono();
 
@@ -54,10 +54,7 @@ snapshotRoutes.post('/agents/:id/snapshots', async (c) => {
   const body = await c.req.json<{ label?: string }>().catch(() => ({ label: undefined }));
 
   try {
-    const result = await rpcCall('snapshot.capture', {
-      agentId: id,
-      label: body.label,
-    });
+    const result = await handleSnapshotRPC.capture({ agentId: id, label: body.label }, null as any);
     return c.json(result, 201);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
@@ -77,10 +74,10 @@ snapshotRoutes.post('/agents/:id/snapshots/:seq/restore', async (c) => {
   }
 
   try {
-    const result = await rpcCall('snapshot.restore', {
-      agentId: id,
-      seq: parseInt(seq, 10),
-    });
+    const result = await handleSnapshotRPC.restore(
+      { agentId: id, seq: parseInt(seq, 10) },
+      null as any,
+    );
     return c.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';

@@ -1,6 +1,7 @@
 import { fork, type ChildProcess } from 'node:child_process';
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { nanoid } from 'nanoid';
 import { AGENTS_DIR, MAX_AGENTS, log, Errors } from '@omniwatch/shared';
@@ -154,8 +155,10 @@ export async function startAgent(id: string): Promise<void> {
   );
 
   // runtime.js is in the same dist directory: dist/agent/runtime.js
-  const distRuntime = resolve(new URL('./agent/runtime.js', import.meta.url).pathname);
-  const srcRuntime = resolve(new URL('../agent/runtime.ts', import.meta.url).pathname);
+  // Use dirname(fileURLToPath) to avoid webpack resolving new URL() as a module
+  const __daemonDir = dirname(fileURLToPath(import.meta.url));
+  const distRuntime = resolve(__daemonDir, 'agent', 'runtime.js');
+  const srcRuntime = resolve(__daemonDir, '..', 'agent', 'runtime.ts');
   const scriptPath = existsSync(distRuntime) ? distRuntime : srcRuntime;
 
   const child = fork(scriptPath, [id], {

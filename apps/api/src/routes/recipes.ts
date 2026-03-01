@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { listRecipes, searchRecipes, getRecipe } from '@omniwatch/shared';
-import { rpcCall } from '../lib/rpc-bridge.js';
+import { handleAgentRPC } from '@omniwatch/daemon/engine';
 
 export const recipeRoutes = new Hono();
 
@@ -11,7 +11,7 @@ recipeRoutes.get('/recipes', (c) => {
 
   let recipes = query ? searchRecipes(query) : listRecipes();
   if (category) {
-    recipes = recipes.filter(r => r.category === category);
+    recipes = recipes.filter((r) => r.category === category);
   }
 
   return c.json({ recipes });
@@ -26,7 +26,7 @@ recipeRoutes.get('/recipes/:id', (c) => {
   return c.json({ recipe });
 });
 
-/** POST /recipes/:id/install - create agent from recipe via daemon IPC */
+/** POST /recipes/:id/install - create agent from recipe */
 recipeRoutes.post('/recipes/:id/install', async (c) => {
   const recipe = getRecipe(c.req.param('id'));
   if (!recipe) {
@@ -34,12 +34,10 @@ recipeRoutes.post('/recipes/:id/install', async (c) => {
   }
 
   try {
-    const result = await rpcCall('agent.create', {
-      name: recipe.name,
-      prompt: recipe.prompt,
-      type: 'watcher',
-      template: recipe.template,
-    });
+    const result = await handleAgentRPC.create(
+      { name: recipe.name, prompt: recipe.prompt, type: 'watcher', template: recipe.template },
+      null as any,
+    );
     return c.json({ agent: result }, 201);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';

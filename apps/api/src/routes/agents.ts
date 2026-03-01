@@ -3,7 +3,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
 import type { Agent, AgentLog } from '@omniwatch/shared';
-import { rpcCall } from '../lib/rpc-bridge.js';
+import { handleAgentRPC } from '@omniwatch/daemon/engine';
 import { requireRole } from '../middleware/auth.js';
 import { broadcast } from '../ws.js';
 
@@ -16,7 +16,9 @@ const createAgentSchema = z.object({
 
 /** Schema: GET /agents query params */
 const listAgentsQuerySchema = z.object({
-  status: z.enum(['creating', 'ready', 'running', 'stopped', 'error', 'healing', 'destroyed']).optional(),
+  status: z
+    .enum(['creating', 'ready', 'running', 'stopped', 'error', 'healing', 'destroyed'])
+    .optional(),
   tenant: z.string().optional(),
 });
 
@@ -36,19 +38,27 @@ agentRoutes.get('/agents', zValidator('query', listAgentsQuerySchema), (c) => {
 
   let agents: Agent[];
   if (auth.role === 'admin' && !tenant) {
-    // Admin can see all agents
     if (status) {
-      agents = db.prepare('SELECT * FROM agents WHERE status = ? ORDER BY created_at DESC').all(status) as Agent[];
+      agents = db
+        .prepare('SELECT * FROM agents WHERE status = ? ORDER BY created_at DESC')
+        .all(status) as Agent[];
     } else {
-      agents = db.prepare("SELECT * FROM agents WHERE status != ? ORDER BY created_at DESC").all('destroyed') as Agent[];
+      agents = db
+        .prepare('SELECT * FROM agents WHERE status != ? ORDER BY created_at DESC')
+        .all('destroyed') as Agent[];
     }
   } else {
-    // Non-admin: filter by tenant_id
     const tenantId = tenant || auth.tenantId;
     if (status) {
-      agents = db.prepare('SELECT * FROM agents WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC').all(tenantId, status) as Agent[];
+      agents = db
+        .prepare('SELECT * FROM agents WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC')
+        .all(tenantId, status) as Agent[];
     } else {
-      agents = db.prepare("SELECT * FROM agents WHERE tenant_id = ? AND status != ? ORDER BY created_at DESC").all(tenantId, 'destroyed') as Agent[];
+      agents = db
+        .prepare(
+          'SELECT * FROM agents WHERE tenant_id = ? AND status != ? ORDER BY created_at DESC',
+        )
+        .all(tenantId, 'destroyed') as Agent[];
     }
   }
 
@@ -66,7 +76,6 @@ agentRoutes.get('/agents/:id', (c) => {
     return c.json({ error: `Agent '${id}' not found` }, 404);
   }
 
-  // Tenant isolation: non-admin can only access own tenant's agents
   if (auth.role !== 'admin' && agent.tenant_id !== auth.tenantId) {
     return c.json({ error: `Agent '${id}' not found` }, 404);
   }
@@ -74,33 +83,36 @@ agentRoutes.get('/agents/:id', (c) => {
   return c.json({ agent });
 });
 
-/** POST /agents - create agent via daemon IPC (operator+) */
-agentRoutes.post('/agents', requireRole('admin', 'operator'), zValidator('json', createAgentSchema), async (c) => {
-  const body = c.req.valid('json');
+/** POST /agents - create agent via engine (operator+) */
+agentRoutes.post(
+  '/agents',
+  requireRole('admin', 'operator'),
+  zValidator('json', createAgentSchema),
+  async (c) => {
+    const body = c.req.valid('json');
+    const auth = c.get('auth');
 
-  const auth = c.get('auth');
-  try {
-    const result = await rpcCall('agent.create', {
-      name: body.name,
-      prompt: body.prompt,
-      type: body.type,
-      tenantId: auth.tenantId,
-    });
-    const created = result as { id?: string; name?: string };
-    broadcast('agent:created', { id: created.id, name: created.name });
-    return c.json({ agent: result }, 201);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.json({ error: message }, 502);
-  }
-});
+    try {
+      const result = await handleAgentRPC.create(
+        { name: body.name, prompt: body.prompt, type: body.type, tenantId: auth.tenantId },
+        null as any,
+      );
+      const created = result as { id?: string; name?: string };
+      broadcast('agent:created', { id: created.id, name: created.name });
+      return c.json({ agent: result }, 201);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      return c.json({ error: message }, 502);
+    }
+  },
+);
 
-/** DELETE /agents/:id - destroy agent via daemon IPC (operator+) */
+/** DELETE /agents/:id - destroy agent via engine (operator+) */
 agentRoutes.delete('/agents/:id', requireRole('admin', 'operator'), async (c) => {
   const { id } = c.req.param();
 
   try {
-    const result = await rpcCall('agent.destroy', { id });
+    const result = await handleAgentRPC.destroy({ id }, null as any);
     broadcast('agent:destroyed', { id });
     return c.json({ result });
   } catch (err) {
@@ -114,7 +126,7 @@ agentRoutes.post('/agents/:id/start', requireRole('admin', 'operator'), async (c
   const { id } = c.req.param();
 
   try {
-    const result = await rpcCall('agent.start', { id });
+    const result = await handleAgentRPC.start({ id }, null as any);
     broadcast('agent:status', { id, status: 'running' });
     return c.json({ result });
   } catch (err) {
@@ -128,7 +140,7 @@ agentRoutes.post('/agents/:id/stop', requireRole('admin', 'operator'), async (c)
   const { id } = c.req.param();
 
   try {
-    const result = await rpcCall('agent.stop', { id });
+    const result = await handleAgentRPC.stop({ id }, null as any);
     broadcast('agent:status', { id, status: 'stopped' });
     return c.json({ result });
   } catch (err) {
@@ -142,7 +154,7 @@ agentRoutes.post('/agents/:id/restart', requireRole('admin', 'operator'), async 
   const { id } = c.req.param();
 
   try {
-    const result = await rpcCall('agent.restart', { id });
+    const result = await handleAgentRPC.restart({ id }, null as any);
     broadcast('agent:status', { id, status: 'running' });
     return c.json({ result });
   } catch (err) {
@@ -165,7 +177,9 @@ agentRoutes.get('/agents/:id/logs', zValidator('query', agentLogsQuerySchema), (
   let logs: AgentLog[];
   if (level) {
     logs = db
-      .prepare('SELECT * FROM agent_logs WHERE agent_id = ? AND level = ? ORDER BY created_at DESC LIMIT ?')
+      .prepare(
+        'SELECT * FROM agent_logs WHERE agent_id = ? AND level = ? ORDER BY created_at DESC LIMIT ?',
+      )
       .all(id, level, limit) as AgentLog[];
   } else {
     logs = db

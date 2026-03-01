@@ -1,6 +1,6 @@
 {
   "name": "@omniwatch/api",
-  "version": "1.9.1",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "exports": {
@@ -16,6 +16,7 @@
     "@hono/node-server": "^1.13.0",
     "@hono/zod-validator": "^0.7.6",
     "@modelcontextprotocol/sdk": "^1.27.1",
+    "@omniwatch/daemon": "workspace:*",
     "@omniwatch/db": "workspace:*",
     "@omniwatch/shared": "workspace:*",
     "hono": "^4.6.0",

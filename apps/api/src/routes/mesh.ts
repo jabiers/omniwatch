@@ -1,14 +1,14 @@
 /** Mesh topology and events API routes */
 import { Hono } from 'hono';
 import { getDb } from '@omniwatch/db';
-import { rpcCall } from '../lib/rpc-bridge.js';
+import { handleMeshRPC } from '@omniwatch/daemon/engine';
 
 export const meshRoutes = new Hono();
 
 /** GET /mesh/topology - get mesh node graph */
 meshRoutes.get('/mesh/topology', async (c) => {
   try {
-    const result = await rpcCall('mesh.topology');
+    const result = await handleMeshRPC.topology({}, null as any);
     return c.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
@@ -26,7 +26,6 @@ meshRoutes.get('/mesh/events', (c) => {
   const conditions: string[] = [];
   const params: unknown[] = [];
 
-  // Tenant isolation: non-admin users see only their tenant's events
   if (auth.role !== 'admin') {
     conditions.push('a.tenant_id = ?');
     params.push(auth.tenantId);

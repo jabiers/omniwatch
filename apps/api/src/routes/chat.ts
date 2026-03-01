@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { rpcCall } from '../lib/rpc-bridge.js';
+import { handleChatRPC } from '@omniwatch/daemon/engine';
 
 export const chatRoutes = new Hono();
 
@@ -13,7 +13,7 @@ chatRoutes.post('/agents/:id/chat', async (c) => {
   }
 
   try {
-    const result = await rpcCall('agent.chat', { id, message: body.message });
+    const result = await handleChatRPC.chat({ id, message: body.message }, null as any);
     return c.json({ result });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
@@ -30,10 +30,10 @@ chatRoutes.post('/agents/preview', async (c) => {
   }
 
   try {
-    const result = await rpcCall('agent.preview', {
-      prompt: body.prompt,
-      template: body.template,
-    });
+    const result = await handleChatRPC.preview(
+      { prompt: body.prompt, template: body.template },
+      null as any,
+    );
     return c.json({ result });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
@@ -51,7 +51,7 @@ chatRoutes.post('/agents/:id/apply', async (c) => {
   }
 
   try {
-    const result = await rpcCall('agent.apply', { id, code: body.code });
+    const result = await handleChatRPC.apply({ id, code: body.code }, null as any);
     return c.json({ result });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';

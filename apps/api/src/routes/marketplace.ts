@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
-import { rpcCall } from '../lib/rpc-bridge.js';
+import { handleAgentRPC } from '@omniwatch/daemon/engine';
 import { requireRole } from '../middleware/auth.js';
 import { randomUUID } from 'node:crypto';
 
@@ -184,13 +184,16 @@ marketplaceRoutes.post('/marketplace/:id/install', async (c) => {
 
   try {
     const config = JSON.parse(row.config || '{}');
-    const result = await rpcCall('agent.create', {
-      name: row.name,
-      prompt: row.prompt,
-      type: config.type || 'watcher',
-      template: config.template,
-      tenantId: auth.tenantId,
-    });
+    const result = await handleAgentRPC.create(
+      {
+        name: row.name,
+        prompt: row.prompt,
+        type: config.type || 'watcher',
+        template: config.template,
+        tenantId: auth.tenantId,
+      },
+      null as any,
+    );
 
     // Increment download count
     db.prepare(
