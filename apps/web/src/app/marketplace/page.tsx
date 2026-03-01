@@ -109,6 +109,12 @@ export default function MarketplacePage() {
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
 
+  // Detail modal state
+  const [selectedRecipe, setSelectedRecipe] = useState<MarketplaceRecipe | null>(null);
+
+  // Install confirmation state
+  const [confirmInstall, setConfirmInstall] = useState<MarketplaceRecipe | null>(null);
+
   // Publish modal state
   const [showPublish, setShowPublish] = useState(false);
   const [publishForm, setPublishForm] = useState<PublishForm>(DEFAULT_FORM);
@@ -338,7 +344,11 @@ export default function MarketplacePage() {
             const catColor = CATEGORY_COLORS[recipe.category] || 'bg-gray-500/10 text-gray-400';
 
             return (
-              <div key={recipe.id} className="glass-card flex flex-col">
+              <div
+                key={recipe.id}
+                className="glass-card flex flex-col cursor-pointer"
+                onClick={() => setSelectedRecipe(recipe)}
+              >
                 {/* Header: category badge + version */}
                 <div className="flex items-center justify-between mb-3">
                   <span
@@ -387,7 +397,10 @@ export default function MarketplacePage() {
                 {/* Install button */}
                 <div className="mt-auto">
                   <button
-                    onClick={() => handleInstall(recipe.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isInstalled) setConfirmInstall(recipe);
+                    }}
                     disabled={isInstalling || isInstalled}
                     className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg text-sm transition-colors ${
                       isInstalled
@@ -582,6 +595,86 @@ export default function MarketplacePage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/*  Recipe Detail Modal                                          */}
+      {/* ============================================================ */}
+      {selectedRecipe && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={() => setSelectedRecipe(null)}
+        >
+          <div
+            className="bg-[#12121a] border border-white/[0.08] rounded-xl p-6 w-full max-w-lg space-y-4 max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <h3 className="text-lg font-semibold">{selectedRecipe.name}</h3>
+              <button
+                onClick={() => setSelectedRecipe(null)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {selectedRecipe.author && (
+              <p className="text-xs text-gray-500">by {selectedRecipe.author}</p>
+            )}
+            <p className="text-sm text-gray-300">{selectedRecipe.description}</p>
+            {selectedRecipe.prompt && (
+              <div>
+                <h4 className="text-xs text-gray-500 mb-1">System Prompt</h4>
+                <pre className="text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg p-3 whitespace-pre-wrap text-gray-400 max-h-48 overflow-y-auto">
+                  {selectedRecipe.prompt}
+                </pre>
+              </div>
+            )}
+            {selectedRecipe.tags && selectedRecipe.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {selectedRecipe.tags.map((tag: string) => (
+                  <span
+                    key={tag}
+                    className="px-2 py-0.5 rounded bg-white/[0.06] text-xs text-gray-400"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/*  Install Confirmation Modal                                    */}
+      {/* ============================================================ */}
+      {confirmInstall && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-[#12121a] border border-white/[0.08] rounded-xl p-6 w-full max-w-sm space-y-4">
+            <h3 className="text-lg font-semibold">Install Recipe</h3>
+            <p className="text-sm text-gray-400">
+              Install <strong className="text-white">{confirmInstall.name}</strong>?
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setConfirmInstall(null)}
+                className="px-4 py-2 text-sm text-gray-400 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  await handleInstall(confirmInstall.id);
+                  setConfirmInstall(null);
+                }}
+                className="px-4 py-2 text-sm bg-emerald-500/20 text-emerald-400 rounded-lg hover:bg-emerald-500/30"
+              >
+                Install
+              </button>
+            </div>
           </div>
         </div>
       )}
