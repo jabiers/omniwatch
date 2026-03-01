@@ -7,9 +7,9 @@ import {
   parseMessages,
   encodeMessage,
   type RPCResponse,
-} from '@omniwatch/shared';
+} from '@vigil/shared';
 
-/** Check if the OmniWatch daemon process is alive */
+/** Check if the Vigil daemon process is alive */
 export function isDaemonRunning(): boolean {
   if (!existsSync(PID_FILE)) return false;
   try {

@@ -926,7 +926,7 @@ export default function TenantsPage() {
             </div>
 
             <div className="px-3 py-2 rounded-lg bg-amber-500/5 border border-amber-500/10 text-xs text-amber-400/80">
-              Store this API key securely. It grants access to the OmniWatch API based on the
+              Store this API key securely. It grants access to the Vigil API based on the
               user&apos;s assigned role. You will not be able to retrieve this key after closing
               this dialog.
             </div>

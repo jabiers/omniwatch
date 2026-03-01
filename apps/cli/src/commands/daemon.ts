@@ -6,8 +6,7 @@ import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
 import { isDaemonRunning, getDaemonPid, rpcCall } from '../ipc-client.js';
 
-export const daemonCommand = new Command('daemon')
-  .description('Manage the OmniWatch daemon');
+export const daemonCommand = new Command('daemon').description('Manage the Vigil daemon');
 
 daemonCommand
   .command('start')
@@ -59,7 +58,7 @@ daemonCommand
     }
 
     try {
-      const stats = await rpcCall('system.stats') as {
+      const stats = (await rpcCall('system.stats')) as {
         agents: { total: number; running: number; errors: number; processes: number };
         daemon: { pid: number; uptime: number; memory: number };
       };
@@ -68,9 +67,13 @@ daemonCommand
       console.log(chalk.green('  ● Daemon running'));
       console.log(`  ${chalk.dim('PID:')}      ${stats.daemon.pid}`);
       console.log(`  ${chalk.dim('Uptime:')}   ${formatUptime(stats.daemon.uptime)}`);
-      console.log(`  ${chalk.dim('Memory:')}   ${(stats.daemon.memory / 1024 / 1024).toFixed(1)} MB`);
+      console.log(
+        `  ${chalk.dim('Memory:')}   ${(stats.daemon.memory / 1024 / 1024).toFixed(1)} MB`,
+      );
       console.log();
-      console.log(`  ${chalk.dim('Agents:')}   ${stats.agents.total} total, ${chalk.green(String(stats.agents.running))} running, ${chalk.red(String(stats.agents.errors))} errors`);
+      console.log(
+        `  ${chalk.dim('Agents:')}   ${stats.agents.total} total, ${chalk.green(String(stats.agents.running))} running, ${chalk.red(String(stats.agents.errors))} errors`,
+      );
       console.log();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -91,7 +94,9 @@ export async function ensureDaemon(): Promise<void> {
       try {
         await rpcCall('system.health', {}, { timeout: 2000 });
         return;
-      } catch { /* retry */ }
+      } catch {
+        /* retry */
+      }
     }
   }
 

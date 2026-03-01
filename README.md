@@ -1,14 +1,14 @@
-# OmniWatch
+# Vigil
 
 > AI-powered autonomous monitoring platform — **"Don't Config, Just Speak"**
 
-OmniWatch is a platform where you describe what you want in plain language, and AI automatically generates, runs, monitors, and self-heals background agents 24/7. It ships with a CLI, a background daemon, a REST API, and a full-featured web dashboard.
+Vigil is a platform where you describe what you want in plain language, and AI automatically generates, runs, monitors, and self-heals background agents 24/7. It ships with a CLI, a background daemon, a REST API, and a full-featured web dashboard.
 
 ```
-$ omni watch "Alert me when AirPods Pro drops below $250 on Amazon"
+$ vigil watch "Alert me when AirPods Pro drops below $250 on Amazon"
 Agent [amazon-airpods] created and running.
 
-$ omni list
+$ vigil list
 ID              NAME                STATUS    LAST CHECK
 agent-a1b2      amazon-airpods      running   30s ago
 agent-c3d4      btc-price-alert     running   10s ago
@@ -28,20 +28,20 @@ docker compose up -d
 ### From Source
 
 ```bash
-git clone https://github.com/jabiers/omniwatch.git
-cd omniwatch
+git clone https://github.com/jabiers/vigil.git
+cd vigil
 pnpm install
 npx turbo build
 npx turbo dev
 
 # Set your AI key
-omni config set ai.api_key sk-ant-xxxxx
+vigil config set ai.api_key sk-ant-xxxxx
 
 # Start the daemon
-omni daemon start
+vigil daemon start
 
 # Create your first agent
-omni watch "Check Hacker News every hour for AI-related posts"
+vigil watch "Check Hacker News every hour for AI-related posts"
 ```
 
 ## Features
@@ -97,10 +97,10 @@ omni watch "Check Hacker News every hour for AI-related posts"
 | Layer | Role |
 |-------|------|
 | **CLI** (`omni`) | Lightweight terminal client. 14 commands + Ink TUI. |
-| **Daemon** (`omnid`) | Background service. Agent lifecycle, health, AI, sandbox, queue, metrics. |
+| **Daemon** (`vigild`) | Background service. Agent lifecycle, health, AI, sandbox, queue, metrics. |
 | **API** (`apps/api`) | Hono REST API (45+ endpoints) + WebSocket + MCP. |
 | **Web** (`apps/web`) | Next.js 15 Glass Console. 15 pages with auth, charts, admin. |
-| **Agent** | Sandboxed Node.js process with SDK (`omni.fetch`, `omni.notify`, `omni.store`). |
+| **Agent** | Sandboxed Node.js process with SDK (`vigil.fetch`, `vigil.notify`, `vigil.store`). |
 
 ## Web Dashboard
 
@@ -134,7 +134,7 @@ The Glass Console dashboard (port 3457) provides full control over the platform.
 
 ```bash
 # API key header
-curl -H "X-API-Key: omni_..." http://localhost:3456/api/agents
+curl -H "X-API-Key: vigil_..." http://localhost:3456/api/agents
 
 # OAuth Bearer token
 curl -H "Authorization: Bearer <token>" http://localhost:3456/api/agents
@@ -170,7 +170,7 @@ curl -H "Authorization: Bearer <token>" http://localhost:3456/api/agents
 
 ## Security
 
-- **API key authentication** -- `omni_` prefix + 32 hex chars, SHA-256 hashed storage
+- **API key authentication** -- `vigil_` prefix + 32 hex chars, SHA-256 hashed storage
 - **OAuth/OIDC** -- GitHub and Google login with CSRF state protection
 - **RBAC** -- Role-based access control: `admin` > `operator` > `viewer`
 - **Agent Sandbox** -- VM-based isolation with three security levels
@@ -229,7 +229,7 @@ GitHub Actions workflow runs on every push and PR to `main`:
 ## Project Structure
 
 ```
-omniwatch/
+vigil/
 +-- apps/
 |   +-- cli/                    # CLI client (14 commands + Ink TUI)
 |   +-- daemon/                 # Background daemon
@@ -253,7 +253,7 @@ omniwatch/
 |   +-- db/                     # SQLite schema + versioned migrations
 |       +-- src/migrations/     # v001-v005
 +-- tests/                      # 34 files, 280+ tests
-+-- bin/omni.mjs                # CLI entry point
++-- bin/vigil.mjs                # CLI entry point
 +-- Dockerfile                  # Production container
 +-- docker-compose.yml          # Docker Compose config
 +-- turbo.json                  # Turborepo config

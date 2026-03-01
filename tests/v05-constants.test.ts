@@ -5,7 +5,7 @@ import {
   MAX_SPAWN_DEPTH,
   SPAWN_RATE_LIMIT,
   MAX_SNAPSHOTS_PER_AGENT,
-} from '@omniwatch/shared';
+} from '@vigil/shared';
 
 describe('v0.5 constants', () => {
   it('MESH_RATE_LIMIT is 100/min', () => {

@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { loadConfig, saveConfig, type OmniConfig } from '@omniwatch/db';
+import { loadConfig, saveConfig, type OmniConfig } from '@vigil/db';
 
 export const configRoutes = new Hono();
 
@@ -54,16 +54,20 @@ configRoutes.put('/config', async (c) => {
     if (n.telegram_token !== undefined && !n.telegram_token.startsWith('••••')) {
       current.notification.telegram_token = n.telegram_token;
     }
-    if (n.telegram_chat_id !== undefined) current.notification.telegram_chat_id = n.telegram_chat_id;
+    if (n.telegram_chat_id !== undefined)
+      current.notification.telegram_chat_id = n.telegram_chat_id;
     if (n.system !== undefined) current.notification.system = n.system;
-    if (n.channels) current.notification.channels = { ...current.notification.channels, ...n.channels };
+    if (n.channels)
+      current.notification.channels = { ...current.notification.channels, ...n.channels };
   }
 
   // Merge agent settings
   if (updates.agent) {
     if (updates.agent.max_count !== undefined) current.agent.max_count = updates.agent.max_count;
-    if (updates.agent.memory_limit_mb !== undefined) current.agent.memory_limit_mb = updates.agent.memory_limit_mb;
-    if (updates.agent.max_heal_attempts !== undefined) current.agent.max_heal_attempts = updates.agent.max_heal_attempts;
+    if (updates.agent.memory_limit_mb !== undefined)
+      current.agent.memory_limit_mb = updates.agent.memory_limit_mb;
+    if (updates.agent.max_heal_attempts !== undefined)
+      current.agent.max_heal_attempts = updates.agent.max_heal_attempts;
   }
 
   saveConfig(current);

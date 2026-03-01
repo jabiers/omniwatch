@@ -1,7 +1,7 @@
 import type { Socket } from 'node:net';
-import { encodeMessage, createNotification } from '@omniwatch/shared';
-import type { AgentLog } from '@omniwatch/shared';
-import { getDb } from '@omniwatch/db';
+import { encodeMessage, createNotification } from '@vigil/shared';
+import type { AgentLog } from '@vigil/shared';
+import { getDb } from '@vigil/db';
 
 // Track active log stream subscriptions
 const logStreamClients = new Map<Socket, { agentId: string; level?: string }>();
@@ -15,14 +15,16 @@ export const handleLogRPC = {
     const db = getDb();
 
     if (level) {
-      return db.prepare(
-        'SELECT * FROM agent_logs WHERE agent_id = ? AND level = ? ORDER BY created_at DESC LIMIT ?'
-      ).all(id, level, limit) as AgentLog[];
+      return db
+        .prepare(
+          'SELECT * FROM agent_logs WHERE agent_id = ? AND level = ? ORDER BY created_at DESC LIMIT ?',
+        )
+        .all(id, level, limit) as AgentLog[];
     }
 
-    return db.prepare(
-      'SELECT * FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT ?'
-    ).all(id, limit) as AgentLog[];
+    return db
+      .prepare('SELECT * FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT ?')
+      .all(id, limit) as AgentLog[];
   },
 
   async streamLogs(params: Record<string, unknown>, client: Socket) {

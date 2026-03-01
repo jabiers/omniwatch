@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { listRecipes, searchRecipes, getRecipe } from '@omniwatch/shared';
+import { listRecipes, searchRecipes, getRecipe } from '@vigil/shared';
 import { rpcCall } from '../lib/rpc-bridge.js';
 
 export const recipeRoutes = new Hono();
@@ -11,7 +11,7 @@ recipeRoutes.get('/recipes', (c) => {
 
   let recipes = query ? searchRecipes(query) : listRecipes();
   if (category) {
-    recipes = recipes.filter(r => r.category === category);
+    recipes = recipes.filter((r) => r.category === category);
   }
 
   return c.json({ recipes });

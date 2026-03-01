@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  OMNI_HOME,
+  VIGIL_HOME,
   DB_PATH,
   SOCKET_PATH,
   HEARTBEAT_INTERVAL,
@@ -9,20 +9,20 @@ import {
   AGENT_MEMORY_LIMIT,
   WHITELISTED_PACKAGES,
   FORBIDDEN_APIS,
-} from '@omniwatch/shared';
+} from '@vigil/shared';
 
 describe('constants', () => {
-  it('OMNI_HOME is under home directory', () => {
-    expect(OMNI_HOME).toContain('.omniwatch');
+  it('VIGIL_HOME is under home directory', () => {
+    expect(VIGIL_HOME).toContain('.vigil');
   });
 
-  it('DB_PATH is under OMNI_HOME', () => {
-    expect(DB_PATH).toContain('.omniwatch');
-    expect(DB_PATH).toContain('omniwatch.db');
+  it('DB_PATH is under VIGIL_HOME', () => {
+    expect(DB_PATH).toContain('.vigil');
+    expect(DB_PATH).toContain('vigil.db');
   });
 
-  it('SOCKET_PATH is under OMNI_HOME', () => {
-    expect(SOCKET_PATH).toContain('omnid.sock');
+  it('SOCKET_PATH is under VIGIL_HOME', () => {
+    expect(SOCKET_PATH).toContain('vigild.sock');
   });
 
   it('heartbeat values are reasonable', () => {

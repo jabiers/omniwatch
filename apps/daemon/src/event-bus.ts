@@ -1,7 +1,7 @@
 /** Agent Mesh — In-memory pub/sub event bus for inter-agent communication */
-import { log, MESH_RATE_LIMIT, MESH_MAX_PAYLOAD_SIZE } from '@omniwatch/shared';
-import type { DaemonToAgentMessage } from '@omniwatch/shared';
-import { getDb } from '@omniwatch/db';
+import { log, MESH_RATE_LIMIT, MESH_MAX_PAYLOAD_SIZE } from '@vigil/shared';
+import type { DaemonToAgentMessage } from '@vigil/shared';
+import { getDb } from '@vigil/db';
 import { getRunningProcesses } from './agent-manager.js';
 
 interface Subscription {

@@ -21,8 +21,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@omniwatch/shared': resolve(__dirname, 'packages/shared/src/index.ts'),
-      '@omniwatch/db': resolve(__dirname, 'packages/db/src/index.ts'),
+      '@vigil/shared': resolve(__dirname, 'packages/shared/src/index.ts'),
+      '@vigil/db': resolve(__dirname, 'packages/db/src/index.ts'),
     },
   },
 });

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock dependencies
-vi.mock('@omniwatch/db', () => ({
+vi.mock('@vigil/db', () => ({
   getDb: vi.fn(() => ({
     prepare: vi.fn(() => ({
       all: vi.fn(() => []),
@@ -9,8 +9,8 @@ vi.mock('@omniwatch/db', () => ({
     })),
   })),
 }));
-vi.mock('@omniwatch/shared', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@omniwatch/shared')>();
+vi.mock('@vigil/shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@vigil/shared')>();
   return { ...actual, log: vi.fn() };
 });
 vi.mock('../apps/daemon/src/agent-manager.js', () => ({

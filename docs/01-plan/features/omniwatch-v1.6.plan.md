@@ -1,4 +1,4 @@
-# OmniWatch v1.6 Plan - Analytics Enhancement & Agent Detail
+# Vigil v1.6 Plan - Analytics Enhancement & Agent Detail
 
 ## Overview
 - **Version**: 1.6.0

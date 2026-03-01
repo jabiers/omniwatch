@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface AuthState {
   apiKey: string | null;
@@ -33,16 +33,16 @@ export const useAuthStore = create<AuthState>()(
       getAuthHeaders: (): Record<string, string> => {
         const key = get().apiKey;
         if (!key) return {};
-        return { "X-API-Key": key };
+        return { 'X-API-Key': key };
       },
     }),
     {
-      name: "omniwatch-auth",
+      name: 'vigil-auth',
       partialize: (state) => ({
         apiKey: state.apiKey,
         role: state.role,
         tenantId: state.tenantId,
       }),
-    }
-  )
+    },
+  ),
 );

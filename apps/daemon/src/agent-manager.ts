@@ -3,15 +3,15 @@ import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { nanoid } from 'nanoid';
-import { AGENTS_DIR, MAX_AGENTS, log, Errors } from '@omniwatch/shared';
+import { AGENTS_DIR, MAX_AGENTS, log, Errors } from '@vigil/shared';
 import type {
   Agent,
   AgentConfig,
   AgentMessage,
   AgentType,
   DaemonToAgentMessage,
-} from '@omniwatch/shared';
-import { getDb } from '@omniwatch/db';
+} from '@vigil/shared';
+import { getDb } from '@vigil/db';
 import { sendNotification } from './notifier.js';
 import { recordHeartbeat } from './health-monitor.js';
 import { broadcastLogEntry } from './handlers/log.js';
@@ -26,7 +26,7 @@ import {
   recordAgentError,
   recordAgentHeal,
 } from './metrics-collector.js';
-import type { SandboxLevel } from '@omniwatch/shared';
+import type { SandboxLevel } from '@vigil/shared';
 
 /** Auto-capture snapshot with error suppression (best-effort) */
 function autoSnapshot(agentId: string, label: string): void {
@@ -86,7 +86,7 @@ export function createAgentRecord(
     join(agentDir, 'package.json'),
     JSON.stringify(
       {
-        name: `omniwatch-agent-${id}`,
+        name: `vigil-agent-${id}`,
         private: true,
         type: 'module',
         dependencies: Object.fromEntries((config.dependencies || []).map((dep) => [dep, 'latest'])),
@@ -162,8 +162,8 @@ export async function startAgent(id: string): Promise<void> {
     cwd: agentDir,
     env: {
       ...process.env,
-      OMNI_AGENT_ID: id,
-      OMNI_AGENT_DIR: agentDir,
+      VIGIL_AGENT_ID: id,
+      VIGIL_AGENT_DIR: agentDir,
       OMNI_SANDBOX_LEVEL: sandboxLevel,
       NODE_ENV: 'production',
     },

@@ -1,13 +1,26 @@
 /** Agent Sandbox — Isolated execution environment */
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'node:fs';
-import { join, resolve, relative } from 'node:path';
-import { getDb } from '@omniwatch/db';
 import {
-  SANDBOX_TIMEOUT_STRICT, SANDBOX_TIMEOUT_STANDARD, SANDBOX_TIMEOUT_PERMISSIVE,
-  SANDBOX_MEMORY_STRICT, SANDBOX_MEMORY_STANDARD, SANDBOX_MEMORY_PERMISSIVE,
-  AGENTS_DIR, log,
-} from '@omniwatch/shared';
-import type { SandboxLevel, SecurityEvent } from '@omniwatch/shared';
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  statSync,
+  unlinkSync,
+} from 'node:fs';
+import { join, resolve, relative } from 'node:path';
+import { getDb } from '@vigil/db';
+import {
+  SANDBOX_TIMEOUT_STRICT,
+  SANDBOX_TIMEOUT_STANDARD,
+  SANDBOX_TIMEOUT_PERMISSIVE,
+  SANDBOX_MEMORY_STRICT,
+  SANDBOX_MEMORY_STANDARD,
+  SANDBOX_MEMORY_PERMISSIVE,
+  AGENTS_DIR,
+  log,
+} from '@vigil/shared';
+import type { SandboxLevel, SecurityEvent } from '@vigil/shared';
 
 interface SandboxPolicy {
   timeout: number;
@@ -60,24 +73,28 @@ export function logSecurityEvent(
 ): void {
   try {
     const db = getDb();
-    db.prepare(
-      'INSERT INTO security_events (agent_id, event_type, detail) VALUES (?, ?, ?)'
-    ).run(agentId, eventType, detail);
+    db.prepare('INSERT INTO security_events (agent_id, event_type, detail) VALUES (?, ?, ?)').run(
+      agentId,
+      eventType,
+      detail,
+    );
     log('warn', `Security event [${eventType}] for agent ${agentId}: ${detail}`);
-  } catch { /* ignore DB errors in security logging */ }
+  } catch {
+    /* ignore DB errors in security logging */
+  }
 }
 
 /** Get recent security events for an agent */
 export function getSecurityEvents(agentId?: string, limit = 50): SecurityEvent[] {
   const db = getDb();
   if (agentId) {
-    return db.prepare(
-      'SELECT * FROM security_events WHERE agent_id = ? ORDER BY created_at DESC LIMIT ?'
-    ).all(agentId, limit) as SecurityEvent[];
+    return db
+      .prepare('SELECT * FROM security_events WHERE agent_id = ? ORDER BY created_at DESC LIMIT ?')
+      .all(agentId, limit) as SecurityEvent[];
   }
-  return db.prepare(
-    'SELECT * FROM security_events ORDER BY created_at DESC LIMIT ?'
-  ).all(limit) as SecurityEvent[];
+  return db
+    .prepare('SELECT * FROM security_events ORDER BY created_at DESC LIMIT ?')
+    .all(limit) as SecurityEvent[];
 }
 
 /** Create a sandboxed fs proxy that restricts access to allowed paths */
@@ -166,13 +183,22 @@ export function isUrlAllowed(url: string, agentId: string, level: SandboxLevel):
 
 /** Get blocked API list — APIs that agents are never allowed to use directly */
 export const SANDBOX_BLOCKED_APIS = [
-  'child_process', 'cluster', 'dgram', 'net', 'tls',
-  'vm', 'worker_threads', 'process.exit', 'process.kill',
+  'child_process',
+  'cluster',
+  'dgram',
+  'net',
+  'tls',
+  'vm',
+  'worker_threads',
+  'process.exit',
+  'process.kill',
 ] as const;
 
 /** Check if a require call is sandbox-safe */
 export function isSafeRequire(moduleName: string): boolean {
-  return !SANDBOX_BLOCKED_APIS.some(api => moduleName === api || moduleName.startsWith(`${api}/`));
+  return !SANDBOX_BLOCKED_APIS.some(
+    (api) => moduleName === api || moduleName.startsWith(`${api}/`),
+  );
 }
 
 /**
@@ -194,9 +220,12 @@ export async function runInIsolate(
     const jail = context.global;
 
     // Provide minimal console.log
-    await jail.set('_log', new ivm.Callback((msg: string) => {
-      log('info', `[Isolate:${agentId}] ${msg}`);
-    }));
+    await jail.set(
+      '_log',
+      new ivm.Callback((msg: string) => {
+        log('info', `[Isolate:${agentId}] ${msg}`);
+      }),
+    );
     await context.eval('globalThis.console = { log: (...args) => _log(args.join(" ")) }');
 
     const script = await isolate.compileScript(code);

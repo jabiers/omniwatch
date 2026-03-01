@@ -9,8 +9,8 @@ import {
   createErrorResponse,
   createNotification,
   RPC_ERRORS,
-} from '@omniwatch/shared';
-import type { RPCRequest } from '@omniwatch/shared';
+} from '@vigil/shared';
+import type { RPCRequest } from '@vigil/shared';
 import { handleAgentRPC } from './handlers/agent.js';
 import { handleLogRPC } from './handlers/log.js';
 import { handleSystemRPC } from './handlers/system.js';
@@ -167,7 +167,11 @@ export function stopRPCServer(): void {
   }
 
   if (existsSync(SOCKET_PATH)) {
-    try { unlinkSync(SOCKET_PATH); } catch { /* ignore */ }
+    try {
+      unlinkSync(SOCKET_PATH);
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -176,6 +180,8 @@ export function broadcastToClients(type: string, data: unknown): void {
   for (const client of clients) {
     try {
       client.write(msg);
-    } catch { /* ignore dead clients */ }
+    } catch {
+      /* ignore dead clients */
+    }
   }
 }

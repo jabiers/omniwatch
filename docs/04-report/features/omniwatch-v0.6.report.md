@@ -1,4 +1,4 @@
-# OmniWatch v0.6 Completion Report
+# Vigil v0.6 Completion Report
 
 > **Summary**: Enterprise-ready platform with Agent Sandbox, Persistent Queue, Multi-Tenant support, and Analytics dashboard
 >
@@ -11,7 +11,7 @@
 
 ## 1. Executive Summary
 
-OmniWatch v0.6 successfully implements four critical enterprise features that elevate the platform from agent orchestration infrastructure to a production-ready, multi-team monitoring solution:
+Vigil v0.6 successfully implements four critical enterprise features that elevate the platform from agent orchestration infrastructure to a production-ready, multi-team monitoring solution:
 
 - **Agent Sandbox**: Secure isolation of agent code using Node.js VM with per-agent policy enforcement
 - **Persistent Queue**: SQLite-backed message queue with at-least-once delivery guarantees
@@ -32,7 +32,7 @@ OmniWatch v0.6 successfully implements four critical enterprise features that el
 
 ### 2.1 Plan Phase
 
-**Document**: `docs/01-plan/features/omniwatch-v0.6.plan.md`
+**Document**: `docs/01-plan/features/vigil-v0.6.plan.md`
 
 **Planned Goals**:
 - Define 4 major features with clear scope and success criteria
@@ -50,7 +50,7 @@ OmniWatch v0.6 successfully implements four critical enterprise features that el
 
 ### 2.2 Design Phase
 
-**Document**: `docs/02-design/features/omniwatch-v0.6.design.md`
+**Document**: `docs/02-design/features/vigil-v0.6.design.md`
 
 **Designed Components**:
 
@@ -68,7 +68,7 @@ OmniWatch v0.6 successfully implements four critical enterprise features that el
 - **Wildcard Topics**: Support for pattern matching (e.g., `btc.*`)
 
 #### FR-03: Multi-Tenant
-- **Auth Model**: API Key (prefix `omni_` + 32 hex chars) → SHA-256 hash → user lookup
+- **Auth Model**: API Key (prefix `vigil_` + 32 hex chars) → SHA-256 hash → user lookup
 - **RBAC**: 3 roles (admin, operator, viewer) with granular permissions
 - **Default Tenant**: Auto-created on first boot with generated admin key
 - **Resource Isolation**: Agents assigned to tenant_id with full scope filtering
@@ -206,7 +206,7 @@ OmniWatch v0.6 successfully implements four critical enterprise features that el
 | At-least-once delivery | ✅ 3 retries | ✅ Implemented | MATCH | Configurable retry limit |
 | Dead letter queue | ✅ Table | ✅ Implemented | MATCH | After max retries |
 | Backpressure | ✅ 1000 limit | ✅ Implemented | MATCH | Per-agent queue depth |
-| API Key auth | ✅ SHA-256 | ✅ Implemented | MATCH | omni_ prefix + 32 hex |
+| API Key auth | ✅ SHA-256 | ✅ Implemented | MATCH | vigil_ prefix + 32 hex |
 | RBAC matrix | ✅ 3 roles | ✅ Implemented | MATCH | admin/operator/viewer |
 | Default tenant | ✅ Auto-create | ✅ Implemented | MATCH | Generated on first boot |
 | Metrics collection | ✅ Raw metrics | ✅ Implemented | MATCH | 8+ metric types |
@@ -403,7 +403,7 @@ const stats = getQueueStats();
 ```typescript
 // API authentication
 const key = await generateApiKey(userId);
-// Returns: { key: "omni_a1b2c3d4e5f6...", hash: "sha256..." }
+// Returns: { key: "vigil_a1b2c3d4e5f6...", hash: "sha256..." }
 
 // Middleware validates each request
 app.use('/api/*', authMiddleware); // extracts X-API-Key header
@@ -500,8 +500,8 @@ if (anomalies.length > 0) {
 
 **Build Results**:
 ```
-✅ @omniwatch/shared   — All types, constants compiled
-✅ @omniwatch/db       — Schema migrations successful
+✅ @vigil/shared   — All types, constants compiled
+✅ @vigil/db       — Schema migrations successful
 ✅ apps/daemon         — All handlers compiled
 ✅ apps/api            — Hono routes mounted
 ✅ apps/web            — Pages built
@@ -795,7 +795,7 @@ if (anomalies.length > 0) {
 
 ### 10.1 Feature Completion Status
 
-**Feature**: omniwatch-v0.6
+**Feature**: vigil-v0.6
 **Version**: 0.6.0
 **Completion Date**: 2026-02-28
 **Overall Status**: COMPLETE & VERIFIED
@@ -815,10 +815,10 @@ if (anomalies.length > 0) {
 
 ```
 docs/
-├── 01-plan/features/omniwatch-v0.6.plan.md          ✅
-├── 02-design/features/omniwatch-v0.6.design.md      ✅
-├── 03-analysis/features/omniwatch-v0.6.analysis.md  📋 (THIS REPORT)
-└── 04-report/features/omniwatch-v0.6.report.md      📋 (THIS FILE)
+├── 01-plan/features/vigil-v0.6.plan.md          ✅
+├── 02-design/features/vigil-v0.6.design.md      ✅
+├── 03-analysis/features/vigil-v0.6.analysis.md  📋 (THIS REPORT)
+└── 04-report/features/vigil-v0.6.report.md      📋 (THIS FILE)
 
 Implementation:
 ├── 23 new/modified files                             ✅
@@ -865,7 +865,7 @@ Implementation:
 
 **Multi-Tenant**:
 - Default tenant ID: `default`
-- API key prefix: `omni_`
+- API key prefix: `vigil_`
 - API key length: 32 hex characters
 - Free plan agents: 10 max
 - Pro plan agents: 50 max
@@ -885,7 +885,7 @@ Implementation:
 All `/api/*` endpoints require `X-API-Key` header:
 
 ```bash
-curl -H "X-API-Key: omni_a1b2c3d4..." https://api.omniwatch.local/api/queue/stats
+curl -H "X-API-Key: vigil_a1b2c3d4..." https://api.vigil.local/api/queue/stats
 ```
 
 Response includes tenant/user context for authorization checks.
@@ -916,7 +916,7 @@ Body: { name: "Acme Inc", plan: "pro" }
 # Create user in tenant
 POST /api/users
 Body: { email: "user@acme.com", role: "operator" }
-Response: { api_key: "omni_...", api_key_hash: "sha256..." }
+Response: { api_key: "vigil_...", api_key_hash: "sha256..." }
 
 # List tenant users
 GET /api/users

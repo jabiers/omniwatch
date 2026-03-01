@@ -1,4 +1,4 @@
-# OmniWatch v1.3 Design - Version Sync & Developer Experience
+# Vigil v1.3 Design - Version Sync & Developer Experience
 
 ## Group 1: Version Sync
 

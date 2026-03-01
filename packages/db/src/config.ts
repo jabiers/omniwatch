@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { CONFIG_FILE, OMNI_HOME } from '@omniwatch/shared';
+import { CONFIG_FILE, VIGIL_HOME } from '@vigil/shared';
 
 export type SeverityLevel = 'info' | 'warning' | 'critical';
 
@@ -63,7 +63,7 @@ let cached: OmniConfig | null = null;
 export function loadConfig(): OmniConfig {
   if (cached) return cached;
 
-  mkdirSync(OMNI_HOME, { recursive: true });
+  mkdirSync(VIGIL_HOME, { recursive: true });
 
   if (!existsSync(CONFIG_FILE)) {
     saveConfig(DEFAULT_CONFIG);

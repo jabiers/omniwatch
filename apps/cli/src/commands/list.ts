@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { rpcCall } from '../ipc-client.js';
 import { ensureDaemon } from './daemon.js';
-import type { Agent } from '@omniwatch/shared';
+import type { Agent } from '@vigil/shared';
 
 const STATUS_COLORS: Record<string, (s: string) => string> = {
   running: chalk.green,
@@ -21,19 +21,17 @@ export const listCommand = new Command('list')
     try {
       await ensureDaemon();
 
-      const agents = await rpcCall('agent.list', {
+      const agents = (await rpcCall('agent.list', {
         status: options.status,
-      }) as Agent[];
+      })) as Agent[];
 
       if (agents.length === 0) {
-        console.log(chalk.dim('No agents found. Create one with: omni watch "<prompt>"'));
+        console.log(chalk.dim('No agents found. Create one with: vigil watch "<prompt>"'));
         return;
       }
 
       console.log();
-      console.log(
-        chalk.dim('  ID              NAME                STATUS      CREATED')
-      );
+      console.log(chalk.dim('  ID              NAME                STATUS      CREATED'));
       console.log(chalk.dim('  ' + '─'.repeat(68)));
 
       for (const agent of agents) {

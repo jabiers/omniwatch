@@ -1,4 +1,4 @@
-# OmniWatch v1.5 Design - Reusable Components & Dashboard Polish
+# Vigil v1.5 Design - Reusable Components & Dashboard Polish
 
 ## Group 1: Reusable Components
 

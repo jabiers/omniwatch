@@ -1,6 +1,6 @@
 /** Snapshot (Time Travel) API routes */
 import { Hono } from 'hono';
-import { getDb } from '@omniwatch/db';
+import { getDb } from '@vigil/db';
 import { rpcCall } from '../lib/rpc-bridge.js';
 
 export const snapshotRoutes = new Hono();
@@ -15,9 +15,11 @@ snapshotRoutes.get('/agents/:id/snapshots', (c) => {
     return c.json({ error: `Agent '${id}' not found` }, 404);
   }
 
-  const snapshots = db.prepare(
-    'SELECT id, agent_id, seq, label, created_at FROM agent_snapshots WHERE agent_id = ? ORDER BY seq DESC'
-  ).all(id);
+  const snapshots = db
+    .prepare(
+      'SELECT id, agent_id, seq, label, created_at FROM agent_snapshots WHERE agent_id = ? ORDER BY seq DESC',
+    )
+    .all(id);
 
   return c.json({ snapshots });
 });
@@ -60,9 +62,11 @@ snapshotRoutes.get('/agents/:id/children', (c) => {
   const db = getDb();
   const { id } = c.req.param();
 
-  const children = db.prepare(
-    "SELECT * FROM agents WHERE parent_id = ? AND status != 'destroyed' ORDER BY created_at DESC"
-  ).all(id);
+  const children = db
+    .prepare(
+      "SELECT * FROM agents WHERE parent_id = ? AND status != 'destroyed' ORDER BY created_at DESC",
+    )
+    .all(id);
 
   return c.json({ children });
 });

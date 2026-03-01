@@ -1,10 +1,10 @@
-# OmniWatch v0.6 Plan — Agent Sandbox + Persistent Queue + Multi-Tenant + Analytics
+# Vigil v0.6 Plan — Agent Sandbox + Persistent Queue + Multi-Tenant + Analytics
 
 ## 1. Overview
 
-**Feature Name**: omniwatch-v0.6
+**Feature Name**: vigil-v0.6
 **Version**: 0.6.0
-**Goal**: OmniWatch를 프로덕션-레디 플랫폼으로 진화. 보안 샌드박스, 메시지 영속성, 멀티테넌트, 운영 분석 기능을 구현하여 팀/조직 단위 운영이 가능한 AI Agent 관제 플랫폼으로 격상시킨다.
+**Goal**: Vigil를 프로덕션-레디 플랫폼으로 진화. 보안 샌드박스, 메시지 영속성, 멀티테넌트, 운영 분석 기능을 구현하여 팀/조직 단위 운영이 가능한 AI Agent 관제 플랫폼으로 격상시킨다.
 **Priority**: Critical
 **Estimated Scope**: 40+ new/modified files, ~5,000 LOC
 

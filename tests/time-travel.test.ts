@@ -1,14 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock @omniwatch/shared
-vi.mock('@omniwatch/shared', () => ({
+// Mock @vigil/shared
+vi.mock('@vigil/shared', () => ({
   log: vi.fn(),
   MAX_SNAPSHOTS_PER_AGENT: 3, // Low limit for testing
 }));
 
 // Agent store and snapshot data
 let storeData: Record<string, { key: string; value: string }[]> = {};
-let snapshotData: Record<string, { id: number; agent_id: string; seq: number; label: string | null; state_json: string; created_at: string }[]> = {};
+let snapshotData: Record<
+  string,
+  {
+    id: number;
+    agent_id: string;
+    seq: number;
+    label: string | null;
+    state_json: string;
+    created_at: string;
+  }[]
+> = {};
 let idCounter = 1;
 
 const mockStmt = {
@@ -17,8 +27,8 @@ const mockStmt = {
   get: vi.fn(),
 };
 
-// Mock @omniwatch/db
-vi.mock('@omniwatch/db', () => ({
+// Mock @vigil/db
+vi.mock('@vigil/db', () => ({
   getDb: () => ({
     prepare: (sql: string) => {
       if (sql.includes('SELECT key, value FROM agent_store')) {
@@ -35,7 +45,7 @@ vi.mock('@omniwatch/db', () => ({
         return {
           get: (agentId: string) => {
             const snaps = snapshotData[agentId] || [];
-            const maxSeq = snaps.length > 0 ? Math.max(...snaps.map(s => s.seq)) : null;
+            const maxSeq = snaps.length > 0 ? Math.max(...snaps.map((s) => s.seq)) : null;
             return { max_seq: maxSeq };
           },
           run: vi.fn(),
@@ -81,7 +91,7 @@ vi.mock('@omniwatch/db', () => ({
         return {
           get: (agentId: string, seq: number) => {
             const snaps = snapshotData[agentId] || [];
-            return snaps.find(s => s.seq === seq);
+            return snaps.find((s) => s.seq === seq);
           },
           run: vi.fn(),
           all: vi.fn(),
@@ -109,8 +119,12 @@ vi.mock('@omniwatch/db', () => ({
       if (sql.includes('SELECT id, agent_id, seq, label, created_at FROM agent_snapshots')) {
         return {
           all: (agentId: string) => {
-            return (snapshotData[agentId] || []).map(s => ({
-              id: s.id, agent_id: s.agent_id, seq: s.seq, label: s.label, created_at: s.created_at,
+            return (snapshotData[agentId] || []).map((s) => ({
+              id: s.id,
+              agent_id: s.agent_id,
+              seq: s.seq,
+              label: s.label,
+              created_at: s.created_at,
             }));
           },
           run: vi.fn(),
@@ -123,21 +137,34 @@ vi.mock('@omniwatch/db', () => ({
 }));
 
 // Mock agent-manager
-const mockGetAgent = vi.fn((id: string): { id: string; name: string; status: string; config: string; heal_count: number; error_count: number; last_error: null } | null => ({
-  id,
-  name: 'Test Agent',
-  status: 'running',
-  config: '{}',
-  heal_count: 0,
-  error_count: 0,
-  last_error: null,
-}));
+const mockGetAgent = vi.fn(
+  (
+    id: string,
+  ): {
+    id: string;
+    name: string;
+    status: string;
+    config: string;
+    heal_count: number;
+    error_count: number;
+    last_error: null;
+  } | null => ({
+    id,
+    name: 'Test Agent',
+    status: 'running',
+    config: '{}',
+    heal_count: 0,
+    error_count: 0,
+    last_error: null,
+  }),
+);
 vi.mock('../apps/daemon/src/agent-manager.js', () => ({
-  getAgent: (...args: unknown[]) => mockGetAgent(...args as [string]),
+  getAgent: (...args: unknown[]) => mockGetAgent(...(args as [string])),
   updateAgent: vi.fn(),
 }));
 
-const { captureSnapshot, restoreSnapshot, listSnapshots } = await import('../apps/daemon/src/time-travel.js');
+const { captureSnapshot, restoreSnapshot, listSnapshots } =
+  await import('../apps/daemon/src/time-travel.js');
 
 describe('Time Travel', () => {
   beforeEach(() => {
@@ -149,9 +176,7 @@ describe('Time Travel', () => {
 
   describe('captureSnapshot', () => {
     it('should capture a snapshot and return sequence number', () => {
-      storeData['agent-tt'] = [
-        { key: 'counter', value: '42' },
-      ];
+      storeData['agent-tt'] = [{ key: 'counter', value: '42' }];
       const seq = captureSnapshot('agent-tt', 'test-snap');
       expect(seq).toBe(1);
       expect(snapshotData['agent-tt']).toHaveLength(1);
@@ -173,15 +198,11 @@ describe('Time Travel', () => {
 
   describe('restoreSnapshot', () => {
     it('should restore store data from snapshot', () => {
-      storeData['agent-restore'] = [
-        { key: 'data', value: '"original"' },
-      ];
+      storeData['agent-restore'] = [{ key: 'data', value: '"original"' }];
       captureSnapshot('agent-restore', 'before-change');
 
       // Simulate data change
-      storeData['agent-restore'] = [
-        { key: 'data', value: '"modified"' },
-      ];
+      storeData['agent-restore'] = [{ key: 'data', value: '"modified"' }];
 
       restoreSnapshot('agent-restore', 1);
 

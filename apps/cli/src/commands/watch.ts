@@ -4,7 +4,7 @@ import ora from 'ora';
 import { createInterface } from 'node:readline';
 import { rpcCall } from '../ipc-client.js';
 import { ensureDaemon } from './daemon.js';
-import type { Agent } from '@omniwatch/shared';
+import type { Agent } from '@vigil/shared';
 
 function confirm(question: string): Promise<boolean> {
   return new Promise((resolve) => {
@@ -27,10 +27,14 @@ export const watchCommand = new Command('watch')
 
       if (options.preview) {
         const spinner = ora('Generating preview...').start();
-        const preview = await rpcCall('agent.preview', {
-          prompt,
-          template: options.template,
-        }, { timeout: 120_000 }) as {
+        const preview = (await rpcCall(
+          'agent.preview',
+          {
+            prompt,
+            template: options.template,
+          },
+          { timeout: 120_000 },
+        )) as {
           name: string;
           description: string;
           code: string;
@@ -68,13 +72,17 @@ export const watchCommand = new Command('watch')
 
       const spinner = ora('Generating agent code with Claude...').start();
 
-      const agent = await rpcCall('agent.create', {
-        prompt,
-        template: options.template,
-      }, { timeout: 120_000 }) as Agent;
+      const agent = (await rpcCall(
+        'agent.create',
+        {
+          prompt,
+          template: options.template,
+        },
+        { timeout: 120_000 },
+      )) as Agent;
 
       spinner.succeed(
-        `Agent ${chalk.cyan(agent.name)} ${chalk.dim(`(${agent.id})`)} created and running.`
+        `Agent ${chalk.cyan(agent.name)} ${chalk.dim(`(${agent.id})`)} created and running.`,
       );
 
       if (agent.description) {
@@ -83,10 +91,10 @@ export const watchCommand = new Command('watch')
 
       console.log();
       console.log(chalk.dim('  Commands:'));
-      console.log(chalk.dim(`    omni logs ${agent.id}    View logs`));
-      console.log(chalk.dim(`    omni status ${agent.id}  Check status`));
-      console.log(chalk.dim(`    omni stop ${agent.id}    Stop agent`));
-      console.log(chalk.dim(`    omni chat ${agent.id}    Chat with agent`));
+      console.log(chalk.dim(`    vigil logs ${agent.id}    View logs`));
+      console.log(chalk.dim(`    vigil status ${agent.id}  Check status`));
+      console.log(chalk.dim(`    vigil stop ${agent.id}    Stop agent`));
+      console.log(chalk.dim(`    vigil chat ${agent.id}    Chat with agent`));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(chalk.red(`Error: ${message}`));

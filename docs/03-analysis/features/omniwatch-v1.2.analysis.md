@@ -1,4 +1,4 @@
-# OmniWatch v1.2 Gap Analysis Report
+# Vigil v1.2 Gap Analysis Report
 
 ## Overview
 - **Date**: 2026-03-01

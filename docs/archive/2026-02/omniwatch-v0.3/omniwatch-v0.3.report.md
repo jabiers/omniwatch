@@ -1,4 +1,4 @@
-# OmniWatch v0.3 Completion Report
+# Vigil v0.3 Completion Report
 
 **Date**: 2026-02-27
 **Version**: 0.3.0
@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-OmniWatch v0.3은 Definition.md의 미구현 요구사항을 해소하고 프로덕션 안정성을 확보하기 위한 릴리즈이다.
+Vigil v0.3은 Definition.md의 미구현 요구사항을 해소하고 프로덕션 안정성을 확보하기 위한 릴리즈이다.
 Agent Types(do/auto), Resource Enforcement, Code Validator 강화, Self-Healing 개선, Smart Throttle, SDK 확장 등
 10개 Feature Requirement를 모두 구현하고 114개 테스트로 검증했다.
 
@@ -17,17 +17,17 @@ Agent Types(do/auto), Resource Enforcement, Code Validator 강화, Self-Healing 
 
 | Phase | Status | Output |
 |-------|--------|--------|
-| Plan | Completed | `docs/01-plan/features/omniwatch-v0.3.plan.md` |
-| Design | Completed | `docs/02-design/features/omniwatch-v0.3.design.md` |
+| Plan | Completed | `docs/01-plan/features/vigil-v0.3.plan.md` |
+| Design | Completed | `docs/02-design/features/vigil-v0.3.design.md` |
 | Do | Completed | 12 files modified/created, 114 tests passing |
-| Check | 97% Match | `docs/03-analysis/features/omniwatch-v0.3.analysis.md` |
+| Check | 97% Match | `docs/03-analysis/features/vigil-v0.3.analysis.md` |
 | Report | This document | - |
 
 ## 3. Features Delivered
 
 ### 3.1 Agent Types (FR-01, FR-02)
-- **`omni do <prompt>`**: 주기적/단발 작업 에이전트. `--once`, `--schedule <cron>` 지원
-- **`omni auto <prompt>`**: 자율 판단 에이전트. 자체 루프로 관찰→분석→판단→실행
+- **`vigil do <prompt>`**: 주기적/단발 작업 에이전트. `--once`, `--schedule <cron>` 지원
+- **`vigil auto <prompt>`**: 자율 판단 에이전트. 자체 루프로 관찰→분석→판단→실행
 - Doer/Auto 전용 템플릿 및 시스템 프롬프트 추가
 
 ### 3.2 Resource Enforcement (FR-03)
@@ -52,9 +52,9 @@ Agent Types(do/auto), Resource Enforcement, Code Validator 강화, Self-Healing 
 - 30분 주기 자동 정리
 
 ### 3.6 SDK Expansion (FR-07)
-- `omni.sleep(ms)`: Promise 기반 대기
-- `omni.retry(fn, opts)`: 지수 백오프 재시도 (maxRetries, delay, backoff)
-- `omni.timeout(fn, ms)`: 타임아웃 래퍼
+- `vigil.sleep(ms)`: Promise 기반 대기
+- `vigil.retry(fn, opts)`: 지수 백오프 재시도 (maxRetries, delay, backoff)
+- `vigil.timeout(fn, ms)`: 타임아웃 래퍼
 - BASE_SYSTEM_PROMPT에 새 메서드 문서화
 
 ### 3.7 Database Improvements (FR-08)
@@ -134,7 +134,7 @@ dist/agent/runtime.js    4.94 KB (+0.78 KB from v0.2)
 
 ## 8. Known Limitations
 
-- `omni do --once` 의 자동 종료는 데몬 측 exit handler에 의존 (구현 완료)
+- `vigil do --once` 의 자동 종료는 데몬 측 exit handler에 의존 (구현 완료)
 - Smart throttle은 인메모리 — 데몬 재시작 시 초기화
 - Self-healing backoff 타이머도 인메모리 — 데몬 재시작 시 초기화
 

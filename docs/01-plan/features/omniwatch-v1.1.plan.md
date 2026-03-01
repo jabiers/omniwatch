@@ -1,4 +1,4 @@
-# OmniWatch v1.1 Plan — Quality & Security Hardening
+# Vigil v1.1 Plan — Quality & Security Hardening
 
 ## Overview
 v1.1은 **품질 인프라 + 보안 강화 + DX 개선**. 코드 품질 게이트를 확립하고, 보안 미비점을 해결하며, 개발자 워크플로우를 자동화한다.

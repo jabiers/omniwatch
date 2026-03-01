@@ -1,7 +1,6 @@
 import type { NotificationChannel, NotificationPayload, Severity } from './types.js';
-import { log } from '@omniwatch/shared';
-import { loadConfig } from '@omniwatch/db';
-
+import { log } from '@vigil/shared';
+import { loadConfig } from '@vigil/db';
 
 const channels: NotificationChannel[] = [];
 
@@ -32,7 +31,9 @@ export async function dispatchNotification(payload: NotificationPayload): Promis
   const results = await Promise.allSettled(
     configured.map(async (channel) => {
       // Check severity filter
-      const channelConfig = (config.notification.channels as Record<string, { min_severity?: Severity }> | undefined)?.[channel.name];
+      const channelConfig = (
+        config.notification.channels as Record<string, { min_severity?: Severity }> | undefined
+      )?.[channel.name];
       if (channelConfig?.min_severity) {
         const minLevel = SEVERITY_ORDER[channelConfig.min_severity];
         const payloadLevel = SEVERITY_ORDER[payload.severity];

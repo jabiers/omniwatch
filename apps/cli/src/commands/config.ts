@@ -1,9 +1,8 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { loadConfig, setConfigValue, getConfigValue } from '@omniwatch/db';
+import { loadConfig, setConfigValue, getConfigValue } from '@vigil/db';
 
-export const configCommand = new Command('config')
-  .description('View and modify configuration');
+export const configCommand = new Command('config').description('View and modify configuration');
 
 configCommand
   .command('set')
@@ -57,9 +56,8 @@ function printConfig(obj: Record<string, unknown>, prefix: string): void {
     if (value && typeof value === 'object' && !Array.isArray(value)) {
       printConfig(value as Record<string, unknown>, fullKey);
     } else {
-      const display = key === 'api_key' && value
-        ? String(value).slice(0, 8) + '...'
-        : String(value);
+      const display =
+        key === 'api_key' && value ? String(value).slice(0, 8) + '...' : String(value);
       console.log(`  ${chalk.cyan(fullKey)} = ${chalk.dim(display)}`);
     }
   }

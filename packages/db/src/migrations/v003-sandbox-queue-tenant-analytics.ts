@@ -3,15 +3,15 @@ import type Database from 'better-sqlite3';
 
 export function up(db: Database.Database): void {
   // Agent sandbox columns
-  const cols = db.prepare("PRAGMA table_info(agents)").all() as { name: string }[];
-  const colNames = new Set(cols.map(c => c.name));
+  const cols = db.prepare('PRAGMA table_info(agents)').all() as { name: string }[];
+  const colNames = new Set(cols.map((c) => c.name));
   if (!colNames.has('tenant_id')) {
     db.exec("ALTER TABLE agents ADD COLUMN tenant_id TEXT NOT NULL DEFAULT 'default'");
   }
   if (!colNames.has('sandbox_level')) {
     db.exec("ALTER TABLE agents ADD COLUMN sandbox_level TEXT NOT NULL DEFAULT 'standard'");
   }
-  db.exec("CREATE INDEX IF NOT EXISTS idx_agents_tenant ON agents(tenant_id)");
+  db.exec('CREATE INDEX IF NOT EXISTS idx_agents_tenant ON agents(tenant_id)');
 
   // Security events
   db.exec(`
@@ -122,12 +122,16 @@ export function up(db: Database.Database): void {
   if (userCount === 0) {
     try {
       const crypto = require('node:crypto');
-      const apiKey = 'omni_' + crypto.randomBytes(16).toString('hex');
+      const apiKey = 'vigil_' + crypto.randomBytes(16).toString('hex');
       const hash = crypto.createHash('sha256').update(apiKey).digest('hex');
       db.prepare(
-        "INSERT INTO users (id, tenant_id, email, role, api_key_hash) VALUES ('admin', 'default', 'admin@omniwatch.local', 'admin', ?)"
+        "INSERT INTO users (id, tenant_id, email, role, api_key_hash) VALUES ('admin', 'default', 'admin@vigil.local', 'admin', ?)",
       ).run(hash);
-      console.log(`\n  [OmniWatch] Default admin API key: ${apiKey}\n  Store this key securely — it will not be shown again.\n`);
-    } catch { /* ignore */ }
+      console.log(
+        `\n  [Vigil] Default admin API key: ${apiKey}\n  Store this key securely — it will not be shown again.\n`,
+      );
+    } catch {
+      /* ignore */
+    }
   }
 }

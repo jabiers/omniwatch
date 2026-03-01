@@ -18,7 +18,7 @@ const LINK_COLUMNS = [
       { label: 'Timeline', href: '#timeline' },
       {
         label: 'API Reference',
-        href: 'https://github.com/jabiers/omniwatch/blob/main/apps/api/src/openapi.ts',
+        href: 'https://github.com/jabiers/vigil/blob/main/apps/api/src/openapi.ts',
         external: true,
       },
     ],
@@ -26,18 +26,18 @@ const LINK_COLUMNS = [
   {
     title: 'Developers',
     links: [
-      { label: 'GitHub', href: 'https://github.com/jabiers/omniwatch', external: true },
+      { label: 'GitHub', href: 'https://github.com/jabiers/vigil', external: true },
       {
         label: 'Contributing',
-        href: 'https://github.com/jabiers/omniwatch/blob/main/CONTRIBUTING.md',
+        href: 'https://github.com/jabiers/vigil/blob/main/CONTRIBUTING.md',
         external: true,
       },
       {
         label: 'Releases',
-        href: 'https://github.com/jabiers/omniwatch/releases',
+        href: 'https://github.com/jabiers/vigil/releases',
         external: true,
       },
-      { label: 'Issues', href: 'https://github.com/jabiers/omniwatch/issues', external: true },
+      { label: 'Issues', href: 'https://github.com/jabiers/vigil/issues', external: true },
     ],
   },
 ];
@@ -63,7 +63,7 @@ export default function Footer() {
           <p className="text-gray-400 text-lg mb-8">Start building autonomous agents in minutes</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="https://github.com/jabiers/omniwatch#quick-start"
+              href="https://github.com/jabiers/vigil#quick-start"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-semibold px-6 py-3 rounded-lg transition-colors"
@@ -71,7 +71,7 @@ export default function Footer() {
               Get Started
             </a>
             <a
-              href="https://github.com/jabiers/omniwatch"
+              href="https://github.com/jabiers/vigil"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 glass-card px-6 py-3 rounded-lg text-sm font-semibold text-gray-300 hover:text-white hover:border-white/20 transition-colors"
@@ -131,7 +131,7 @@ export default function Footer() {
                   <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" />
                 </svg>
               </div>
-              <span className="text-sm font-semibold text-white">OmniWatch</span>
+              <span className="text-sm font-semibold text-white">Vigil</span>
             </div>
             <p className="text-xs text-gray-500 mb-3">AI-powered autonomous monitoring platform</p>
             <span className="inline-block text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full mb-2">
@@ -146,7 +146,7 @@ export default function Footer() {
       <div className="border-t border-white/[0.08]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           {/* Left */}
-          <span className="text-sm text-gray-600">&copy; {year} OmniWatch</span>
+          <span className="text-sm text-gray-600">&copy; {year} Vigil</span>
 
           {/* Center */}
           <span className="text-sm text-gray-600 flex items-center gap-1.5">

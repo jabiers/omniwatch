@@ -1,4 +1,4 @@
-# Contributing to OmniWatch
+# Contributing to Vigil
 
 ## Prerequisites
 
@@ -8,8 +8,8 @@
 ## Development Setup
 
 ```bash
-git clone https://github.com/jabiers/omniwatch.git
-cd omniwatch
+git clone https://github.com/jabiers/vigil.git
+cd vigil
 pnpm install
 pnpm build
 ```
@@ -27,7 +27,7 @@ cd apps/web && pnpm dev
 ## Project Structure
 
 ```
-omniwatch/
+vigil/
 ├── apps/
 │   ├── cli/       # CLI client (Commander.js + Ink)
 │   ├── daemon/    # Agent runtime + event bus

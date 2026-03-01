@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock @omniwatch/shared
-vi.mock('@omniwatch/shared', () => ({
+// Mock @vigil/shared
+vi.mock('@vigil/shared', () => ({
   log: vi.fn(),
   MESH_RATE_LIMIT: 100,
   MESH_MAX_PAYLOAD_SIZE: 65_536,
 }));
 
-// Mock @omniwatch/db
+// Mock @vigil/db
 const mockDb = {
   prepare: vi.fn().mockReturnValue({
     run: vi.fn(),
@@ -15,7 +15,7 @@ const mockDb = {
     get: vi.fn(),
   }),
 };
-vi.mock('@omniwatch/db', () => ({
+vi.mock('@vigil/db', () => ({
   getDb: () => mockDb,
 }));
 
@@ -75,7 +75,7 @@ describe('Event Bus (Agent Mesh)', () => {
 
   describe('meshPublish', () => {
     it('should reject oversized payloads', async () => {
-      const { log } = await import('@omniwatch/shared');
+      const { log } = await import('@vigil/shared');
       const bigPayload = 'x'.repeat(70_000);
       meshPublish('agent-pub', 'big.topic', bigPayload);
       expect(log).toHaveBeenCalledWith('warn', expect.stringContaining('payload exceeds'));

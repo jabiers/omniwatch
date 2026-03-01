@@ -1,4 +1,4 @@
-# OmniWatch v0.8 Plan — Production Readiness
+# Vigil v0.8 Plan — Production Readiness
 
 ## Overview
 v0.7까지 기능 구현에 집중했다면, v0.8은 **프로덕션 배포 가능한 품질**로 끌어올리는 버전.

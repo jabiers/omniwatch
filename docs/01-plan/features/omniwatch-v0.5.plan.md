@@ -1,16 +1,16 @@
-# OmniWatch v0.5 Plan — Agent Mesh + Spawn Chain + Time Travel + Omni MCP
+# Vigil v0.5 Plan — Agent Mesh + Spawn Chain + Time Travel + Omni MCP
 
 ## 1. Overview
 
-**Feature Name**: omniwatch-v0.5
+**Feature Name**: vigil-v0.5
 **Version**: 0.5.0
-**Goal**: 4개 킬러 피처를 통해 OmniWatch를 "AI Agent Infrastructure Platform"으로 진화. 에이전트 간 통신, 자율 생성, 상태 디버깅, MCP 생태계 연결을 구현한다.
+**Goal**: 4개 킬러 피처를 통해 Vigil를 "AI Agent Infrastructure Platform"으로 진화. 에이전트 간 통신, 자율 생성, 상태 디버깅, MCP 생태계 연결을 구현한다.
 **Priority**: Critical
 **Estimated Scope**: 30+ new files, ~4,000 LOC
 
 ## 2. Background & Motivation
 
-v0.4에서 Turborepo 모노레포 + Hono REST API + Next.js Web Dashboard를 완성했고, v0.5 Week 1에서 Local Brain(Ollama), Glass Box(비용 추적), Agent Recipes(마켓플레이스)를 구현했다. 남은 4개 피처는 OmniWatch를 단순 모니터링 도구에서 자율형 에이전트 인프라 플랫폼으로 격상시키는 핵심 기능이다.
+v0.4에서 Turborepo 모노레포 + Hono REST API + Next.js Web Dashboard를 완성했고, v0.5 Week 1에서 Local Brain(Ollama), Glass Box(비용 추적), Agent Recipes(마켓플레이스)를 구현했다. 남은 4개 피처는 Vigil를 단순 모니터링 도구에서 자율형 에이전트 인프라 플랫폼으로 격상시키는 핵심 기능이다.
 
 ### 시장 포지셔닝
 - **Agent Mesh**: CrewAI/AutoGen의 멀티에이전트 통신을 런타임에서 해결
@@ -58,7 +58,7 @@ v0.4에서 Turborepo 모노레포 + Hono REST API + Next.js Web Dashboard를 완
 
 ### FR-04: Omni MCP (Model Context Protocol 브릿지)
 
-OmniWatch를 MCP 서버로 노출하여 Claude, Cursor 등에서 에이전트를 도구로 사용한다.
+Vigil를 MCP 서버로 노출하여 Claude, Cursor 등에서 에이전트를 도구로 사용한다.
 
 - **MCP 서버**: Streamable HTTP 트랜스포트 (`/mcp` 엔드포인트)
 - **MCP SDK**: `@modelcontextprotocol/sdk` 패키지 사용
@@ -156,7 +156,7 @@ CREATE INDEX idx_snapshots_agent ON agent_snapshots(agent_id, seq DESC);
 ### 5.3 SDK Extension
 
 ```typescript
-interface OmniSDK {
+interface VigilSDK {
   // ... 기존 메서드 유지
   mesh: {
     publish(topic: string, payload: unknown): Promise<void>;

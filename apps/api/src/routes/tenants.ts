@@ -2,9 +2,9 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { getDb } from '@omniwatch/db';
-import { generateApiKey, hashApiKey } from '@omniwatch/shared';
-import type { Tenant, User } from '@omniwatch/shared';
+import { getDb } from '@vigil/db';
+import { generateApiKey, hashApiKey } from '@vigil/shared';
+import type { Tenant, User } from '@vigil/shared';
 import { requireRole } from '../middleware/auth.js';
 import { nanoid } from 'nanoid';
 

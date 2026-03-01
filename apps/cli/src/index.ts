@@ -17,8 +17,8 @@ import { autoCommand } from './commands/auto.js';
 const program = new Command();
 
 program
-  .name('omni')
-  .description('OmniWatch - AI-native autonomous agent management CLI')
+  .name('vigil')
+  .description('Vigil - AI-native autonomous agent management CLI')
   .version('0.4.0');
 
 program.addCommand(watchCommand);

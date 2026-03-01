@@ -11,7 +11,7 @@ export class OmniError extends Error {
 
 export const Errors = {
   DAEMON_NOT_RUNNING: () =>
-    new OmniError('DAEMON_NOT_RUNNING', 'Daemon is not running. Start with: omni daemon start'),
+    new OmniError('DAEMON_NOT_RUNNING', 'Daemon is not running. Start with: vigil daemon start'),
   AGENT_NOT_FOUND: (id: string) =>
     new OmniError('AGENT_NOT_FOUND', `Agent '${id}' not found`, { id }),
   AGENT_ALREADY_RUNNING: (id: string) =>

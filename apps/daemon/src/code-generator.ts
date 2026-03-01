@@ -1,4 +1,4 @@
-import { log } from '@omniwatch/shared';
+import { log } from '@vigil/shared';
 import {
   BASE_SYSTEM_PROMPT,
   getTemplate,

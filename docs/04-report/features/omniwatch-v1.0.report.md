@@ -1,15 +1,15 @@
 ---
-report: omniwatch-v1.0
+report: vigil-v1.0
 version: 1.0
 status: completed
 date: 2026-03-01
 ---
 
-# OmniWatch v1.0 Stable Release Completion Report
+# Vigil v1.0 Stable Release Completion Report
 
 > **Status**: Completed
 >
-> **Project**: OmniWatch - AI-based Autonomous Monitoring Platform
+> **Project**: Vigil - AI-based Autonomous Monitoring Platform
 > **Version**: 1.0.0
 > **Release Date**: 2026-03-01
 > **PDCA Cycle**: Enterprise v1.0 Release
@@ -22,7 +22,7 @@ date: 2026-03-01
 
 | Item | Content |
 |------|---------|
-| Feature | OmniWatch v1.0 Stable Release |
+| Feature | Vigil v1.0 Stable Release |
 | Duration | Started: v0.6 completion → Completed: 2026-03-01 |
 | Scope | TypeScript zero errors, Linting, Docker, Release workflow |
 | Owner | Paul |
@@ -55,9 +55,9 @@ date: 2026-03-01
 
 | Phase | Document | Status |
 |-------|----------|--------|
-| Plan | [omniwatch-v1.0.plan.md](../01-plan/features/omniwatch-v1.0.plan.md) | ✅ Finalized |
-| Design | [omniwatch-v1.0.design.md](../02-design/features/omniwatch-v1.0.design.md) | ✅ Finalized |
-| Analysis | [omniwatch-v1.0.analysis.md](../03-analysis/features/omniwatch-v1.0.analysis.md) | ✅ Complete (97% match) |
+| Plan | [vigil-v1.0.plan.md](../01-plan/features/vigil-v1.0.plan.md) | ✅ Finalized |
+| Design | [vigil-v1.0.design.md](../02-design/features/vigil-v1.0.design.md) | ✅ Finalized |
+| Analysis | [vigil-v1.0.analysis.md](../03-analysis/features/vigil-v1.0.analysis.md) | ✅ Complete (97% match) |
 | Report | Current document | ✅ Completed |
 
 ---
@@ -103,9 +103,9 @@ Dockerfile:
 └── web (Next.js - PORT 3457)
 
 docker-compose:
-├── api service (depends on omniwatch-data volume)
+├── api service (depends on vigil-data volume)
 ├── web service (depends on api)
-└── volumes (omniwatch-data: SQLite storage)
+└── volumes (vigil-data: SQLite storage)
 ```
 
 ### 3.4 Feature Group 4: Release Workflow (MEDIUM)
@@ -167,7 +167,7 @@ docker-compose:
 | window is not defined (SSR) | Missing typeof check scope | Added proper SSR guards + verified with tests | ✅ Resolved |
 | scrollIntoView not recognized | DOM types missing from lib config | Added "dom" to compilerOptions.lib | ✅ Resolved |
 | Void expression truthiness | daemon agent-manager.ts void check | Refactored to separate variable assignment | ✅ Resolved |
-| Missing API module types | Dynamic import types not declared | Added declare module '@omniwatch/api/app' | ✅ Resolved |
+| Missing API module types | Dynamic import types not declared | Added declare module '@vigil/api/app' | ✅ Resolved |
 | No linting standards | Missing ESLint + Prettier config | Created flat config + prettier.rc | ✅ Resolved |
 | Docker incomplete | Web service not containerized | Added 4-stage Dockerfile with web target | ✅ Resolved |
 | No release automation | Manual release process | Created GitHub Actions release workflow | ✅ Resolved |
@@ -206,7 +206,7 @@ docker-compose:
 
 2. **TypeScript Strict Mode**: Consider enabling `"strict": true` in tsconfig for next major version to catch more errors at compile time.
 
-3. **Integration Testing for Release**: Add GitHub Actions job to verify Docker build/run before creating release. E.g., `docker run --rm omniwatch-api --version`.
+3. **Integration Testing for Release**: Add GitHub Actions job to verify Docker build/run before creating release. E.g., `docker run --rm vigil-api --version`.
 
 4. **Contributing Guide**: Document TypeScript patterns (event handlers, SSR guards) in CONTRIBUTING.md for consistency.
 
@@ -306,10 +306,10 @@ docker-compose:
 ### 11.1 Document Paths
 
 ```
-docs/01-plan/features/omniwatch-v1.0.plan.md
-docs/02-design/features/omniwatch-v1.0.design.md
-docs/03-analysis/features/omniwatch-v1.0.analysis.md
-docs/04-report/features/omniwatch-v1.0.report.md
+docs/01-plan/features/vigil-v1.0.plan.md
+docs/02-design/features/vigil-v1.0.design.md
+docs/03-analysis/features/vigil-v1.0.analysis.md
+docs/04-report/features/vigil-v1.0.report.md
 ```
 
 ### 11.2 Key Code Changes
@@ -330,9 +330,9 @@ Major changes:
 ### 11.3 Recommended Archive Action
 
 After v1.0.0 is released and stabilized (1-2 weeks of production use):
-- Archive PDCA documents: `/pdca archive omniwatch-v1.0 --summary`
+- Archive PDCA documents: `/pdca archive vigil-v1.0 --summary`
 - Preserve metrics in .pdca-status.json for cycle analysis
-- Move docs to `/docs/archive/2026-03/omniwatch-v1.0/`
+- Move docs to `/docs/archive/2026-03/vigil-v1.0/`
 
 ---
 

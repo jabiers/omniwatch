@@ -1,12 +1,12 @@
-# OmniWatch v0.2 Design Document
+# Vigil v0.2 Design Document
 
 > **Summary**: TUI Dashboard, 알림 플러그인, 대화형 모드, 코드 품질 개선 상세 설계
 >
-> **Project**: OmniWatch
+> **Project**: Vigil
 > **Version**: 0.2.0
 > **Author**: Paul
 > **Date**: 2026-02-27
-> **Planning Doc**: [omniwatch-v0.2.plan.md](../../01-plan/features/omniwatch-v0.2.plan.md)
+> **Planning Doc**: [vigil-v0.2.plan.md](../../01-plan/features/vigil-v0.2.plan.md)
 
 ---
 
@@ -267,7 +267,7 @@ export async function sendNotification(
   message: string,
   options: NotifyOptions = {},
 ): Promise<void> {
-  const { title = 'OmniWatch Alert', severity = 'info' } = options;
+  const { title = 'Vigil Alert', severity = 'info' } = options;
 
   // Record in DB
   const db = getDb();
@@ -436,7 +436,7 @@ function walkNode(node: any, visitor: (node: any) => void): void {
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  OmniWatch Dashboard    Agents: 5  Memory: 340MB    │
+│  Vigil Dashboard    Agents: 5  Memory: 340MB    │
 │  Uptime: 2h 15m         q:quit r:refresh            │
 ├─────────────────────────────────────────────────────┤
 │  NAME              STATUS    PID    LAST RUN         │
@@ -560,7 +560,7 @@ export const dashCommand = new Command('dash')
 ### 6.1 Chat Flow
 
 ```
-$ omni chat agent-a1b2c3d4
+$ vigil chat agent-a1b2c3d4
 
 🤖 Chatting with: coupang-monitor
    Type 'exit' to leave, 'apply' to apply changes
@@ -621,7 +621,7 @@ export async function handleChat(
   const apiKey = config.ai.api_key || process.env.ANTHROPIC_API_KEY;
   const client = new Anthropic({ apiKey: apiKey! });
 
-  const systemPrompt = `You are an AI assistant helping modify an OmniWatch monitoring agent.
+  const systemPrompt = `You are an AI assistant helping modify an Vigil monitoring agent.
 
 Current agent: ${agent.name} (${agent.id})
 Status: ${agent.status}

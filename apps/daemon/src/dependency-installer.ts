@@ -1,7 +1,7 @@
 import { execSync } from 'node:child_process';
 import { join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
-import { AGENTS_DIR, WHITELISTED_PACKAGES, log, Errors } from '@omniwatch/shared';
+import { AGENTS_DIR, WHITELISTED_PACKAGES, log, Errors } from '@vigil/shared';
 
 export async function installDependencies(agentId: string): Promise<void> {
   const agentDir = join(AGENTS_DIR, agentId);

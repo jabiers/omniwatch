@@ -11,7 +11,7 @@ export const NAV_ITEMS = [
 
 export const TERMINAL_STEPS: TerminalStep[] = [
   {
-    command: 'omni watch "Alert me when AirPods Pro drops below $250 on Amazon"',
+    command: 'vigil watch "Alert me when AirPods Pro drops below $250 on Amazon"',
     output: [
       'Analyzing prompt...',
       'Agent type: watcher (auto-detected)',
@@ -21,7 +21,7 @@ export const TERMINAL_STEPS: TerminalStep[] = [
     ],
   },
   {
-    command: 'omni list',
+    command: 'vigil list',
     output: [
       'ID              NAME                STATUS    LAST CHECK',
       'agent-a1b2      amazon-airpods      running   30s ago',
@@ -30,7 +30,7 @@ export const TERMINAL_STEPS: TerminalStep[] = [
     ],
   },
   {
-    command: 'omni status agent-a1b2',
+    command: 'vigil status agent-a1b2',
     output: [
       'Name:     amazon-airpods',
       'Type:     watcher',

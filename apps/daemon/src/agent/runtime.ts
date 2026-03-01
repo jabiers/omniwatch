@@ -1,10 +1,10 @@
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createSDK, handleDaemonMessage } from './sdk.js';
-import type { DaemonToAgentMessage } from '@omniwatch/shared';
+import type { DaemonToAgentMessage } from '@vigil/shared';
 
-const agentId = process.argv[2] || process.env.OMNI_AGENT_ID;
-const agentDir = process.env.OMNI_AGENT_DIR || process.cwd();
+const agentId = process.argv[2] || process.env.VIGIL_AGENT_ID;
+const agentDir = process.env.VIGIL_AGENT_DIR || process.cwd();
 
 if (!agentId) {
   console.error('Agent ID is required');

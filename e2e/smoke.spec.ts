@@ -2,10 +2,10 @@ import { test, expect } from '@playwright/test';
 
 const BASE = 'http://localhost:3457';
 
-test.describe('OmniWatch Smoke Tests', () => {
+test.describe('Vigil Smoke Tests', () => {
   test('login page loads', async ({ page }) => {
     await page.goto(`${BASE}/login`);
-    await expect(page.locator('h1')).toContainText('OmniWatch');
+    await expect(page.locator('h1')).toContainText('Vigil');
     await expect(page.locator('input[type="password"], input[placeholder*="API"]')).toBeVisible();
   });
 

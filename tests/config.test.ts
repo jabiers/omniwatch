@@ -5,22 +5,22 @@ import { tmpdir } from 'node:os';
 import { nanoid } from 'nanoid';
 
 // Create a temp directory per test run
-const testDir = join(tmpdir(), `omniwatch-test-${nanoid(6)}`);
+const testDir = join(tmpdir(), `vigil-test-${nanoid(6)}`);
 const testConfigFile = join(testDir, 'config.toml');
 
 // Mock constants to use temp paths
-vi.mock('@omniwatch/shared', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@omniwatch/shared')>();
+vi.mock('@vigil/shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@vigil/shared')>();
   return {
     ...actual,
-    OMNI_HOME: testDir,
+    VIGIL_HOME: testDir,
     CONFIG_FILE: testConfigFile,
     LOGS_DIR: join(testDir, 'logs'),
   };
 });
 
 // Must import AFTER mocking
-const { loadConfig, getConfigValue, setConfigValue } = await import('@omniwatch/db');
+const { loadConfig, getConfigValue, setConfigValue } = await import('@vigil/db');
 
 beforeEach(() => {
   // Clean up and reset between tests

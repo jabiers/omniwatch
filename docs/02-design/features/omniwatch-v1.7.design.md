@@ -1,4 +1,4 @@
-# OmniWatch v1.7 Design - Tenant Management & Marketplace UX
+# Vigil v1.7 Design - Tenant Management & Marketplace UX
 
 ## Group 1: Tenant Management
 

@@ -1,4 +1,4 @@
-# OmniWatch v0.6 Design — Agent Sandbox + Persistent Queue + Multi-Tenant + Analytics
+# Vigil v0.6 Design — Agent Sandbox + Persistent Queue + Multi-Tenant + Analytics
 
 ## 1. Architecture Overview
 
@@ -140,7 +140,7 @@ Request → X-API-Key header → Hash → Lookup users table
 - Existing agents assigned to `default` tenant (migration)
 
 ### 4.4 API Key Format
-`omni_` + 32 random hex chars → SHA-256 hash stored in DB
+`vigil_` + 32 random hex chars → SHA-256 hash stored in DB
 
 ## 5. FR-04: Agent Analytics
 
@@ -248,7 +248,7 @@ QUEUE_CLEANUP_DAYS = 7;
 QUEUE_BATCH_SIZE = 50;
 
 // Multi-Tenant
-API_KEY_PREFIX = 'omni_';
+API_KEY_PREFIX = 'vigil_';
 API_KEY_LENGTH = 32;
 DEFAULT_TENANT_ID = 'default';
 MAX_AGENTS_FREE = 10;

@@ -23,7 +23,7 @@ function notify() {
 /** Initialize theme from localStorage (call once on mount) */
 export function initTheme() {
   if (typeof window === 'undefined') return;
-  const saved = localStorage.getItem('omniwatch-theme') as Theme | null;
+  const saved = localStorage.getItem('vigil-theme') as Theme | null;
   theme = saved === 'light' ? 'light' : 'dark';
   applyTheme();
 }
@@ -43,7 +43,7 @@ function applyTheme() {
 export function toggleTheme() {
   theme = theme === 'dark' ? 'light' : 'dark';
   if (typeof window !== 'undefined') {
-    localStorage.setItem('omniwatch-theme', theme);
+    localStorage.setItem('vigil-theme', theme);
   }
   applyTheme();
   notify();

@@ -1,4 +1,4 @@
-import { getDb } from '@omniwatch/db';
+import { getDb } from '@vigil/db';
 import { getRunningProcesses } from '../agent-manager.js';
 
 export const handleSystemRPC = {

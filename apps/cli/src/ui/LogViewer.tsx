@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text } from 'ink';
 import { rpcCall } from '../ipc-client.js';
-import type { AgentLog } from '@omniwatch/shared';
+import type { AgentLog } from '@vigil/shared';
 
 interface LogViewerProps {
   agentId: string | null;
@@ -25,7 +25,7 @@ export function LogViewer({ agentId }: LogViewerProps): React.ReactElement {
 
     const fetchLogs = async () => {
       try {
-        const result = await rpcCall('agent.logs', { id: agentId, limit: 10 }) as AgentLog[];
+        const result = (await rpcCall('agent.logs', { id: agentId, limit: 10 })) as AgentLog[];
         setLogs(result.reverse());
       } catch {
         // ignore fetch errors

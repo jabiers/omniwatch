@@ -50,7 +50,7 @@ export default function LoginPage() {
         setError(`Server error (${res.status}). Please try again.`);
       }
     } catch {
-      setError('Cannot connect to OmniWatch API. Is the daemon running?');
+      setError('Cannot connect to Vigil API. Is the daemon running?');
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ export default function LoginPage() {
           <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 flex items-center justify-center mb-4">
             <Activity className="w-7 h-7 text-emerald-400" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">OmniWatch</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Vigil</h1>
           <p className="text-sm text-gray-500 mt-1">AI-Powered Autonomous Monitoring</p>
         </div>
 
@@ -89,7 +89,7 @@ export default function LoginPage() {
                     setApiKey(e.target.value);
                     setError('');
                   }}
-                  placeholder="omni_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  placeholder="vigil_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                   className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors"
                   autoFocus
                   autoComplete="off"
@@ -127,7 +127,7 @@ export default function LoginPage() {
           <p className="text-xs text-gray-500 mt-4 text-center">
             API keys can be generated via{' '}
             <code className="text-gray-400 bg-gray-800 px-1.5 py-0.5 rounded">
-              omni auth create-key
+              vigil auth create-key
             </code>
           </p>
         </div>

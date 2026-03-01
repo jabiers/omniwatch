@@ -1,9 +1,9 @@
-/** MCP (Model Context Protocol) server — Exposes OmniWatch agents as MCP tools */
+/** MCP (Model Context Protocol) server — Exposes Vigil agents as MCP tools */
 import { Hono } from 'hono';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { z } from 'zod';
-import { getDb } from '@omniwatch/db';
+import { getDb } from '@vigil/db';
 import { rpcCall, isDaemonRunning } from '../lib/rpc-bridge.js';
 
 export const mcpRoutes = new Hono();
@@ -11,22 +11,30 @@ export const mcpRoutes = new Hono();
 /** Create MCP server instance */
 function createMcpServer(): McpServer {
   const server = new McpServer({
-    name: 'OmniWatch',
+    name: 'Vigil',
     version: '0.6.0',
   });
 
   // Tool: list agents
   server.tool(
     'list_agents',
-    'List all OmniWatch agents with their status',
+    'List all Vigil agents with their status',
     { status: z.string().optional().describe('Filter by status: running, stopped, error, etc.') },
     async ({ status }) => {
       const db = getDb();
       let agents;
       if (status) {
-        agents = db.prepare('SELECT id, name, type, status, description, created_at FROM agents WHERE status = ? ORDER BY created_at DESC').all(status);
+        agents = db
+          .prepare(
+            'SELECT id, name, type, status, description, created_at FROM agents WHERE status = ? ORDER BY created_at DESC',
+          )
+          .all(status);
       } else {
-        agents = db.prepare("SELECT id, name, type, status, description, created_at FROM agents WHERE status != 'destroyed' ORDER BY created_at DESC").all();
+        agents = db
+          .prepare(
+            "SELECT id, name, type, status, description, created_at FROM agents WHERE status != 'destroyed' ORDER BY created_at DESC",
+          )
+          .all();
       }
       return { content: [{ type: 'text' as const, text: JSON.stringify(agents, null, 2) }] };
     },
@@ -41,7 +49,10 @@ function createMcpServer(): McpServer {
       const db = getDb();
       const agent = db.prepare('SELECT * FROM agents WHERE id = ?').get(agent_id);
       if (!agent) {
-        return { content: [{ type: 'text' as const, text: `Agent '${agent_id}' not found` }], isError: true };
+        return {
+          content: [{ type: 'text' as const, text: `Agent '${agent_id}' not found` }],
+          isError: true,
+        };
       }
       return { content: [{ type: 'text' as const, text: JSON.stringify(agent, null, 2) }] };
     },
@@ -61,10 +72,16 @@ function createMcpServer(): McpServer {
       const safeLimit = Math.min(limit || 20, 100);
       let logs;
       if (level) {
-        logs = db.prepare('SELECT level, message, created_at FROM agent_logs WHERE agent_id = ? AND level = ? ORDER BY created_at DESC LIMIT ?')
+        logs = db
+          .prepare(
+            'SELECT level, message, created_at FROM agent_logs WHERE agent_id = ? AND level = ? ORDER BY created_at DESC LIMIT ?',
+          )
           .all(agent_id, level, safeLimit);
       } else {
-        logs = db.prepare('SELECT level, message, created_at FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT ?')
+        logs = db
+          .prepare(
+            'SELECT level, message, created_at FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT ?',
+          )
           .all(agent_id, safeLimit);
       }
       return { content: [{ type: 'text' as const, text: JSON.stringify(logs, null, 2) }] };
@@ -81,13 +98,24 @@ function createMcpServer(): McpServer {
     },
     async ({ agent_id, action }) => {
       if (!isDaemonRunning()) {
-        return { content: [{ type: 'text' as const, text: 'Daemon is not running' }], isError: true };
+        return {
+          content: [{ type: 'text' as const, text: 'Daemon is not running' }],
+          isError: true,
+        };
       }
       try {
         const result = await rpcCall(`agent.${action}`, { id: agent_id });
         return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: 'text' as const, text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true };
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: `Error: ${err instanceof Error ? err.message : String(err)}`,
+            },
+          ],
+          isError: true,
+        };
       }
     },
   );
@@ -95,58 +123,85 @@ function createMcpServer(): McpServer {
   // Tool: create agent
   server.tool(
     'create_agent',
-    'Create a new OmniWatch agent from a natural language prompt',
+    'Create a new Vigil agent from a natural language prompt',
     {
       prompt: z.string().describe('Natural language description of the agent'),
       name: z.string().optional().describe('Optional agent name'),
     },
     async ({ prompt, name }) => {
       if (!isDaemonRunning()) {
-        return { content: [{ type: 'text' as const, text: 'Daemon is not running' }], isError: true };
+        return {
+          content: [{ type: 'text' as const, text: 'Daemon is not running' }],
+          isError: true,
+        };
       }
       try {
         const result = await rpcCall('agent.create', { prompt, name }, { timeout: 60_000 });
         return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: 'text' as const, text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true };
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: `Error: ${err instanceof Error ? err.message : String(err)}`,
+            },
+          ],
+          isError: true,
+        };
       }
     },
   );
 
   // Tool: get system stats
-  server.tool(
-    'system_stats',
-    'Get OmniWatch system stats (agent counts, uptime)',
-    {},
-    async () => {
-      const db = getDb();
-      const stats = {
-        total: (db.prepare("SELECT COUNT(*) as c FROM agents WHERE status != 'destroyed'").get() as { c: number }).c,
-        running: (db.prepare("SELECT COUNT(*) as c FROM agents WHERE status = 'running'").get() as { c: number }).c,
-        error: (db.prepare("SELECT COUNT(*) as c FROM agents WHERE status = 'error'").get() as { c: number }).c,
-        daemon: isDaemonRunning(),
-      };
-      return { content: [{ type: 'text' as const, text: JSON.stringify(stats, null, 2) }] };
-    },
-  );
+  server.tool('system_stats', 'Get Vigil system stats (agent counts, uptime)', {}, async () => {
+    const db = getDb();
+    const stats = {
+      total: (
+        db.prepare("SELECT COUNT(*) as c FROM agents WHERE status != 'destroyed'").get() as {
+          c: number;
+        }
+      ).c,
+      running: (
+        db.prepare("SELECT COUNT(*) as c FROM agents WHERE status = 'running'").get() as {
+          c: number;
+        }
+      ).c,
+      error: (
+        db.prepare("SELECT COUNT(*) as c FROM agents WHERE status = 'error'").get() as { c: number }
+      ).c,
+      daemon: isDaemonRunning(),
+    };
+    return { content: [{ type: 'text' as const, text: JSON.stringify(stats, null, 2) }] };
+  });
 
   // Tool: capture snapshot
   server.tool(
     'capture_snapshot',
-    'Capture a time-travel snapshot of an agent\'s state',
+    "Capture a time-travel snapshot of an agent's state",
     {
       agent_id: z.string().describe('The agent ID'),
       label: z.string().optional().describe('Optional label for the snapshot'),
     },
     async ({ agent_id, label }) => {
       if (!isDaemonRunning()) {
-        return { content: [{ type: 'text' as const, text: 'Daemon is not running' }], isError: true };
+        return {
+          content: [{ type: 'text' as const, text: 'Daemon is not running' }],
+          isError: true,
+        };
       }
       try {
         const result = await rpcCall('snapshot.capture', { agentId: agent_id, label });
         return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
-        return { content: [{ type: 'text' as const, text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true };
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: `Error: ${err instanceof Error ? err.message : String(err)}`,
+            },
+          ],
+          isError: true,
+        };
       }
     },
   );
@@ -154,12 +209,24 @@ function createMcpServer(): McpServer {
   // Resource: agent list
   server.resource(
     'agents',
-    'omniwatch://agents',
-    { description: 'List of all OmniWatch agents' },
+    'vigil://agents',
+    { description: 'List of all Vigil agents' },
     async () => {
       const db = getDb();
-      const agents = db.prepare("SELECT id, name, type, status FROM agents WHERE status != 'destroyed' ORDER BY created_at DESC").all();
-      return { contents: [{ uri: 'omniwatch://agents', text: JSON.stringify(agents, null, 2), mimeType: 'application/json' }] };
+      const agents = db
+        .prepare(
+          "SELECT id, name, type, status FROM agents WHERE status != 'destroyed' ORDER BY created_at DESC",
+        )
+        .all();
+      return {
+        contents: [
+          {
+            uri: 'vigil://agents',
+            text: JSON.stringify(agents, null, 2),
+            mimeType: 'application/json',
+          },
+        ],
+      };
     },
   );
 
@@ -173,9 +240,17 @@ function createMcpServer(): McpServer {
       const db = getDb();
       const agent = db.prepare('SELECT * FROM agents WHERE id = ?').get(agentId);
       if (!agent) {
-        return { contents: [{ uri: uri.href, text: `Agent '${agentId}' not found`, mimeType: 'text/plain' }] };
+        return {
+          contents: [
+            { uri: uri.href, text: `Agent '${agentId}' not found`, mimeType: 'text/plain' },
+          ],
+        };
       }
-      return { contents: [{ uri: uri.href, text: JSON.stringify(agent, null, 2), mimeType: 'application/json' }] };
+      return {
+        contents: [
+          { uri: uri.href, text: JSON.stringify(agent, null, 2), mimeType: 'application/json' },
+        ],
+      };
     },
   );
 
@@ -187,9 +262,16 @@ function createMcpServer(): McpServer {
     async (uri) => {
       const agentId = uri.pathname.split('/')[0] || '';
       const db = getDb();
-      const logs = db.prepare('SELECT level, message, created_at FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT 30')
+      const logs = db
+        .prepare(
+          'SELECT level, message, created_at FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT 30',
+        )
         .all(agentId);
-      return { contents: [{ uri: uri.href, text: JSON.stringify(logs, null, 2), mimeType: 'application/json' }] };
+      return {
+        contents: [
+          { uri: uri.href, text: JSON.stringify(logs, null, 2), mimeType: 'application/json' },
+        ],
+      };
     },
   );
 

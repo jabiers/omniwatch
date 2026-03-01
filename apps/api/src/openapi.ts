@@ -1,10 +1,10 @@
 import type { Hono } from 'hono';
-import { APP_VERSION } from '@omniwatch/shared';
+import { APP_VERSION } from '@vigil/shared';
 
 const spec = {
   openapi: '3.0.3',
   info: {
-    title: 'OmniWatch API',
+    title: 'Vigil API',
     version: APP_VERSION,
     description: 'AI Agent Orchestration Platform',
   },
@@ -535,7 +535,7 @@ export function registerOpenAPI(app: Hono) {
   app.get('/api/docs/spec', (c) => c.json(spec));
   app.get('/api/docs', (c) => {
     return c.html(`<!DOCTYPE html>
-<html><head><title>OmniWatch API Docs</title>
+<html><head><title>Vigil API Docs</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">

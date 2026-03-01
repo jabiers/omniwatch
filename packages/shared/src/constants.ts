@@ -1,13 +1,13 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-export const OMNI_HOME = join(homedir(), '.omniwatch');
-export const DB_PATH = join(OMNI_HOME, 'omniwatch.db');
-export const SOCKET_PATH = join(OMNI_HOME, 'omnid.sock');
-export const PID_FILE = join(OMNI_HOME, 'omnid.pid');
-export const CONFIG_FILE = join(OMNI_HOME, 'config.json');
-export const AGENTS_DIR = join(OMNI_HOME, 'agents');
-export const LOGS_DIR = join(OMNI_HOME, 'logs');
+export const VIGIL_HOME = join(homedir(), '.vigil');
+export const DB_PATH = join(VIGIL_HOME, 'vigil.db');
+export const SOCKET_PATH = join(VIGIL_HOME, 'vigild.sock');
+export const PID_FILE = join(VIGIL_HOME, 'vigild.pid');
+export const CONFIG_FILE = join(VIGIL_HOME, 'config.json');
+export const AGENTS_DIR = join(VIGIL_HOME, 'agents');
+export const LOGS_DIR = join(VIGIL_HOME, 'logs');
 
 export const HEARTBEAT_INTERVAL = 10_000; // 10s
 export const HEARTBEAT_TIMEOUT = 30_000; // 30s
@@ -71,7 +71,7 @@ export const QUEUE_CLEANUP_DAYS = 7;
 export const QUEUE_BATCH_SIZE = 50;
 
 // v0.6: Multi-Tenant
-export const API_KEY_PREFIX = 'omni_';
+export const API_KEY_PREFIX = 'vigil_';
 export const API_KEY_LENGTH = 32; // hex chars after prefix
 export const DEFAULT_TENANT_ID = 'default';
 export const MAX_AGENTS_FREE = 10;

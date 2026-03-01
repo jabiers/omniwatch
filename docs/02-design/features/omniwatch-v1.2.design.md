@@ -1,4 +1,4 @@
-# OmniWatch v1.2 Design — Testing, Observability & Documentation
+# Vigil v1.2 Design — Testing, Observability & Documentation
 
 ## Group 1: Web Testing Foundation
 

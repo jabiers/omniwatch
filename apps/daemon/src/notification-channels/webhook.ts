@@ -1,5 +1,5 @@
 import type { NotificationChannel, NotificationPayload } from './types.js';
-import { loadConfig } from '@omniwatch/db';
+import { loadConfig } from '@vigil/db';
 
 export class WebhookChannel implements NotificationChannel {
   name = 'webhook';

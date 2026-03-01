@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock config and logger
-vi.mock('@omniwatch/db', () => ({
+vi.mock('@vigil/db', () => ({
   loadConfig: vi.fn(() => ({
     notification: {
       webhook_url: 'https://example.com/webhook',
@@ -14,8 +14,8 @@ vi.mock('@omniwatch/db', () => ({
     },
   })),
 }));
-vi.mock('@omniwatch/shared', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@omniwatch/shared')>();
+vi.mock('@vigil/shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@vigil/shared')>();
   return { ...actual, log: vi.fn() };
 });
 

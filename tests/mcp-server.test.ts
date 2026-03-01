@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock @omniwatch/db
+// Mock @vigil/db
 const mockDbRows: Record<string, unknown[]> = {
   agents: [],
   agent_logs: [],
 };
-vi.mock('@omniwatch/db', () => ({
+vi.mock('@vigil/db', () => ({
   getDb: () => ({
     prepare: (sql: string) => ({
       all: (..._args: unknown[]) => {
@@ -36,8 +36,22 @@ describe('MCP Server', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDbRows.agents = [
-      { id: 'agent-1', name: 'BTC Watcher', type: 'watcher', status: 'running', description: 'Monitors BTC', created_at: '2026-01-01' },
-      { id: 'agent-2', name: 'ETH Tracker', type: 'watcher', status: 'stopped', description: 'Tracks ETH', created_at: '2026-01-02' },
+      {
+        id: 'agent-1',
+        name: 'BTC Watcher',
+        type: 'watcher',
+        status: 'running',
+        description: 'Monitors BTC',
+        created_at: '2026-01-01',
+      },
+      {
+        id: 'agent-2',
+        name: 'ETH Tracker',
+        type: 'watcher',
+        status: 'stopped',
+        description: 'Tracks ETH',
+        created_at: '2026-01-02',
+      },
     ];
     mockDbRows.agent_logs = [
       { level: 'info', message: 'Agent started', created_at: '2026-01-01T00:00:00Z' },
@@ -47,7 +61,7 @@ describe('MCP Server', () => {
 
   describe('Tool handlers (unit)', () => {
     it('list_agents should return agents from DB', async () => {
-      const { getDb } = await import('@omniwatch/db');
+      const { getDb } = await import('@vigil/db');
       const db = getDb();
       const agents = db.prepare("SELECT * FROM agents WHERE status != 'destroyed'").all();
       expect(agents).toHaveLength(2);
@@ -55,7 +69,7 @@ describe('MCP Server', () => {
     });
 
     it('get_agent should return single agent by ID', async () => {
-      const { getDb } = await import('@omniwatch/db');
+      const { getDb } = await import('@vigil/db');
       const db = getDb();
       const agent = db.prepare('SELECT * FROM agents WHERE id = ?').get('agent-1');
       expect(agent).toBeDefined();
@@ -63,16 +77,18 @@ describe('MCP Server', () => {
     });
 
     it('get_agent should return null for unknown agent', async () => {
-      const { getDb } = await import('@omniwatch/db');
+      const { getDb } = await import('@vigil/db');
       const db = getDb();
       const agent = db.prepare('SELECT * FROM agents WHERE id = ?').get('nonexistent');
       expect(agent).toBeNull();
     });
 
     it('get_agent_logs should return log entries', async () => {
-      const { getDb } = await import('@omniwatch/db');
+      const { getDb } = await import('@vigil/db');
       const db = getDb();
-      const logs = db.prepare('SELECT * FROM agent_logs WHERE agent_id = ? LIMIT ?').all('agent-1', 20);
+      const logs = db
+        .prepare('SELECT * FROM agent_logs WHERE agent_id = ? LIMIT ?')
+        .all('agent-1', 20);
       expect(logs).toHaveLength(2);
     });
 
@@ -85,15 +101,27 @@ describe('MCP Server', () => {
 
     it('create_agent should call rpcCall with prompt and timeout', async () => {
       mockRpcCall.mockResolvedValue({ id: 'agent-3', name: 'New Agent', status: 'running' });
-      const result = await mockRpcCall('agent.create', { prompt: 'Monitor API health', name: 'API Monitor' }, { timeout: 60_000 });
+      const result = await mockRpcCall(
+        'agent.create',
+        { prompt: 'Monitor API health', name: 'API Monitor' },
+        { timeout: 60_000 },
+      );
       expect(result).toHaveProperty('id', 'agent-3');
-      expect(mockRpcCall).toHaveBeenCalledWith('agent.create', { prompt: 'Monitor API health', name: 'API Monitor' }, { timeout: 60_000 });
+      expect(mockRpcCall).toHaveBeenCalledWith(
+        'agent.create',
+        { prompt: 'Monitor API health', name: 'API Monitor' },
+        { timeout: 60_000 },
+      );
     });
 
     it('system_stats should return correct agent count', async () => {
-      const { getDb } = await import('@omniwatch/db');
+      const { getDb } = await import('@vigil/db');
       const db = getDb();
-      const total = (db.prepare("SELECT COUNT(*) as c FROM agents WHERE status != 'destroyed'").get() as { c: number }).c;
+      const total = (
+        db.prepare("SELECT COUNT(*) as c FROM agents WHERE status != 'destroyed'").get() as {
+          c: number;
+        }
+      ).c;
       expect(total).toBe(2);
     });
 
@@ -137,14 +165,16 @@ describe('MCP Server', () => {
   describe('MCP resource response format', () => {
     it('should return contents array with uri and mimeType', () => {
       const response = {
-        contents: [{
-          uri: 'omniwatch://agents',
-          text: JSON.stringify([{ id: 'agent-1' }]),
-          mimeType: 'application/json',
-        }],
+        contents: [
+          {
+            uri: 'vigil://agents',
+            text: JSON.stringify([{ id: 'agent-1' }]),
+            mimeType: 'application/json',
+          },
+        ],
       };
       expect(response.contents).toHaveLength(1);
-      expect(response.contents[0].uri).toBe('omniwatch://agents');
+      expect(response.contents[0].uri).toBe('vigil://agents');
       expect(response.contents[0].mimeType).toBe('application/json');
     });
 
@@ -152,11 +182,13 @@ describe('MCP Server', () => {
       const agentId = 'agent-1';
       const uri = `agent://${agentId}/status`;
       const response = {
-        contents: [{
-          uri,
-          text: JSON.stringify({ id: agentId, status: 'running' }),
-          mimeType: 'application/json',
-        }],
+        contents: [
+          {
+            uri,
+            text: JSON.stringify({ id: agentId, status: 'running' }),
+            mimeType: 'application/json',
+          },
+        ],
       };
       expect(response.contents[0].uri).toBe('agent://agent-1/status');
       const parsed = JSON.parse(response.contents[0].text);
@@ -166,11 +198,13 @@ describe('MCP Server', () => {
     it('should support per-agent logs resource URI', () => {
       const agentId = 'agent-1';
       const response = {
-        contents: [{
-          uri: `agent://${agentId}/logs`,
-          text: JSON.stringify(mockDbRows.agent_logs),
-          mimeType: 'application/json',
-        }],
+        contents: [
+          {
+            uri: `agent://${agentId}/logs`,
+            text: JSON.stringify(mockDbRows.agent_logs),
+            mimeType: 'application/json',
+          },
+        ],
       };
       const parsed = JSON.parse(response.contents[0].text);
       expect(parsed).toHaveLength(2);
@@ -181,7 +215,10 @@ describe('MCP Server', () => {
   describe('MCP RPC integration patterns', () => {
     it('control_agent should support start/stop/restart actions', async () => {
       for (const action of ['start', 'stop', 'restart']) {
-        mockRpcCall.mockResolvedValueOnce({ id: 'agent-1', status: action === 'stop' ? 'stopped' : 'running' });
+        mockRpcCall.mockResolvedValueOnce({
+          id: 'agent-1',
+          status: action === 'stop' ? 'stopped' : 'running',
+        });
         const result = await mockRpcCall(`agent.${action}`, { id: 'agent-1' });
         expect(result).toHaveProperty('id', 'agent-1');
       }

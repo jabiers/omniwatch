@@ -7,5 +7,5 @@ export default defineConfig({
   target: 'node20',
   sourcemap: true,
   clean: true,
-  external: ['@omniwatch/shared', '@omniwatch/db', 'better-sqlite3'],
+  external: ['@vigil/shared', '@vigil/db', 'better-sqlite3'],
 });

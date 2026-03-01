@@ -1,4 +1,4 @@
-# OmniWatch v0.8 Design — Production Readiness
+# Vigil v0.8 Design — Production Readiness
 
 ## Group 1: Security Hardening
 

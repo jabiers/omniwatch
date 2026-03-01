@@ -1,7 +1,7 @@
-# PDCA Completion Report: omniwatch-mvp
+# PDCA Completion Report: vigil-mvp
 
-> **Project**: OmniWatch - AI 기반 자율형 CLI 에이전트 관리 플랫폼
-> **Feature**: omniwatch-mvp (v0.1.0)
+> **Project**: Vigil - AI 기반 자율형 CLI 에이전트 관리 플랫폼
+> **Feature**: vigil-mvp (v0.1.0)
 > **Date**: 2026-02-27
 > **Author**: Paul
 > **PDCA Cycle**: Plan → Design → Do → Check → Act → Report
@@ -11,7 +11,7 @@
 
 ## 1. Executive Summary
 
-OmniWatch MVP는 "Don't Config, Just Speak" 철학 하에, 터미널에서 자연어 한 줄로 모니터링/자동화 에이전트를 생성하고 백그라운드 데몬이 24시간 관리하는 CLI 도구입니다.
+Vigil MVP는 "Don't Config, Just Speak" 철학 하에, 터미널에서 자연어 한 줄로 모니터링/자동화 에이전트를 생성하고 백그라운드 데몬이 24시간 관리하는 CLI 도구입니다.
 
 PDCA 사이클 1회 완료:
 - **Plan**: CLI-first 아키텍처, 단일 패키지, Self-Healing 필수
@@ -106,14 +106,14 @@ CLI Layer ──[Unix Socket JSON-RPC]──▶ Daemon Layer ──[child_proces
 
 | FR | Requirement | Status |
 |----|-------------|:------:|
-| FR-01 | `omni watch "<prompt>"` | Implemented |
-| FR-02 | `omni list` | Implemented |
-| FR-03 | `omni logs <id> [--follow]` | Implemented |
-| FR-04 | `omni stop/start/restart <id>` | Implemented |
-| FR-05 | `omni status <id>` | Implemented |
-| FR-06 | `omni destroy <id>` | Implemented |
-| FR-07 | `omni dash` (TUI) | Deferred to v0.2 |
-| FR-08 | `omni config set/get` | Implemented |
+| FR-01 | `vigil watch "<prompt>"` | Implemented |
+| FR-02 | `vigil list` | Implemented |
+| FR-03 | `vigil logs <id> [--follow]` | Implemented |
+| FR-04 | `vigil stop/start/restart <id>` | Implemented |
+| FR-05 | `vigil status <id>` | Implemented |
+| FR-06 | `vigil destroy <id>` | Implemented |
+| FR-07 | `vigil dash` (TUI) | Deferred to v0.2 |
+| FR-08 | `vigil config set/get` | Implemented |
 | FR-09 | Background daemon auto-start | Implemented |
 | FR-10 | Unix Socket JSON-RPC | Implemented |
 | FR-11 | Heartbeat monitoring | Implemented |
@@ -257,10 +257,10 @@ CLI Layer ──[Unix Socket JSON-RPC]──▶ Daemon Layer ──[child_proces
 
 | Document | Path |
 |----------|------|
-| Plan | docs/01-plan/features/omniwatch-mvp.plan.md |
-| Design | docs/02-design/features/omniwatch-mvp.design.md |
-| Analysis | docs/03-analysis/features/omniwatch-mvp.analysis.md |
-| Report | docs/04-report/features/omniwatch-mvp.report.md |
+| Plan | docs/01-plan/features/vigil-mvp.plan.md |
+| Design | docs/02-design/features/vigil-mvp.design.md |
+| Analysis | docs/03-analysis/features/vigil-mvp.analysis.md |
+| Report | docs/04-report/features/vigil-mvp.report.md |
 
 ---
 
