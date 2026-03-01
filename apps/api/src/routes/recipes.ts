@@ -33,12 +33,15 @@ recipeRoutes.post('/recipes/:id/install', async (c) => {
     return c.json({ error: 'Recipe not found' }, 404);
   }
 
+  const auth = c.get('auth');
+
   try {
     const result = await handleAgentRPC.create({
       name: recipe.name,
       prompt: recipe.prompt,
       type: 'watcher',
       template: recipe.template,
+      tenantId: auth.tenantId,
     });
     return c.json({ agent: result }, 201);
   } catch (err) {

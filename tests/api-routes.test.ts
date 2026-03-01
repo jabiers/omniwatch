@@ -677,3 +677,92 @@ describe('POST /api/queue/dead-letters/:id/retry', () => {
     expect(res.status).toBe(200);
   });
 });
+
+describe('Security: Bulk tenant isolation', () => {
+  it('should reject bulk destroy for non-admin operators', async () => {
+    // Mock auth as operator (not admin)
+    mockGet.mockReturnValue({
+      id: 'user-1',
+      tenant_id: 'tenant-a',
+      role: 'operator',
+    });
+
+    const res = await app.request('/api/agents/bulk', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': 'omni_test',
+      },
+      body: JSON.stringify({ action: 'destroy', ids: ['agent-1'] }),
+    });
+    expect(res.status).toBe(403);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toContain('Admin role required');
+  });
+});
+
+describe('Security: SSRF prevention on webhook URLs', () => {
+  it('should reject localhost webhook URL', async () => {
+    const res = await app.request('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        config: {
+          notification: { slack_webhook: 'https://localhost/hook' },
+        },
+      }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('should reject private IP webhook URL', async () => {
+    const res = await app.request('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        config: {
+          notification: { webhook_url: 'https://192.168.1.1/hook' },
+        },
+      }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('should reject HTTP (non-HTTPS) webhook URL', async () => {
+    const res = await app.request('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        config: {
+          notification: { slack_webhook: 'http://hooks.slack.com/abc' },
+        },
+      }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('should accept valid HTTPS webhook URL', async () => {
+    const res = await app.request('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        config: {
+          notification: { slack_webhook: 'https://hooks.slack.com/services/abc' },
+        },
+      }),
+    });
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('Config GET webhook masking', () => {
+  it('should mask webhook URLs in config response', async () => {
+    const res = await app.request('/api/config');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { config: { notification: Record<string, string> } };
+    // Empty webhooks should return empty strings
+    expect(body.config.notification.slack_webhook).toBe('');
+    expect(body.config.notification.discord_webhook).toBe('');
+    expect(body.config.notification.webhook_url).toBe('');
+  });
+});

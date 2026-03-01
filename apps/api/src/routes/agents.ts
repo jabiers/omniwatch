@@ -180,10 +180,28 @@ agentRoutes.post(
   zValidator('json', bulkActionSchema),
   async (c) => {
     const { action, ids } = c.req.valid('json');
+    const auth = c.get('auth');
+    const db = getDb();
     const results: { id: string; success: boolean; error?: string }[] = [];
+
+    // Require admin for destroy action
+    if (action === 'destroy' && auth.role !== 'admin') {
+      return c.json({ error: 'Admin role required for bulk destroy' }, 403);
+    }
 
     for (const id of ids) {
       try {
+        // Tenant isolation: verify agent belongs to requesting user's tenant
+        if (auth.role !== 'admin') {
+          const agent = db.prepare('SELECT tenant_id FROM agents WHERE id = ?').get(id) as
+            | { tenant_id: string }
+            | undefined;
+          if (!agent || agent.tenant_id !== auth.tenantId) {
+            results.push({ id, success: false, error: 'Agent not found' });
+            continue;
+          }
+        }
+
         const handler =
           action === 'start'
             ? handleAgentRPC.start
