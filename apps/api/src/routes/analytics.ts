@@ -2,7 +2,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { handleAnalyticsRPC, handleSecurityRPC } from '@omniwatch/daemon/engine';
+import { handleAnalyticsRPC, handleSecurityRPC } from '../engine/engine.js';
 import { requireRole } from '../middleware/auth.js';
 
 /** Schema: GET /analytics/metrics query params */

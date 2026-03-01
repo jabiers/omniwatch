@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createSDK } from '../apps/daemon/src/agent/sdk.js';
+import { createSDK } from '../apps/api/src/engine/agent/sdk.js';
 
 describe('SDK Utils', () => {
   // Note: createSDK uses process.send which won't work in test env,

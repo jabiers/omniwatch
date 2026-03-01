@@ -147,7 +147,7 @@ import {
   getDeadLetters,
   retryDeadLetter,
   resetStaleProcessing,
-} from '../apps/daemon/src/message-queue.js';
+} from '../apps/api/src/engine/message-queue.js';
 
 describe('Message Queue', () => {
   beforeEach(() => {

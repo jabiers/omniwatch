@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { handleChatRPC } from '@omniwatch/daemon/engine';
+import { handleChatRPC } from '../engine/engine.js';
 import { getErrorMessage } from '@omniwatch/shared';
 
 const chatSchema = z.object({ message: z.string().min(1, 'message is required').max(5000) });

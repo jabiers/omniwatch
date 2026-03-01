@@ -9,9 +9,9 @@ const throttleMap = new Map<string, ThrottleState>();
 
 // Throttle windows per severity level
 const THROTTLE_WINDOWS: Record<Severity, number> = {
-  critical: 0,           // always send immediately
-  warning: 5 * 60_000,   // suppress duplicates within 5 min
-  info: 15 * 60_000,     // suppress duplicates within 15 min
+  critical: 0, // always send immediately
+  warning: 5 * 60_000, // suppress duplicates within 5 min
+  info: 15 * 60_000, // suppress duplicates within 15 min
 };
 
 /**

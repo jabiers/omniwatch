@@ -45,7 +45,7 @@ vi.mock('node:fs', () => ({
 
 // Mock daemon engine handlers
 const mockEngineAgentCreate = vi.fn().mockRejectedValue(new Error('Daemon is not running'));
-vi.mock('@omniwatch/daemon/engine', () => ({
+vi.mock('@omniwatch/api/engine', () => ({
   handleAgentRPC: {
     create: (...args: unknown[]) => mockEngineAgentCreate(...args),
     list: vi.fn(),

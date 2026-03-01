@@ -44,7 +44,7 @@ vi.mock('@omniwatch/db', () => ({
         }
         if (sql.includes('DELETE FROM alert_rules')) {
           const before = alertRulesTable.length;
-          alertRulesTable = alertRulesTable.filter(r => r.id !== args[0]);
+          alertRulesTable = alertRulesTable.filter((r) => r.id !== args[0]);
           return { changes: before - alertRulesTable.length };
         }
         if (sql.includes('DELETE FROM metric_rollups')) {
@@ -57,25 +57,41 @@ vi.mock('@omniwatch/db', () => ({
       },
       get: (...args: any[]) => {
         if (sql.includes('FROM alert_rules WHERE id')) {
-          return alertRulesTable.find(r => r.id === args[0]) || null;
+          return alertRulesTable.find((r) => r.id === args[0]) || null;
         }
         return null;
       },
       all: (...args: any[]) => {
-        if (sql.includes('FROM metric_rollups') && sql.includes('agent_id = ?') && sql.includes('period = ?')) {
-          return metricRollups.filter(m => m.agent_id === args[0] && m.period === args[1]).slice(0, args[2] || 24);
+        if (
+          sql.includes('FROM metric_rollups') &&
+          sql.includes('agent_id = ?') &&
+          sql.includes('period = ?')
+        ) {
+          return metricRollups
+            .filter((m) => m.agent_id === args[0] && m.period === args[1])
+            .slice(0, args[2] || 24);
         }
-        if (sql.includes('FROM metric_rollups') && sql.includes('metric_name = ?') && sql.includes('period = ?')) {
-          return metricRollups.filter(m => m.metric_name === args[0] && m.period === args[1]).slice(0, args[2] || 100);
+        if (
+          sql.includes('FROM metric_rollups') &&
+          sql.includes('metric_name = ?') &&
+          sql.includes('period = ?')
+        ) {
+          return metricRollups
+            .filter((m) => m.metric_name === args[0] && m.period === args[1])
+            .slice(0, args[2] || 100);
         }
-        if (sql.includes('FROM metric_rollups') && sql.includes('agent_id = ?') && sql.includes("period = 'hourly'")) {
-          return metricRollups.filter(m => m.agent_id === args[0] && m.period === 'hourly');
+        if (
+          sql.includes('FROM metric_rollups') &&
+          sql.includes('agent_id = ?') &&
+          sql.includes("period = 'hourly'")
+        ) {
+          return metricRollups.filter((m) => m.agent_id === args[0] && m.period === 'hourly');
         }
         if (sql.includes('FROM alert_rules WHERE enabled')) {
-          return alertRulesTable.filter(r => r.enabled);
+          return alertRulesTable.filter((r) => r.enabled);
         }
         if (sql.includes('FROM alert_rules WHERE tenant_id')) {
-          return alertRulesTable.filter(r => r.tenant_id === args[0]);
+          return alertRulesTable.filter((r) => r.tenant_id === args[0]);
         }
         if (sql.includes('FROM alert_rules ORDER')) {
           return alertRulesTable;
@@ -102,12 +118,25 @@ vi.mock('@omniwatch/shared', async (importOriginal) => {
 });
 
 // Mock notifier
-vi.mock('../apps/daemon/src/notifier.js', () => ({
+vi.mock('../apps/api/src/engine/notifier.js', () => ({
   sendNotification: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { recordMetric, recordAgentStart, recordAgentError, recordMeshEventSent, getAgentMetrics, getMetricsByName, performHourlyRollup } from '../apps/daemon/src/metrics-collector.js';
-import { detectAnomalies, getAlertRules, createAlertRule, deleteAlertRule } from '../apps/daemon/src/anomaly-detector.js';
+import {
+  recordMetric,
+  recordAgentStart,
+  recordAgentError,
+  recordMeshEventSent,
+  getAgentMetrics,
+  getMetricsByName,
+  performHourlyRollup,
+} from '../apps/api/src/engine/metrics-collector.js';
+import {
+  detectAnomalies,
+  getAlertRules,
+  createAlertRule,
+  deleteAlertRule,
+} from '../apps/api/src/engine/anomaly-detector.js';
 
 describe('Metrics Collector', () => {
   beforeEach(() => {
@@ -190,10 +219,34 @@ describe('Anomaly Detector', () => {
     it('should detect anomalies when z-score exceeds threshold', () => {
       // Simulate hourly rollups with a spike
       metricRollups = [
-        { agent_id: 'agent-1', metric_name: 'error_count', period: 'hourly', avg_value: 100, period_start: '2026-01-01T01:00:00' },
-        { agent_id: 'agent-1', metric_name: 'error_count', period: 'hourly', avg_value: 2, period_start: '2026-01-01T02:00:00' },
-        { agent_id: 'agent-1', metric_name: 'error_count', period: 'hourly', avg_value: 3, period_start: '2026-01-01T03:00:00' },
-        { agent_id: 'agent-1', metric_name: 'error_count', period: 'hourly', avg_value: 1, period_start: '2026-01-01T04:00:00' },
+        {
+          agent_id: 'agent-1',
+          metric_name: 'error_count',
+          period: 'hourly',
+          avg_value: 100,
+          period_start: '2026-01-01T01:00:00',
+        },
+        {
+          agent_id: 'agent-1',
+          metric_name: 'error_count',
+          period: 'hourly',
+          avg_value: 2,
+          period_start: '2026-01-01T02:00:00',
+        },
+        {
+          agent_id: 'agent-1',
+          metric_name: 'error_count',
+          period: 'hourly',
+          avg_value: 3,
+          period_start: '2026-01-01T03:00:00',
+        },
+        {
+          agent_id: 'agent-1',
+          metric_name: 'error_count',
+          period: 'hourly',
+          avg_value: 1,
+          period_start: '2026-01-01T04:00:00',
+        },
       ];
       const anomalies = detectAnomalies('agent-1');
       // The first value (100) should be a major spike

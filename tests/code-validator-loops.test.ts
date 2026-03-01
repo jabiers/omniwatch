@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateCode } from '../apps/daemon/src/code-validator.js';
+import { validateCode } from '../apps/api/src/engine/code-validator.js';
 
 describe('Code Validator - Loop Detection', () => {
   it('should detect while(true) without break', () => {
@@ -10,7 +10,7 @@ describe('Code Validator - Loop Detection', () => {
     }`;
     const result = validateCode(code);
     expect(result.valid).toBe(false);
-    expect(result.issues.some(i => i.includes('infinite loop'))).toBe(true);
+    expect(result.issues.some((i) => i.includes('infinite loop'))).toBe(true);
   });
 
   it('should allow while(true) with break', () => {
@@ -21,7 +21,7 @@ describe('Code Validator - Loop Detection', () => {
       }
     }`;
     const result = validateCode(code);
-    expect(result.issues.some(i => i.includes('infinite loop'))).toBe(false);
+    expect(result.issues.some((i) => i.includes('infinite loop'))).toBe(false);
   });
 
   it('should allow while(true) with return', () => {
@@ -32,7 +32,7 @@ describe('Code Validator - Loop Detection', () => {
       }
     }`;
     const result = validateCode(code);
-    expect(result.issues.some(i => i.includes('infinite loop'))).toBe(false);
+    expect(result.issues.some((i) => i.includes('infinite loop'))).toBe(false);
   });
 
   it('should detect for(;;) without break', () => {
@@ -43,7 +43,7 @@ describe('Code Validator - Loop Detection', () => {
     }`;
     const result = validateCode(code);
     expect(result.valid).toBe(false);
-    expect(result.issues.some(i => i.includes('infinite loop'))).toBe(true);
+    expect(result.issues.some((i) => i.includes('infinite loop'))).toBe(true);
   });
 
   it('should allow for(;;) with break', () => {
@@ -53,7 +53,7 @@ describe('Code Validator - Loop Detection', () => {
       }
     }`;
     const result = validateCode(code);
-    expect(result.issues.some(i => i.includes('infinite loop'))).toBe(false);
+    expect(result.issues.some((i) => i.includes('infinite loop'))).toBe(false);
   });
 
   it('should detect dynamic access to forbidden APIs', () => {
@@ -62,7 +62,7 @@ describe('Code Validator - Loop Detection', () => {
     }`;
     const result = validateCode(code);
     expect(result.valid).toBe(false);
-    expect(result.issues.some(i => i.includes('Dynamic access'))).toBe(true);
+    expect(result.issues.some((i) => i.includes('Dynamic access'))).toBe(true);
   });
 
   it('should allow normal while loops with condition', () => {
@@ -73,6 +73,6 @@ describe('Code Validator - Loop Detection', () => {
       }
     }`;
     const result = validateCode(code);
-    expect(result.issues.some(i => i.includes('infinite loop'))).toBe(false);
+    expect(result.issues.some((i) => i.includes('infinite loop'))).toBe(false);
   });
 });

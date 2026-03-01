@@ -2,7 +2,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { handleQueueRPC } from '@omniwatch/daemon/engine';
+import { handleQueueRPC } from '../engine/engine.js';
 import { requireRole } from '../middleware/auth.js';
 import { getErrorMessage } from '@omniwatch/shared';
 

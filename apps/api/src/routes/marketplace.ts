@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
-import { handleAgentRPC } from '@omniwatch/daemon/engine';
+import { handleAgentRPC } from '../engine/engine.js';
 import { safeJsonParse, getErrorMessage } from '@omniwatch/shared';
 import { requireRole } from '../middleware/auth.js';
 import { randomUUID } from 'node:crypto';

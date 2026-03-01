@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
 import type { Agent, AgentLog } from '@omniwatch/shared';
 import { getErrorMessage } from '@omniwatch/shared';
-import { handleAgentRPC } from '@omniwatch/daemon/engine';
+import { handleAgentRPC } from '../engine/engine.js';
 import { requireRole } from '../middleware/auth.js';
 import { broadcast } from '../ws.js';
 

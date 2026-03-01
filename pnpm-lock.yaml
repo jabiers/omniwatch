@@ -77,6 +77,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@anthropic-ai/sdk':
+        specifier: ^0.39.0
+        version: 0.39.0
       '@hono/node-server':
         specifier: ^1.13.0
         version: 1.19.9(hono@4.12.3)
@@ -86,21 +89,27 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.27.1
         version: 1.27.1(zod@3.25.76)
-      '@omniwatch/daemon':
-        specifier: workspace:*
-        version: link:../daemon
       '@omniwatch/db':
         specifier: workspace:*
         version: link:../../packages/db
       '@omniwatch/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      acorn:
+        specifier: ^8.16.0
+        version: 8.16.0
       hono:
         specifier: ^4.6.0
         version: 4.12.3
+      isolated-vm:
+        specifier: ^6.0.2
+        version: 6.0.2
       nanoid:
         specifier: ^5.1.6
         version: 5.1.6
+      openai:
+        specifier: ^4.73.0
+        version: 4.104.0(ws@8.19.0)(zod@3.25.76)
       ws:
         specifier: ^8.18.0
         version: 8.19.0
@@ -152,45 +161,11 @@ importers:
         specifier: ^4.19.0
         version: 4.21.0
 
-  apps/daemon:
-    dependencies:
-      '@anthropic-ai/sdk':
-        specifier: ^0.39.0
-        version: 0.39.0
-      '@omniwatch/db':
-        specifier: workspace:*
-        version: link:../../packages/db
-      '@omniwatch/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
-      acorn:
-        specifier: ^8.16.0
-        version: 8.16.0
-      isolated-vm:
-        specifier: ^6.0.2
-        version: 6.0.2
-      nanoid:
-        specifier: ^5.0.9
-        version: 5.1.6
-      openai:
-        specifier: ^4.73.0
-        version: 4.104.0(ws@8.19.0)(zod@3.25.76)
-    devDependencies:
-      tsup:
-        specifier: ^8.3.5
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
-      tsx:
-        specifier: ^4.19.0
-        version: 4.21.0
-
   apps/web:
     dependencies:
       '@omniwatch/api':
         specifier: workspace:*
         version: link:../api
-      '@omniwatch/daemon':
-        specifier: workspace:*
-        version: link:../daemon
       '@omniwatch/db':
         specifier: workspace:*
         version: link:../../packages/db

@@ -55,7 +55,7 @@ const mockAgentStart = vi.fn().mockRejectedValue(new Error('Daemon is not runnin
 const mockAgentStop = vi.fn().mockRejectedValue(new Error('Daemon is not running'));
 const mockAgentRestart = vi.fn().mockRejectedValue(new Error('Daemon is not running'));
 
-vi.mock('@omniwatch/daemon/engine', () => ({
+vi.mock('@omniwatch/api/engine', () => ({
   handleAgentRPC: {
     create: (...args: unknown[]) => mockAgentCreate(...args),
     list: vi.fn(),

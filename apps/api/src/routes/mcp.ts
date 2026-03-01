@@ -5,7 +5,7 @@ import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/
 import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
 import { APP_VERSION } from '@omniwatch/shared';
-import { handleAgentRPC, handleSnapshotRPC } from '@omniwatch/daemon/engine';
+import { handleAgentRPC, handleSnapshotRPC } from '../engine/engine.js';
 
 export const mcpRoutes = new Hono();
 

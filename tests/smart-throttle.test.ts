@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { shouldThrottle, getSuppressedCount, resetThrottle, cleanupThrottle } from '../apps/daemon/src/smart-throttle.js';
+import {
+  shouldThrottle,
+  getSuppressedCount,
+  resetThrottle,
+  cleanupThrottle,
+} from '../apps/api/src/engine/smart-throttle.js';
 
 describe('SmartThrottle', () => {
   beforeEach(() => {

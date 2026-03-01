@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
-import { handleMeshRPC } from '@omniwatch/daemon/engine';
+import { handleMeshRPC } from '../engine/engine.js';
 import { getErrorMessage } from '@omniwatch/shared';
 
 const meshEventsSchema = z.object({

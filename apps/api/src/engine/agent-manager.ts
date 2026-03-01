@@ -160,11 +160,10 @@ export async function startAgent(id: string): Promise<void> {
     `level=${sandboxLevel} memory=${memoryLimit}MB timeout=${timeout}ms`,
   );
 
-  // runtime.js is in the same dist directory: dist/agent/runtime.js
-  // Use dirname(fileURLToPath) to avoid webpack resolving new URL() as a module
-  const __daemonDir = dirname(fileURLToPath(import.meta.url));
-  const distRuntime = resolve(__daemonDir, 'agent', 'runtime.js');
-  const srcRuntime = resolve(__daemonDir, '..', 'agent', 'runtime.ts');
+  // runtime.js is in dist/engine/agent/runtime.js (or src/engine/agent/runtime.ts in dev)
+  const __engineDir = dirname(fileURLToPath(import.meta.url));
+  const distRuntime = resolve(__engineDir, 'agent', 'runtime.js');
+  const srcRuntime = resolve(__engineDir, 'agent', 'runtime.ts');
   const scriptPath = existsSync(distRuntime) ? distRuntime : srcRuntime;
 
   const child = fork(scriptPath, [id], {

@@ -36,7 +36,7 @@ import {
   performDailyRollup,
   getAgentMetrics,
   getMetricsByName,
-} from '../apps/daemon/src/metrics-collector.js';
+} from '../apps/api/src/engine/metrics-collector.js';
 
 describe('Metrics Collector', () => {
   beforeEach(() => {

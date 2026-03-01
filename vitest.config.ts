@@ -23,7 +23,7 @@ export default defineConfig({
     alias: {
       '@omniwatch/shared': resolve(__dirname, 'packages/shared/src/index.ts'),
       '@omniwatch/db': resolve(__dirname, 'packages/db/src/index.ts'),
-      '@omniwatch/daemon/engine': resolve(__dirname, 'apps/daemon/src/engine.ts'),
+      '@omniwatch/api/engine': resolve(__dirname, 'apps/api/src/engine/engine.ts'),
     },
   },
 });

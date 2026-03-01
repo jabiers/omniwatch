@@ -24,7 +24,7 @@ vi.mock('@omniwatch/shared', async (importOriginal) => {
   };
 });
 
-vi.mock('../apps/daemon/src/notifier.js', () => ({
+vi.mock('../apps/api/src/engine/notifier.js', () => ({
   sendNotification: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -35,7 +35,7 @@ import {
   createAlertRule,
   updateAlertRule,
   deleteAlertRule,
-} from '../apps/daemon/src/anomaly-detector.js';
+} from '../apps/api/src/engine/anomaly-detector.js';
 import { ANOMALY_Z_THRESHOLD } from '@omniwatch/shared';
 
 describe('Anomaly Detector', () => {

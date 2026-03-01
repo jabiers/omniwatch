@@ -13,13 +13,7 @@ const nextConfig: NextConfig = {
   // Standalone output for Docker deployment
   output: 'standalone',
   // Native modules that must not be bundled
-  serverExternalPackages: [
-    'better-sqlite3',
-    '@omniwatch/daemon',
-    '@omniwatch/api',
-    'isolated-vm',
-    'ws',
-  ],
+  serverExternalPackages: ['better-sqlite3', '@omniwatch/api', 'isolated-vm', 'ws'],
   // Transpile workspace packages
   transpilePackages: ['@omniwatch/db', '@omniwatch/shared'],
   // Environment variables exposed to the browser

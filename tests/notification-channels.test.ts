@@ -24,12 +24,12 @@ import {
   getConfiguredChannels,
   dispatchNotification,
   clearChannels,
-} from '../apps/daemon/src/notification-channels/registry.js';
-import { WebhookChannel } from '../apps/daemon/src/notification-channels/webhook.js';
-import { SlackChannel } from '../apps/daemon/src/notification-channels/slack.js';
-import { DiscordChannel } from '../apps/daemon/src/notification-channels/discord.js';
-import { TelegramChannel } from '../apps/daemon/src/notification-channels/telegram.js';
-import type { NotificationPayload } from '../apps/daemon/src/notification-channels/types.js';
+} from '../apps/api/src/engine/notification-channels/registry.js';
+import { WebhookChannel } from '../apps/api/src/engine/notification-channels/webhook.js';
+import { SlackChannel } from '../apps/api/src/engine/notification-channels/slack.js';
+import { DiscordChannel } from '../apps/api/src/engine/notification-channels/discord.js';
+import { TelegramChannel } from '../apps/api/src/engine/notification-channels/telegram.js';
+import type { NotificationPayload } from '../apps/api/src/engine/notification-channels/types.js';
 
 describe('Notification Channel Registry', () => {
   beforeEach(() => {

@@ -19,16 +19,21 @@ export async function sendNotification(
   // Check throttle before sending
   if (shouldThrottle(agentId, severity)) {
     const suppressed = getSuppressedCount(agentId, severity);
-    log('info', `Notification throttled for agent ${agentId} (severity: ${severity}, suppressed: ${suppressed})`);
+    log(
+      'info',
+      `Notification throttled for agent ${agentId} (severity: ${severity}, suppressed: ${suppressed})`,
+    );
     return;
   }
 
   // Record in DB
   const db = getDb();
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO notifications (agent_id, channel, title, message, severity, status)
     VALUES (?, ?, ?, ?, ?, ?)
-  `).run(agentId, 'all', title, message, severity, 'pending');
+  `,
+  ).run(agentId, 'all', title, message, severity, 'pending');
 
   try {
     // Dispatch to all configured channels
@@ -41,14 +46,14 @@ export async function sendNotification(
     });
 
     db.prepare(
-      "UPDATE notifications SET status = 'sent' WHERE agent_id = ? AND message = ? AND status = 'pending'"
+      "UPDATE notifications SET status = 'sent' WHERE agent_id = ? AND message = ? AND status = 'pending'",
     ).run(agentId, message);
 
     log('info', `Notification sent for agent ${agentId}: ${title}`);
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err);
     db.prepare(
-      "UPDATE notifications SET status = 'failed' WHERE agent_id = ? AND message = ? AND status = 'pending'"
+      "UPDATE notifications SET status = 'failed' WHERE agent_id = ? AND message = ? AND status = 'pending'",
     ).run(agentId, message);
     log('error', `Failed to send notification: ${errorMsg}`);
   }

@@ -123,7 +123,7 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
 |-------|------|
 | **CLI** (`omni`) | Lightweight HTTP client. 15 commands + Ink TUI. Talks to API via HTTP. |
 | **API Server** (`apps/api`) | Unified Hono server (70+ endpoints) + embedded daemon engine + WebSocket + MCP. |
-| **Engine** (`apps/daemon`) | Agent lifecycle, health, AI, sandbox, queue, metrics — runs in-process within API. |
+| **Engine** (`apps/api/src/engine`) | Agent lifecycle, health, AI, sandbox, queue, metrics — embedded in API package. |
 | **Web** (`apps/web`) | Next.js 15 Glass Console. 14 pages with auth, charts, admin. |
 | **Agent** | Sandboxed Node.js process with SDK (`omni.fetch`, `omni.notify`, `omni.store`). |
 
@@ -257,7 +257,7 @@ GitHub Actions workflow runs on every push and PR to `main`:
 
 1. Checkout + pnpm setup
 2. `pnpm install --frozen-lockfile`
-3. `npx turbo build` (all 6 packages)
+3. `npx turbo build` (all 5 packages)
 4. `npx vitest run` (full test suite)
 
 ## Database
@@ -273,16 +273,9 @@ GitHub Actions workflow runs on every push and PR to `main`:
 omniwatch/
 +-- apps/
 |   +-- cli/                    # CLI client (15 commands + Ink TUI)
-|   +-- daemon/                 # Engine module (embedded in API since v2.0)
-|   |   +-- src/engine.ts       # Engine lifecycle (initEngine/shutdownEngine)
-|   |   +-- src/handlers/       # 8 handler groups (direct function calls)
-|   |   +-- src/agent/          # Agent runtime + SDK
-|   |   +-- src/sandbox.ts      # VM isolation + isolated-vm
-|   |   +-- src/message-queue.ts
-|   |   +-- src/metrics-collector.ts
-|   |   +-- src/anomaly-detector.ts
 |   +-- api/                    # Unified API server (Hono + Engine)
 |   |   +-- src/routes/         # 15 route groups
+|   |   +-- src/engine/         # Daemon engine (lifecycle, handlers, agent runtime)
 |   |   +-- src/middleware/     # auth, error-handler, logger
 |   |   +-- src/openapi.ts      # OpenAPI/Swagger
 |   |   +-- src/ws.ts           # WebSocket server
@@ -294,7 +287,7 @@ omniwatch/
 |   +-- shared/                 # Types, constants, errors, IPC, auth
 |   +-- db/                     # SQLite schema + versioned migrations
 |       +-- src/migrations/     # v001-v006
-+-- tests/                      # 59 files, 477 tests
++-- tests/                      # 60 files, 511 tests
 +-- bin/omni.mjs                # CLI entry point
 +-- Dockerfile                  # Production container
 +-- docker-compose.yml          # Docker Compose config

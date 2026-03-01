@@ -10,17 +10,17 @@ vi.mock('@omniwatch/shared', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@omniwatch/shared')>();
   return { ...actual, log: vi.fn() };
 });
-vi.mock('../apps/daemon/src/agent-manager.js', () => ({
+vi.mock('../apps/api/src/engine/agent-manager.js', () => ({
   startAgent: vi.fn(),
   stopAgent: vi.fn(),
   getAgent: vi.fn(),
   getRunningProcesses: vi.fn(() => new Map()),
 }));
-vi.mock('../apps/daemon/src/self-healer.js', () => ({
+vi.mock('../apps/api/src/engine/self-healer.js', () => ({
   attemptHeal: vi.fn(),
 }));
 
-import { startScheduler, stopScheduler } from '../apps/daemon/src/scheduler.js';
+import { startScheduler, stopScheduler } from '../apps/api/src/engine/scheduler.js';
 
 describe('scheduler', () => {
   beforeEach(() => {

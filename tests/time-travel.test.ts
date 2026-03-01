@@ -158,13 +158,13 @@ const mockGetAgent = vi.fn(
     last_error: null,
   }),
 );
-vi.mock('../apps/daemon/src/agent-manager.js', () => ({
+vi.mock('../apps/api/src/engine/agent-manager.js', () => ({
   getAgent: (...args: unknown[]) => mockGetAgent(...(args as [string])),
   updateAgent: vi.fn(),
 }));
 
 const { captureSnapshot, restoreSnapshot, listSnapshots } =
-  await import('../apps/daemon/src/time-travel.js');
+  await import('../apps/api/src/engine/time-travel.js');
 
 describe('Time Travel', () => {
   beforeEach(() => {

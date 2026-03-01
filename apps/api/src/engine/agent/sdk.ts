@@ -6,7 +6,10 @@ type RequestResolver = (value: unknown) => void;
 const pendingRequests = new Map<string, RequestResolver>();
 
 // Mesh event listeners: topic → callbacks
-const meshListeners: Array<{ topic: string; callback: (event: { topic: string; payload: unknown; from: string }) => void }> = [];
+const meshListeners: Array<{
+  topic: string;
+  callback: (event: { topic: string; payload: unknown; from: string }) => void;
+}> = [];
 
 // Handle responses from daemon
 export function handleDaemonMessage(msg: DaemonToAgentMessage): void {
@@ -33,7 +36,9 @@ export function handleDaemonMessage(msg: DaemonToAgentMessage): void {
       if (listener.topic === msg.topic || listener.topic === '*') {
         try {
           listener.callback({ topic: msg.topic, payload: msg.payload, from: msg.from });
-        } catch { /* ignore listener errors */ }
+        } catch {
+          /* ignore listener errors */
+        }
       }
     }
   } else if (msg.type === 'shutdown') {
@@ -66,9 +71,15 @@ function awaitRequest(msg: AgentMessage, timeoutMs = 10_000): Promise<unknown> {
 
 export interface OmniSDK {
   fetch(url: string, options?: RequestInit): Promise<Response>;
-  notify(message: string, options?: { title?: string; severity?: 'critical' | 'warning' | 'info' }): Promise<void>;
+  notify(
+    message: string,
+    options?: { title?: string; severity?: 'critical' | 'warning' | 'info' },
+  ): Promise<void>;
   sleep(ms: number): Promise<void>;
-  retry<T>(fn: () => Promise<T>, opts?: { maxRetries?: number; delay?: number; backoff?: number }): Promise<T>;
+  retry<T>(
+    fn: () => Promise<T>,
+    opts?: { maxRetries?: number; delay?: number; backoff?: number },
+  ): Promise<T>;
   timeout<T>(fn: () => Promise<T>, ms: number): Promise<T>;
   store: {
     get(key: string): Promise<unknown>;
@@ -85,10 +96,16 @@ export interface OmniSDK {
     publish(topic: string, payload: unknown): void;
     subscribe(topic: string): void;
     unsubscribe(topic: string): void;
-    on(topic: string, callback: (event: { topic: string; payload: unknown; from: string }) => void): void;
+    on(
+      topic: string,
+      callback: (event: { topic: string; payload: unknown; from: string }) => void,
+    ): void;
   };
   // v0.5: Spawn Chain
-  spawn(prompt: string, options?: { name?: string; type?: AgentType; schedule?: string }): Promise<string>;
+  spawn(
+    prompt: string,
+    options?: { name?: string; type?: AgentType; schedule?: string },
+  ): Promise<string>;
   // v0.5: Time Travel
   snapshot(label?: string): Promise<number>;
 }
@@ -105,15 +122,21 @@ export function createSDK(): OmniSDK {
       });
     },
 
-    async notify(message: string, options?: { title?: string; severity?: 'critical' | 'warning' | 'info' }): Promise<void> {
+    async notify(
+      message: string,
+      options?: { title?: string; severity?: 'critical' | 'warning' | 'info' },
+    ): Promise<void> {
       send({ type: 'notify', message, options });
     },
 
     sleep(ms: number): Promise<void> {
-      return new Promise(resolve => setTimeout(resolve, ms));
+      return new Promise((resolve) => setTimeout(resolve, ms));
     },
 
-    async retry<T>(fn: () => Promise<T>, opts?: { maxRetries?: number; delay?: number; backoff?: number }): Promise<T> {
+    async retry<T>(
+      fn: () => Promise<T>,
+      opts?: { maxRetries?: number; delay?: number; backoff?: number },
+    ): Promise<T> {
       const { maxRetries = 3, delay = 1000, backoff = 2 } = opts || {};
       let lastError: Error = new Error('retry failed');
       for (let i = 0; i <= maxRetries; i++) {
@@ -122,7 +145,7 @@ export function createSDK(): OmniSDK {
         } catch (e) {
           lastError = e instanceof Error ? e : new Error(String(e));
           if (i < maxRetries) {
-            await new Promise(r => setTimeout(r, delay * Math.pow(backoff, i)));
+            await new Promise((r) => setTimeout(r, delay * Math.pow(backoff, i)));
           }
         }
       }
@@ -133,7 +156,7 @@ export function createSDK(): OmniSDK {
       return Promise.race([
         fn(),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms)
+          setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms),
         ),
       ]);
     },
@@ -178,18 +201,24 @@ export function createSDK(): OmniSDK {
       unsubscribe(topic: string): void {
         send({ type: 'mesh.unsubscribe', topic });
       },
-      on(topic: string, callback: (event: { topic: string; payload: unknown; from: string }) => void): void {
+      on(
+        topic: string,
+        callback: (event: { topic: string; payload: unknown; from: string }) => void,
+      ): void {
         meshListeners.push({ topic, callback });
       },
     },
 
     // v0.5: Spawn Chain
-    async spawn(prompt: string, options?: { name?: string; type?: AgentType; schedule?: string }): Promise<string> {
+    async spawn(
+      prompt: string,
+      options?: { name?: string; type?: AgentType; schedule?: string },
+    ): Promise<string> {
       const requestId = nanoid(8);
-      const result = await awaitRequest(
+      const result = (await awaitRequest(
         { type: 'spawn.create', prompt, options, requestId },
         60_000,
-      ) as { agentId?: string; error?: string };
+      )) as { agentId?: string; error?: string };
       if (result.error) throw new Error(result.error);
       return result.agentId!;
     },

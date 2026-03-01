@@ -9,7 +9,7 @@ const rootPkg = JSON.parse(readFileSync(join(rootDir, 'package.json'), 'utf-8'))
 const version = rootPkg.version;
 
 const packages = [
-  'apps/cli', 'apps/daemon', 'apps/api', 'apps/web',
+  'apps/cli', 'apps/api', 'apps/web',
   'packages/shared', 'packages/db',
 ];
 

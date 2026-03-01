@@ -1,7 +1,10 @@
 /** Queue RPC handlers */
 import {
-  getQueueStats, getDeadLetters, retryDeadLetter,
-  cleanupOldMessages, resetStaleProcessing,
+  getQueueStats,
+  getDeadLetters,
+  retryDeadLetter,
+  cleanupOldMessages,
+  resetStaleProcessing,
 } from '../message-queue.js';
 
 export const handleQueueRPC: Record<string, (params: Record<string, unknown>) => unknown> = {

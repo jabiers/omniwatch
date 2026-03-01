@@ -1,7 +1,7 @@
 /** OmniWatch API Server — Unified API + Daemon Engine */
 import { serve } from '@hono/node-server';
 import type { Server } from 'node:http';
-import { initEngine, shutdownEngine } from '@omniwatch/daemon/engine';
+import { initEngine, shutdownEngine } from './engine/engine.js';
 import { log } from '@omniwatch/shared';
 import { createApp } from './app.js';
 import { initWebSocket } from './ws.js';

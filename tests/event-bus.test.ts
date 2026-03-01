@@ -21,12 +21,12 @@ vi.mock('@omniwatch/db', () => ({
 
 // Mock agent-manager
 const mockProcesses = new Map();
-vi.mock('../apps/daemon/src/agent-manager.js', () => ({
+vi.mock('../apps/api/src/engine/agent-manager.js', () => ({
   getRunningProcesses: () => mockProcesses,
 }));
 
 // Inline import after mocks
-const eventBusModule = await import('../apps/daemon/src/event-bus.js');
+const eventBusModule = await import('../apps/api/src/engine/event-bus.js');
 const { meshPublish, meshSubscribe, meshUnsubscribe, meshRemoveAgent, getMeshTopology } =
   eventBusModule as unknown as {
     meshPublish: (id: string, topic: string, payload: unknown) => void;

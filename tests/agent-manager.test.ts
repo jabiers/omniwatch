@@ -41,27 +41,27 @@ vi.mock('node:child_process', () => ({
 }));
 
 // Mock internal daemon dependencies
-vi.mock('../apps/daemon/src/notifier.js', () => ({ sendNotification: vi.fn() }));
-vi.mock('../apps/daemon/src/health-monitor.js', () => ({ recordHeartbeat: vi.fn() }));
+vi.mock('../apps/api/src/engine/notifier.js', () => ({ sendNotification: vi.fn() }));
+vi.mock('../apps/api/src/engine/health-monitor.js', () => ({ recordHeartbeat: vi.fn() }));
 
-vi.mock('../apps/daemon/src/self-healer.js', () => ({ attemptHeal: vi.fn() }));
-vi.mock('../apps/daemon/src/event-bus.js', () => ({
+vi.mock('../apps/api/src/engine/self-healer.js', () => ({ attemptHeal: vi.fn() }));
+vi.mock('../apps/api/src/engine/event-bus.js', () => ({
   meshPublish: vi.fn(),
   meshSubscribe: vi.fn(),
   meshUnsubscribe: vi.fn(),
   meshRemoveAgent: vi.fn(),
 }));
-vi.mock('../apps/daemon/src/spawn-manager.js', () => ({
+vi.mock('../apps/api/src/engine/spawn-manager.js', () => ({
   spawnChildAgent: vi.fn(),
   getChildAgents: vi.fn().mockReturnValue([]),
 }));
-vi.mock('../apps/daemon/src/time-travel.js', () => ({ captureSnapshot: vi.fn() }));
-vi.mock('../apps/daemon/src/sandbox.js', () => ({
+vi.mock('../apps/api/src/engine/time-travel.js', () => ({ captureSnapshot: vi.fn() }));
+vi.mock('../apps/api/src/engine/sandbox.js', () => ({
   getSandboxMemoryLimit: vi.fn().mockReturnValue(128),
   getSandboxTimeout: vi.fn().mockReturnValue(30000),
   logSecurityEvent: vi.fn(),
 }));
-vi.mock('../apps/daemon/src/metrics-collector.js', () => ({
+vi.mock('../apps/api/src/engine/metrics-collector.js', () => ({
   recordAgentStart: vi.fn(),
   recordAgentStop: vi.fn(),
   recordAgentError: vi.fn(),
@@ -79,7 +79,7 @@ import {
   getAgent,
   listAgents,
   updateAgent,
-} from '../apps/daemon/src/agent-manager.js';
+} from '../apps/api/src/engine/agent-manager.js';
 import { MAX_AGENTS, AGENTS_DIR } from '@omniwatch/shared';
 import { join } from 'node:path';
 

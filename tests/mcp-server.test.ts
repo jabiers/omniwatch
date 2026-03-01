@@ -31,7 +31,7 @@ const mockEngineStart = vi.fn();
 const mockEngineStop = vi.fn();
 const mockEngineRestart = vi.fn();
 const mockSnapshotCapture = vi.fn();
-vi.mock('@omniwatch/daemon/engine', () => ({
+vi.mock('@omniwatch/api/engine', () => ({
   handleAgentRPC: {
     create: (...args: unknown[]) => mockEngineCreate(...args),
     start: (...args: unknown[]) => mockEngineStart(...args),
@@ -262,7 +262,7 @@ describe('MCP Server', () => {
     });
 
     it('snapshot.restore should accept agentId and seq', async () => {
-      const { handleSnapshotRPC } = await import('@omniwatch/daemon/engine');
+      const { handleSnapshotRPC } = await import('@omniwatch/api/engine');
       vi.mocked(handleSnapshotRPC.restore).mockResolvedValue({ restored: true, seq: 3 });
       const result = await handleSnapshotRPC.restore({ agentId: 'agent-1', seq: 3 }, null as any);
       expect(result).toHaveProperty('restored', true);

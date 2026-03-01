@@ -1,12 +1,13 @@
 {
   "name": "@omniwatch/api",
-  "version": "3.21.0",
+  "version": "4.0.0",
   "private": true,
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
     "./app": "./dist/app.js",
-    "./ws": "./dist/ws.js"
+    "./ws": "./dist/ws.js",
+    "./engine": "./dist/engine/engine.js"
   },
   "scripts": {
     "build": "tsup",
@@ -17,9 +18,12 @@
     "@hono/node-server": "^1.13.0",
     "@hono/zod-validator": "^0.7.6",
     "@modelcontextprotocol/sdk": "^1.27.1",
-    "@omniwatch/daemon": "workspace:*",
+    "@anthropic-ai/sdk": "^0.39.0",
     "@omniwatch/db": "workspace:*",
     "@omniwatch/shared": "workspace:*",
+    "acorn": "^8.16.0",
+    "isolated-vm": "^6.0.2",
+    "openai": "^4.73.0",
     "hono": "^4.6.0",
     "nanoid": "^5.1.6",
     "ws": "^8.18.0",

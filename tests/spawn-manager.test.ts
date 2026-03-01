@@ -26,7 +26,7 @@ vi.mock('@omniwatch/db', () => ({
 }));
 
 // Mock agent-manager
-vi.mock('../apps/daemon/src/agent-manager.js', () => ({
+vi.mock('../apps/api/src/engine/agent-manager.js', () => ({
   getAgent: (id: string) => {
     if (id === 'parent-1') return { id: 'parent-1', spawn_depth: 0, status: 'running' };
     if (id === 'deep-parent') return { id: 'deep-parent', spawn_depth: 3, status: 'running' };
@@ -37,7 +37,7 @@ vi.mock('../apps/daemon/src/agent-manager.js', () => ({
 }));
 
 // Mock code-generator
-vi.mock('../apps/daemon/src/code-generator.js', () => ({
+vi.mock('../apps/api/src/engine/code-generator.js', () => ({
   generateAgentCode: vi.fn().mockResolvedValue({
     name: 'child-agent',
     description: 'A child agent',
@@ -47,16 +47,17 @@ vi.mock('../apps/daemon/src/code-generator.js', () => ({
 }));
 
 // Mock code-validator
-vi.mock('../apps/daemon/src/code-validator.js', () => ({
+vi.mock('../apps/api/src/engine/code-validator.js', () => ({
   validateCode: vi.fn().mockReturnValue({ valid: true, issues: [] }),
 }));
 
 // Mock dependency-installer
-vi.mock('../apps/daemon/src/dependency-installer.js', () => ({
+vi.mock('../apps/api/src/engine/dependency-installer.js', () => ({
   installDependencies: vi.fn(),
 }));
 
-const { spawnChildAgent, getChildAgents, getSpawnChain } = await import('../apps/daemon/src/spawn-manager.js');
+const { spawnChildAgent, getChildAgents, getSpawnChain } =
+  await import('../apps/api/src/engine/spawn-manager.js');
 
 describe('Spawn Manager', () => {
   beforeEach(() => {
@@ -65,19 +66,18 @@ describe('Spawn Manager', () => {
 
   describe('spawnChildAgent', () => {
     it('should throw if parent not found', async () => {
-      await expect(
-        spawnChildAgent('nonexistent', 'create an agent')
-      ).rejects.toThrow('not found');
+      await expect(spawnChildAgent('nonexistent', 'create an agent')).rejects.toThrow('not found');
     });
 
     it('should throw if max spawn depth exceeded', async () => {
-      await expect(
-        spawnChildAgent('deep-parent', 'create an agent')
-      ).rejects.toThrow('Max spawn depth');
+      await expect(spawnChildAgent('deep-parent', 'create an agent')).rejects.toThrow(
+        'Max spawn depth',
+      );
     });
 
     it('should create and start child agent', async () => {
-      const { createAgentRecord, startAgent } = await import('../apps/daemon/src/agent-manager.js');
+      const { createAgentRecord, startAgent } =
+        await import('../apps/api/src/engine/agent-manager.js');
       const childId = await spawnChildAgent('parent-1', 'monitor API health');
 
       expect(createAgentRecord).toHaveBeenCalled();

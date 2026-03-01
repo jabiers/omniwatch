@@ -33,7 +33,7 @@ import {
   SANDBOX_BLOCKED_APIS,
   logSecurityEvent,
   getSecurityEvents,
-} from '../apps/daemon/src/sandbox.js';
+} from '../apps/api/src/engine/sandbox.js';
 import {
   SANDBOX_TIMEOUT_STRICT,
   SANDBOX_TIMEOUT_STANDARD,

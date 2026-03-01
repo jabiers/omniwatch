@@ -13,12 +13,12 @@ vi.mock('@omniwatch/shared', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@omniwatch/shared')>();
   return { ...actual, log: vi.fn() };
 });
-vi.mock('../apps/daemon/src/agent-manager.js', () => ({
+vi.mock('../apps/api/src/engine/agent-manager.js', () => ({
   getRunningProcesses: vi.fn(() => new Map()),
   getAgent: vi.fn(),
   updateAgent: vi.fn(),
 }));
-vi.mock('../apps/daemon/src/self-healer.js', () => ({
+vi.mock('../apps/api/src/engine/self-healer.js', () => ({
   attemptHeal: vi.fn(() => Promise.resolve()),
 }));
 
@@ -26,7 +26,7 @@ import {
   recordHeartbeat,
   startHealthMonitor,
   stopHealthMonitor,
-} from '../apps/daemon/src/health-monitor.js';
+} from '../apps/api/src/engine/health-monitor.js';
 
 describe('health-monitor', () => {
   beforeEach(() => {

@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { listRecipes, searchRecipes, getRecipe, getErrorMessage } from '@omniwatch/shared';
-import { handleAgentRPC } from '@omniwatch/daemon/engine';
+import { handleAgentRPC } from '../engine/engine.js';
 
 /** Schema: GET /recipes query params */
 const listRecipesSchema = z.object({
