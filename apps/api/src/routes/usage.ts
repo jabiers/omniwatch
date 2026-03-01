@@ -43,6 +43,9 @@ usageRoutes.get('/usage', zValidator('query', usageQuerySchema), (c) => {
   const { days } = c.req.valid('query');
   const db = getDb();
 
+  // Parameterized date modifier (prevents SQL injection)
+  const dateModifier = `-${days} days`;
+
   // Tenant filter: non-admin users see only their tenant's usage
   const tenantJoin = auth.role !== 'admin' ? 'JOIN agents ag ON u.agent_id = ag.id' : '';
   const tenantWhere = auth.role !== 'admin' ? 'AND ag.tenant_id = ?' : '';
@@ -56,9 +59,9 @@ usageRoutes.get('/usage', zValidator('query', usageQuerySchema), (c) => {
       COALESCE(SUM(u.output_tokens), 0) as total_output_tokens,
       COUNT(*) as total_requests
     FROM ai_usage u ${tenantJoin}
-    WHERE u.created_at >= datetime('now', '-${days} days') ${tenantWhere}`,
+    WHERE u.created_at >= datetime('now', ?) ${tenantWhere}`,
     )
-    .get(...tenantParams) as UsageRow;
+    .get(dateModifier, ...tenantParams) as UsageRow;
 
   const byModel = db
     .prepare(
@@ -67,10 +70,10 @@ usageRoutes.get('/usage', zValidator('query', usageQuerySchema), (c) => {
       COUNT(*) as requests,
       COALESCE(SUM(u.total_tokens), 0) as tokens
     FROM ai_usage u ${tenantJoin}
-    WHERE u.created_at >= datetime('now', '-${days} days') ${tenantWhere}
+    WHERE u.created_at >= datetime('now', ?) ${tenantWhere}
     GROUP BY u.model ORDER BY cost DESC`,
     )
-    .all(...tenantParams) as ModelRow[];
+    .all(dateModifier, ...tenantParams) as ModelRow[];
 
   const byAgent = db
     .prepare(
@@ -79,12 +82,12 @@ usageRoutes.get('/usage', zValidator('query', usageQuerySchema), (c) => {
       COUNT(*) as requests
     FROM ai_usage u
     LEFT JOIN agents a ON u.agent_id = a.id
-    WHERE u.created_at >= datetime('now', '-${days} days')
+    WHERE u.created_at >= datetime('now', ?)
     AND u.agent_id IS NOT NULL
     ${auth.role !== 'admin' ? 'AND a.tenant_id = ?' : ''}
     GROUP BY u.agent_id ORDER BY cost DESC`,
     )
-    .all(...tenantParams) as AgentRow[];
+    .all(dateModifier, ...tenantParams) as AgentRow[];
 
   const daily = db
     .prepare(
@@ -92,10 +95,10 @@ usageRoutes.get('/usage', zValidator('query', usageQuerySchema), (c) => {
       COALESCE(SUM(u.cost_usd), 0) as cost,
       COUNT(*) as requests
     FROM ai_usage u ${tenantJoin}
-    WHERE u.created_at >= datetime('now', '-${days} days') ${tenantWhere}
+    WHERE u.created_at >= datetime('now', ?) ${tenantWhere}
     GROUP BY date(u.created_at) ORDER BY date ASC`,
     )
-    .all(...tenantParams) as DailyRow[];
+    .all(dateModifier, ...tenantParams) as DailyRow[];
 
   return c.json({
     ...totals,

@@ -1006,3 +1006,68 @@ describe('POST /auth/login', () => {
     expect(body.error).toContain('Invalid');
   });
 });
+
+describe('DELETE Endpoints', () => {
+  let app: ReturnType<typeof createApp>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.OMNIWATCH_DEV_AUTH = '1';
+    app = createApp();
+  });
+
+  it('DELETE /agents/:id returns 204 on success', async () => {
+    mockAgentDestroy.mockResolvedValueOnce({ destroyed: true });
+    const res = await app.request('/api/agents/agent-1', {
+      method: 'DELETE',
+    });
+    expect(res.status).toBe(204);
+  });
+
+  it('DELETE /agents/:id returns 502 on engine error', async () => {
+    mockAgentDestroy.mockRejectedValueOnce(new Error('Not found'));
+    const res = await app.request('/api/agents/agent-1', {
+      method: 'DELETE',
+    });
+    expect(res.status).toBe(502);
+  });
+
+  it('DELETE /analytics/alerts/:id returns 204', async () => {
+    const res = await app.request('/api/analytics/alerts/1', {
+      method: 'DELETE',
+    });
+    expect(res.status).toBe(204);
+  });
+
+  it('DELETE /marketplace/:id returns 204 on success', async () => {
+    mockGet.mockReturnValueOnce({ id: 'recipe-1' });
+    const res = await app.request('/api/marketplace/recipe-1', {
+      method: 'DELETE',
+    });
+    expect(res.status).toBe(204);
+  });
+
+  it('DELETE /marketplace/:id returns 404 if not found', async () => {
+    mockGet.mockReturnValueOnce(null);
+    const res = await app.request('/api/marketplace/nonexistent', {
+      method: 'DELETE',
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('DELETE /users/:id returns 204 on success', async () => {
+    mockGet.mockReturnValueOnce({ id: 'user-1' });
+    const res = await app.request('/api/users/user-1', {
+      method: 'DELETE',
+    });
+    expect(res.status).toBe(204);
+  });
+
+  it('DELETE /users/:id returns 404 if not found', async () => {
+    mockGet.mockReturnValueOnce(null);
+    const res = await app.request('/api/users/nonexistent', {
+      method: 'DELETE',
+    });
+    expect(res.status).toBe(404);
+  });
+});
