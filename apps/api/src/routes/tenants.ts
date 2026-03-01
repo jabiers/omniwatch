@@ -36,7 +36,7 @@ tenantRoutes.get('/tenants', requireRole('admin'), (c) => {
   const tenants = db
     .prepare('SELECT id, name, plan, max_agents, created_at FROM tenants ORDER BY created_at DESC')
     .all() as Tenant[];
-  return c.json(tenants);
+  return c.json({ tenants });
 });
 
 /** POST /tenants — Create a new tenant (admin only) */
@@ -148,7 +148,7 @@ tenantRoutes.get('/users', requireRole('admin'), (c) => {
       'SELECT id, tenant_id, email, role, created_at FROM users WHERE tenant_id = ? ORDER BY created_at DESC',
     )
     .all(auth.tenantId) as Omit<User, 'api_key_hash'>[];
-  return c.json(users);
+  return c.json({ users });
 });
 
 /** POST /users — Create a new user + API key (admin only) */
