@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { setWsStatus, useWsStatus } from '../../lib/ws-store';
 
 describe('ws-store', () => {

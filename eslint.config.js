@@ -39,12 +39,16 @@ export default [
     },
   },
   {
-    files: ['scripts/**/*.mjs'],
+    files: ['**/*.mjs'],
     languageOptions: {
       globals: {
         console: 'readonly',
         process: 'readonly',
         URL: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
       },
     },
   },

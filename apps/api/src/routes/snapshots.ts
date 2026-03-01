@@ -72,27 +72,36 @@ snapshotRoutes.post(
   },
 );
 
-/** POST /agents/:id/snapshots/:seq/restore - restore a snapshot */
-snapshotRoutes.post('/agents/:id/snapshots/:seq/restore', async (c) => {
-  const db = getDb();
-  const auth = c.get('auth');
-  const { id, seq } = c.req.param();
-
-  const agent = verifyAgentAccess(db, id, auth);
-  if (!agent) {
-    return c.json({ error: `Agent '${id}' not found` }, 404);
-  }
-
-  try {
-    const result = await handleSnapshotRPC.restore({
-      agentId: id,
-      seq: parseInt(seq, 10),
-    });
-    return c.json(result);
-  } catch (err) {
-    return c.json({ error: getErrorMessage(err) }, 502);
-  }
+const restoreParamSchema = z.object({
+  id: z.string().min(1),
+  seq: z.coerce.number().int().min(0),
 });
+
+/** POST /agents/:id/snapshots/:seq/restore - restore a snapshot */
+snapshotRoutes.post(
+  '/agents/:id/snapshots/:seq/restore',
+  zValidator('param', restoreParamSchema),
+  async (c) => {
+    const db = getDb();
+    const auth = c.get('auth');
+    const { id, seq } = c.req.valid('param');
+
+    const agent = verifyAgentAccess(db, id, auth);
+    if (!agent) {
+      return c.json({ error: `Agent '${id}' not found` }, 404);
+    }
+
+    try {
+      const result = await handleSnapshotRPC.restore({
+        agentId: id,
+        seq,
+      });
+      return c.json(result);
+    } catch (err) {
+      return c.json({ error: getErrorMessage(err) }, 502);
+    }
+  },
+);
 
 /** GET /agents/:id/children - get child agents (spawn chain) */
 snapshotRoutes.get('/agents/:id/children', (c) => {
