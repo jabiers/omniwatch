@@ -166,6 +166,59 @@ const spec = {
         },
       },
     },
+    '/api/agents/bulk': {
+      post: {
+        summary: 'Bulk agent action (start/stop/restart/destroy)',
+        tags: ['Agents'],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['action', 'ids'],
+                properties: {
+                  action: {
+                    type: 'string',
+                    enum: ['start', 'stop', 'restart', 'destroy'],
+                  },
+                  ids: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    maxItems: 50,
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'Bulk results',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    results: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          success: { type: 'boolean' },
+                          error: { type: 'string' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/api/agents/{id}': {
       get: {
         summary: 'Get agent by ID',

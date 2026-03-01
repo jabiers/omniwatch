@@ -58,7 +58,8 @@ marketplaceRoutes.get('/marketplace', zValidator('query', listQuerySchema), (c) 
   const { category, search, sort } = c.req.valid('query');
   const db = getDb();
 
-  let query = 'SELECT * FROM marketplace_recipes WHERE published = 1';
+  let query =
+    'SELECT id, name, description, category, author, version, downloads, rating, tags, created_at FROM marketplace_recipes WHERE published = 1';
   const params: unknown[] = [];
 
   if (category) {
