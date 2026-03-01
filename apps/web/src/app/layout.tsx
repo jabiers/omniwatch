@@ -1,7 +1,7 @@
 'use client';
 
 import './globals.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -20,12 +20,15 @@ import {
   Building2,
   Store,
   LogOut,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { AuthGuard } from '../components/auth-guard';
 import { ErrorBoundary } from '../components/error-boundary';
 import { ToastContainer } from '../components/toast';
 import { useAuthStore } from '../lib/auth-store';
 import { useWsStatus } from '../lib/ws-store';
+import { useTheme, initTheme } from '../lib/theme-store';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -46,7 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const isLoginPage = pathname === '/login';
 
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body className="min-h-screen flex">
         {isLoginPage ? (
           // Login page renders without sidebar/auth guard
@@ -69,6 +72,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
   const { clearAuth, role } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const wsStatus = useWsStatus();
+  const { theme, toggleTheme } = useTheme();
+
+  useEffect(() => {
+    initTheme();
+  }, []);
 
   function handleLogout() {
     clearAuth();
@@ -122,8 +130,18 @@ function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {/* Bottom section: status + logout */}
+        {/* Bottom section: theme toggle + logout + status */}
         <div className="border-t border-white/[0.08]">
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            className="w-full flex items-center gap-3 px-5 py-3 text-sm text-gray-400 hover:text-white hover:bg-white/[0.05] transition-colors"
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+          </button>
+
           {/* Logout button */}
           <button
             onClick={handleLogout}

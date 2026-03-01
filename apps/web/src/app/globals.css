@@ -9,10 +9,24 @@
   --text-secondary: #6b7280;
 }
 
+/* Light mode overrides */
+html.light {
+  --bg-primary: #f8fafc;
+  --bg-card: rgba(0, 0, 0, 0.02);
+  --border: rgba(0, 0, 0, 0.1);
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+}
+
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+html.light body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 /* Glass card utility */
@@ -41,6 +55,19 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+html.light .glass-card {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: var(--border);
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
 }
 
 /* Log viewer */
