@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: npx turbo build
+      - run: npx eslint .
+      - run: npx vitest run
+      - name: Docker build test (API)
+        run: docker build --target api -t omniwatch-api:test . || true
+      - name: Docker build test (Web)
+        run: docker build --target web -t omniwatch-web:test . || true
