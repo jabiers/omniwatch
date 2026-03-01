@@ -107,7 +107,7 @@ tenantRoutes.put(
       const tenant = db
         .prepare('SELECT id, name, plan, max_agents, created_at FROM tenants WHERE id = ?')
         .get(tenantId) as Tenant;
-      return c.json(tenant);
+      return c.json({ tenant });
     } catch (err) {
       return c.json({ error: getErrorMessage(err) }, 500);
     }

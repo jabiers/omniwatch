@@ -3,6 +3,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { listRecipes, searchRecipes, getRecipe, getErrorMessage } from '@omniwatch/shared';
 import { handleAgentRPC } from '../engine/engine.js';
+import { requireRole } from '../middleware/auth.js';
 
 /** Schema: GET /recipes query params */
 const listRecipesSchema = z.object({
@@ -33,8 +34,8 @@ recipeRoutes.get('/recipes/:id', (c) => {
   return c.json({ recipe });
 });
 
-/** POST /recipes/:id/install - create agent from recipe */
-recipeRoutes.post('/recipes/:id/install', async (c) => {
+/** POST /recipes/:id/install - create agent from recipe (operator+) */
+recipeRoutes.post('/recipes/:id/install', requireRole('admin', 'operator'), async (c) => {
   const recipe = getRecipe(c.req.param('id'));
   if (!recipe) {
     return c.json({ error: 'Recipe not found' }, 404);

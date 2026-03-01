@@ -190,6 +190,16 @@ export default function AnalyticsPage() {
         setMetrics([]);
       }
 
+      // Detect partial or total failure
+      const failCount = results.filter(
+        (r) => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.ok),
+      ).length;
+      if (failCount === results.length) {
+        setError('Unable to load analytics data. API may be unavailable.');
+      } else if (failCount > 0) {
+        setError(`Partially loaded (${results.length - failCount}/${results.length} succeeded).`);
+      }
+
       setLastRefresh(new Date());
     } catch {
       setError('Failed to load analytics data. API may be unavailable.');

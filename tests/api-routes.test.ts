@@ -510,6 +510,7 @@ describe('POST /api/agents/:id/chat', () => {
   });
 
   it('should accept valid chat message', async () => {
+    mockGet.mockReturnValueOnce({ id: 'agent-1', tenant_id: 'default' });
     const res = await app.request('/api/agents/agent-1/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -551,6 +552,7 @@ describe('POST /api/agents/:id/apply', () => {
   });
 
   it('should accept valid code', async () => {
+    mockGet.mockReturnValueOnce({ id: 'agent-1', tenant_id: 'default' });
     const res = await app.request('/api/agents/agent-1/apply', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

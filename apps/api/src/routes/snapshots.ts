@@ -6,6 +6,8 @@ import { getDb } from '@omniwatch/db';
 import { handleSnapshotRPC } from '../engine/engine.js';
 import { getErrorMessage } from '@omniwatch/shared';
 
+const agentIdParam = z.object({ id: z.string().min(1, 'Agent ID is required') });
+
 export const snapshotRoutes = new Hono();
 
 /** Verify agent exists and belongs to the user's tenant */
@@ -24,10 +26,10 @@ function verifyAgentAccess(
 }
 
 /** GET /agents/:id/snapshots - list snapshots for an agent */
-snapshotRoutes.get('/agents/:id/snapshots', (c) => {
+snapshotRoutes.get('/agents/:id/snapshots', zValidator('param', agentIdParam), (c) => {
   const db = getDb();
   const auth = c.get('auth');
-  const { id } = c.req.param();
+  const { id } = c.req.valid('param');
 
   const agent = verifyAgentAccess(db, id, auth);
   if (!agent) {
@@ -50,11 +52,12 @@ const captureSnapshotSchema = z.object({
 /** POST /agents/:id/snapshots - capture a snapshot */
 snapshotRoutes.post(
   '/agents/:id/snapshots',
+  zValidator('param', agentIdParam),
   zValidator('json', captureSnapshotSchema),
   async (c) => {
     const db = getDb();
     const auth = c.get('auth');
-    const { id } = c.req.param();
+    const { id } = c.req.valid('param');
 
     const agent = verifyAgentAccess(db, id, auth);
     if (!agent) {
@@ -104,10 +107,10 @@ snapshotRoutes.post(
 );
 
 /** GET /agents/:id/children - get child agents (spawn chain) */
-snapshotRoutes.get('/agents/:id/children', (c) => {
+snapshotRoutes.get('/agents/:id/children', zValidator('param', agentIdParam), (c) => {
   const db = getDb();
   const auth = c.get('auth');
-  const { id } = c.req.param();
+  const { id } = c.req.valid('param');
 
   const agent = verifyAgentAccess(db, id, auth);
   if (!agent) {
