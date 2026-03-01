@@ -21,6 +21,8 @@ const listAgentsQuerySchema = z.object({
     .enum(['creating', 'ready', 'running', 'stopped', 'error', 'healing', 'destroyed'])
     .optional(),
   tenant: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(500).default(100),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 /** Schema: GET /agents/:id/logs query params */
@@ -35,37 +37,40 @@ export const agentRoutes = new Hono();
 agentRoutes.get('/agents', zValidator('query', listAgentsQuerySchema), (c) => {
   const db = getDb();
   const auth = c.get('auth');
-  const { status, tenant } = c.req.valid('query');
+  const { status, tenant, limit, offset } = c.req.valid('query');
+
+  const cols =
+    'id, name, type, status, prompt, sandbox_level, schedule, last_run_at, error_count, heal_count, parent_id, tenant_id, created_at, updated_at';
 
   let agents: Agent[];
   if (auth.role === 'admin' && !tenant) {
     if (status) {
       agents = db
         .prepare(
-          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run_at, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE status = ? ORDER BY created_at DESC',
+          `SELECT ${cols} FROM agents WHERE status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
         )
-        .all(status) as Agent[];
+        .all(status, limit, offset) as Agent[];
     } else {
       agents = db
         .prepare(
-          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run_at, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE status != ? ORDER BY created_at DESC',
+          `SELECT ${cols} FROM agents WHERE status != ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
         )
-        .all('destroyed') as Agent[];
+        .all('destroyed', limit, offset) as Agent[];
     }
   } else {
     const tenantId = tenant || auth.tenantId;
     if (status) {
       agents = db
         .prepare(
-          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run_at, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC',
+          `SELECT ${cols} FROM agents WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
         )
-        .all(tenantId, status) as Agent[];
+        .all(tenantId, status, limit, offset) as Agent[];
     } else {
       agents = db
         .prepare(
-          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run_at, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE tenant_id = ? AND status != ? ORDER BY created_at DESC',
+          `SELECT ${cols} FROM agents WHERE tenant_id = ? AND status != ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
         )
-        .all(tenantId, 'destroyed') as Agent[];
+        .all(tenantId, 'destroyed', limit, offset) as Agent[];
     }
   }
 

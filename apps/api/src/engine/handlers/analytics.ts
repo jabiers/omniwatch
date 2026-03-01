@@ -19,7 +19,8 @@ export const handleAnalyticsRPC: Record<string, (params: Record<string, unknown>
   metrics: (params) => {
     const agentId = params.agentId as string;
     const period = (params.period as 'hourly' | 'daily') || 'hourly';
-    const limit = (params.limit as number) || 24;
+    const hours = params.hours as number | undefined;
+    const limit = hours ?? ((params.limit as number) || 24);
     if (!agentId) throw new Error('agentId is required');
     return getAgentMetrics(agentId, period, limit);
   },

@@ -1,6 +1,6 @@
 {
   "name": "omniwatch",
-  "version": "4.13.0",
+  "version": "4.16.0",
   "private": true,
   "description": "AI-native CLI tool for autonomous agent management. Don't Config, Just Speak.",
   "type": "module",

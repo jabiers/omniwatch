@@ -279,9 +279,11 @@ export default function AnalyticsPage() {
     } catch {
       channels = rule.notify_channels || 'log';
     }
+    // Reverse-map API operator to display format
+    const reverseOp: Record<string, string> = { gt: '>', lt: '<', gte: '>=', lte: '<=' };
     setAlertForm({
       metric_name: rule.metric_name,
-      operator: rule.operator,
+      operator: reverseOp[rule.operator] || rule.operator,
       threshold: rule.threshold,
       window_minutes: rule.window_minutes,
       notify_channels: channels,
@@ -299,7 +301,15 @@ export default function AnalyticsPage() {
     e.preventDefault();
     setAlertSaving(true);
 
-    // Build channels as JSON array
+    // Map display operators to API enum values
+    const operatorMap: Record<string, string> = {
+      '>': 'gt',
+      '<': 'lt',
+      '>=': 'gte',
+      '<=': 'lte',
+    };
+
+    // Build channels as array
     const channelsArray = alertForm.notify_channels
       .split(',')
       .map((c) => c.trim())
@@ -307,10 +317,10 @@ export default function AnalyticsPage() {
 
     const body = {
       metric_name: alertForm.metric_name,
-      operator: alertForm.operator,
+      operator: operatorMap[alertForm.operator] || alertForm.operator,
       threshold: Number(alertForm.threshold),
       window_minutes: Number(alertForm.window_minutes),
-      notify_channels: JSON.stringify(channelsArray),
+      notify_channels: channelsArray,
     };
 
     try {

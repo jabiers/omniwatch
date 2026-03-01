@@ -11,6 +11,7 @@ const metricsQuerySchema = z.object({
   agentId: z.string().min(1, 'agentId required'),
   period: z.enum(['hourly', 'daily']).default('hourly'),
   limit: z.coerce.number().int().min(1).max(1000).default(24),
+  hours: z.coerce.number().int().min(1).max(720).optional(),
 });
 
 /** Schema: GET /analytics/anomalies query params */
@@ -58,8 +59,8 @@ analyticsRoutes.get(
   zValidator('query', metricsQuerySchema),
   async (c) => {
     try {
-      const { agentId, period, limit } = c.req.valid('query');
-      const metrics = handleAnalyticsRPC.metrics({ agentId, period, limit });
+      const { agentId, period, limit, hours } = c.req.valid('query');
+      const metrics = handleAnalyticsRPC.metrics({ agentId, period, limit, hours });
       return c.json({ metrics });
     } catch (err) {
       return c.json({ error: getErrorMessage(err) }, 500);
