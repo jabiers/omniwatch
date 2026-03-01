@@ -112,7 +112,8 @@ export const VERSIONS: Version[] = [
   { version: 'v1.9', theme: 'Isolation', highlight: 'Tenant Isolation + WS Logs + E2E' },
   { version: 'v2.0', theme: 'Unified', highlight: 'Unified Architecture (Single Process)' },
   { version: 'v2.1', theme: 'Security', highlight: 'RBAC Fix + Type Safety' },
-  { version: 'v2.2', theme: 'Current', highlight: 'Complete Daemon Removal (CLI HTTP)' },
+  { version: 'v2.2', theme: 'Cleanup', highlight: 'Complete Daemon Removal (CLI HTTP)' },
+  { version: 'v2.3', theme: 'Current', highlight: 'IPC Protocol Fully Removed (-3,090 LOC)' },
 ];
 
 export interface Stat {
@@ -122,12 +123,12 @@ export interface Stat {
 }
 
 export const STATS: Stat[] = [
-  { value: 351, suffix: '+', label: 'Tests Passing' },
+  { value: 339, suffix: '+', label: 'Tests Passing' },
   { value: 65, suffix: '+', label: 'API Endpoints' },
   { value: 18, suffix: '', label: 'Database Tables' },
   { value: 14, suffix: '', label: 'Dashboard Pages' },
   { value: 15, suffix: '', label: 'CLI Commands' },
-  { value: 18, suffix: '', label: 'Releases' },
+  { value: 19, suffix: '', label: 'Releases' },
 ];
 
 export interface TechCategory {
