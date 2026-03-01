@@ -76,16 +76,16 @@ vi.mock('@omniwatch/api/engine', () => ({
     list: vi.fn(),
   },
   handleQueueRPC: {
-    stats: vi.fn().mockReturnValue({ pending: 0, processing: 0, completed: 0 }),
-    deadLetters: vi.fn().mockReturnValue({ letters: [] }),
+    stats: vi.fn().mockReturnValue({ pending: 0, processing: 0, done_today: 0, dead_letters: 0 }),
+    deadLetters: vi.fn().mockReturnValue([]),
     retryDeadLetter: vi.fn().mockReturnValue({ success: true }),
     cleanup: vi.fn(),
     resetStale: vi.fn(),
   },
   handleAnalyticsRPC: {
-    metrics: vi.fn().mockReturnValue({ metrics: [] }),
-    anomalies: vi.fn().mockReturnValue({ anomalies: [] }),
-    alertRules: vi.fn().mockReturnValue({ rules: [] }),
+    metrics: vi.fn().mockReturnValue([]),
+    anomalies: vi.fn().mockReturnValue([]),
+    alertRules: vi.fn().mockReturnValue([]),
     createAlert: vi.fn(),
     updateAlert: vi.fn(),
     deleteAlert: vi.fn(),
@@ -95,7 +95,7 @@ vi.mock('@omniwatch/api/engine', () => ({
     topology: vi.fn().mockResolvedValue({ nodes: [], edges: [] }),
   },
   handleSecurityRPC: {
-    events: vi.fn().mockReturnValue({ events: [] }),
+    events: vi.fn().mockReturnValue([]),
   },
 }));
 
@@ -657,8 +657,9 @@ describe('GET /api/queue/stats', () => {
     const res = await app.request('/api/queue/stats');
     expect(res.status).toBe(200);
 
-    const body = await res.json();
-    expect(body).toHaveProperty('pending');
+    const body = (await res.json()) as { stats: { pending: number } };
+    expect(body).toHaveProperty('stats');
+    expect(body.stats).toHaveProperty('pending');
   });
 });
 
@@ -773,9 +774,10 @@ describe('Mesh API routes', () => {
   it('GET /api/mesh/topology should return nodes and edges', async () => {
     const res = await app.request('/api/mesh/topology');
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { nodes: unknown[]; edges: unknown[] };
-    expect(body).toHaveProperty('nodes');
-    expect(body).toHaveProperty('edges');
+    const body = (await res.json()) as { topology: { nodes: unknown[]; edges: unknown[] } };
+    expect(body).toHaveProperty('topology');
+    expect(body.topology).toHaveProperty('nodes');
+    expect(body.topology).toHaveProperty('edges');
   });
 
   it('GET /api/mesh/events should return events array', async () => {
@@ -914,8 +916,8 @@ describe('GET /api/tenants', () => {
 
     const res = await app.request('/api/tenants');
     expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body).toEqual(tenants);
+    const body = (await res.json()) as { tenants: unknown[] };
+    expect(body).toEqual({ tenants });
   });
 });
 

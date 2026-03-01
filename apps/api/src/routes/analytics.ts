@@ -60,7 +60,7 @@ analyticsRoutes.get(
     try {
       const { agentId, period, limit } = c.req.valid('query');
       const metrics = handleAnalyticsRPC.metrics({ agentId, period, limit });
-      return c.json(metrics);
+      return c.json({ metrics });
     } catch (err) {
       return c.json({ error: getErrorMessage(err) }, 500);
     }
@@ -76,7 +76,7 @@ analyticsRoutes.get(
     try {
       const { agentId } = c.req.valid('query');
       const anomalies = handleAnalyticsRPC.anomalies({ agentId });
-      return c.json(anomalies);
+      return c.json({ anomalies });
     } catch (err) {
       return c.json({ error: getErrorMessage(err) }, 500);
     }
@@ -88,7 +88,7 @@ analyticsRoutes.get('/analytics/alerts', requireRole('admin', 'operator', 'viewe
   try {
     const auth = c.get('auth');
     const rules = handleAnalyticsRPC.alertRules({ tenantId: auth.tenantId });
-    return c.json(rules);
+    return c.json({ rules });
   } catch (err) {
     return c.json({ error: getErrorMessage(err) }, 500);
   }
@@ -130,7 +130,7 @@ analyticsRoutes.put(
       const { id } = c.req.valid('param');
       const body = c.req.valid('json');
       const rule = handleAnalyticsRPC.updateAlert({ id, updates: body });
-      return c.json(rule);
+      return c.json({ rule });
     } catch (err) {
       return c.json({ error: getErrorMessage(err) }, 500);
     }
@@ -162,7 +162,7 @@ analyticsRoutes.get(
     try {
       const { agentId, limit } = c.req.valid('query');
       const events = handleSecurityRPC.events({ agentId, limit });
-      return c.json(events);
+      return c.json({ events });
     } catch (err) {
       return c.json({ error: getErrorMessage(err) }, 500);
     }

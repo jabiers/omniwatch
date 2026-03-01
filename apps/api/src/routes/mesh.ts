@@ -16,8 +16,8 @@ export const meshRoutes = new Hono();
 /** GET /mesh/topology - get mesh node graph */
 meshRoutes.get('/mesh/topology', async (c) => {
   try {
-    const result = await handleMeshRPC.topology({});
-    return c.json(result);
+    const topology = await handleMeshRPC.topology({});
+    return c.json({ topology });
   } catch (err) {
     return c.json({ error: getErrorMessage(err) }, 502);
   }

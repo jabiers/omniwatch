@@ -22,7 +22,7 @@ export const queueRoutes = new Hono();
 queueRoutes.get('/queue/stats', requireRole('admin', 'operator', 'viewer'), async (c) => {
   try {
     const stats = handleQueueRPC.stats({});
-    return c.json(stats);
+    return c.json({ stats });
   } catch (err) {
     return c.json({ error: getErrorMessage(err) }, 500);
   }
@@ -37,7 +37,7 @@ queueRoutes.get(
     try {
       const { limit } = c.req.valid('query');
       const letters = handleQueueRPC.deadLetters({ limit });
-      return c.json(letters);
+      return c.json({ dead_letters: letters });
     } catch (err) {
       return c.json({ error: getErrorMessage(err) }, 500);
     }
@@ -53,7 +53,7 @@ queueRoutes.post(
     try {
       const { id } = c.req.valid('param');
       const result = handleQueueRPC.retryDeadLetter({ id });
-      return c.json(result);
+      return c.json({ result });
     } catch (err) {
       return c.json({ error: getErrorMessage(err) }, 500);
     }
