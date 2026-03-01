@@ -1,8 +1,8 @@
 # OmniWatch
 
-> **Don't Config, Just Speak** — AI-native CLI tool for autonomous agent management.
+> AI-powered autonomous monitoring platform — **"Don't Config, Just Speak"**
 
-OmniWatch is a terminal-native platform where you describe what you want in plain language, and AI automatically generates, runs, monitors, and self-heals background agents 24/7.
+OmniWatch is a platform where you describe what you want in plain language, and AI automatically generates, runs, monitors, and self-heals background agents 24/7. It ships with a CLI, a background daemon, a REST API, and a full-featured web dashboard.
 
 ```
 $ omni watch "Alert me when AirPods Pro drops below $250 on Amazon"
@@ -15,168 +15,132 @@ agent-c3d4      btc-price-alert     running   10s ago
 agent-e5f6      hackernews-ai       running   2m ago
 ```
 
+## Quick Start
+
+### Docker (Recommended)
+
+```bash
+docker compose up -d
+# API at http://localhost:3456
+# API Docs at http://localhost:3456/api/docs
+```
+
+### From Source
+
+```bash
+git clone https://github.com/jabiers/omniwatch.git
+cd omniwatch
+pnpm install
+npx turbo build
+npx turbo dev
+
+# Set your AI key
+omni config set ai.api_key sk-ant-xxxxx
+
+# Start the daemon
+omni daemon start
+
+# Create your first agent
+omni watch "Check Hacker News every hour for AI-related posts"
+```
+
 ## Features
 
-### Core
-- **Prompt-to-Agent** — Describe a task in natural language, get a running background agent
-- **Three Agent Types** — Watcher (monitor), Doer (execute), Auto (autonomous judgment)
-- **Self-Healing** — Agents that crash are automatically diagnosed and repaired by AI
-- **Smart Throttle** — Severity-based notification frequency control
-- **Multi-Channel Alerts** — Slack, Discord, Telegram, Webhook, System notifications
-- **Agent Templates** — Pre-built templates for web monitoring, API checks, RSS feeds
-- **AST Code Validation** — Security-first code analysis before deployment
+### Core Agent System
+- **Prompt-to-Agent** -- Describe a task in natural language, get a running background agent
+- **Three Agent Types** -- Watcher (monitor), Doer (execute), Auto (autonomous judgment)
+- **Self-Healing** -- Agents that crash are automatically diagnosed and repaired by AI
+- **Smart Throttle** -- Severity-based notification frequency control
+- **Multi-Channel Alerts** -- Slack, Discord, Telegram, Webhook, System notifications
+- **Agent Templates** -- Pre-built templates for web monitoring, API checks, RSS feeds
+- **AST Code Validation** -- Security-first static analysis before deployment
 
 ### Agent Mesh (v0.5)
-- **Event Bus** — Pub/sub inter-agent communication via topics
-- **Spawn Chain** — Agents can spawn child agents with depth limits
-- **Time Travel** — State snapshots with capture/restore
-- **MCP Server** — Model Context Protocol integration (7 tools, 3 resources)
-- **Local Brain** — Ollama integration for offline AI
-- **Glass Box** — Agent introspection and live code editing
-- **Recipes** — Pre-built agent templates with one-click install
+- **Event Bus** -- Pub/sub inter-agent communication via topics
+- **Spawn Chain** -- Agents can spawn child agents with depth limits
+- **Time Travel** -- State snapshots with capture and restore
+- **MCP Server** -- Model Context Protocol integration (7 tools, 3 resources)
+- **Local Brain** -- Ollama integration for offline AI
+- **Glass Box** -- Agent introspection and live code editing
+- **Recipes** -- Pre-built agent templates with one-click install
 
 ### Enterprise (v0.6)
-- **Agent Sandbox** — VM-based isolation (strict/standard/permissive) + isolated-vm
-- **Persistent Queue** — SQLite-backed at-least-once delivery with DLQ
-- **Multi-Tenant** — API key auth, RBAC (admin/operator/viewer), tenant isolation
-- **Analytics** — Metrics collector, hourly/daily rollup, Z-score anomaly detection, alert rules
-- **Security Audit** — Event logging for sandbox violations
+- **Agent Sandbox** -- VM-based isolation (strict/standard/permissive) with isolated-vm
+- **Persistent Queue** -- SQLite-backed at-least-once delivery with DLQ and backpressure
+- **Multi-Tenant** -- API key auth, RBAC (admin/operator/viewer), tenant isolation
+- **Analytics** -- Metrics collector, hourly/daily rollup, Z-score anomaly detection, alert rules
 
-### Platform (v0.7)
-- **OAuth/OIDC** — GitHub and Google login support
-- **Agent Marketplace** — Community recipe sharing and discovery
-- **Web Login** — API key authentication with session management
+### Platform (v0.7-v0.9)
+- **OAuth/OIDC** -- GitHub and Google login with CSRF protection
+- **Agent Marketplace** -- Community recipe sharing, discovery, and install
+- **OpenAPI Docs** -- Swagger UI at `/api/docs` with full endpoint documentation
+- **Real-time WebSocket** -- Live agent status updates with heartbeat and auto-reconnect
+- **Success Toasts** -- Instant feedback on agent lifecycle actions
 
 ## Architecture
 
 ```
 [Terminal]                              [Browser]
-    │                                       │
-    ▼                                       ▼
-[CLI: omni] ──Unix Socket──▶ [Daemon] ◀── [Next.js + Hono API]
-                                │              │
-                                ├──fork──▶ [Agent A] (sandbox)
-                                ├──fork──▶ [Agent B] (sandbox)
-                                ├──fork──▶ [Agent N] (sandbox)
-                                ▼
+    |                                       |
+    v                                       v
+[CLI: omni] --Unix Socket--> [Daemon] <-- [Next.js + Hono API]
+                                |              |
+                                |--fork--> [Agent A] (sandbox)
+                                |--fork--> [Agent B] (sandbox)
+                                |--fork--> [Agent N] (sandbox)
+                                v
                           [SQLite DB (WAL)]
-                          ├─ 17 tables
-                          └─ versioned migrations
+                          |-- 18 tables
+                          +-- versioned migrations (v001-v005)
 ```
 
 | Layer | Role |
 |-------|------|
 | **CLI** (`omni`) | Lightweight terminal client. 14 commands + Ink TUI. |
 | **Daemon** (`omnid`) | Background service. Agent lifecycle, health, AI, sandbox, queue, metrics. |
-| **API** (`apps/api`) | Hono REST API (40+ endpoints) + WebSocket + MCP. Embedded in Next.js or standalone. |
-| **Web** (`apps/web`) | Next.js 15 Glass Console. 13 pages with auth, charts, admin. |
+| **API** (`apps/api`) | Hono REST API (45+ endpoints) + WebSocket + MCP. |
+| **Web** (`apps/web`) | Next.js 15 Glass Console. 15 pages with auth, charts, admin. |
 | **Agent** | Sandboxed Node.js process with SDK (`omni.fetch`, `omni.notify`, `omni.store`). |
-
-## Requirements
-
-- Node.js >= 20.0.0
-- pnpm >= 9.0.0
-- Anthropic API key (Claude) — or Ollama for local AI
-
-## Installation
-
-```bash
-git clone https://github.com/jabiers/omniwatch.git
-cd omniwatch
-pnpm install
-pnpm build
-
-# Link globally
-pnpm link --global
-
-# Set your API key
-omni config set ai.api_key sk-ant-xxxxx
-```
-
-## Quick Start
-
-```bash
-# 1. Start the daemon
-omni daemon start
-
-# 2. Create your first agent
-omni watch "Check Hacker News every hour for AI-related posts and notify me"
-
-# 3. View running agents
-omni list
-
-# 4. Check logs
-omni logs <agent-id>
-
-# 5. Open the TUI dashboard
-omni dash
-
-# 6. Open the web dashboard
-cd apps/web && pnpm dev    # http://localhost:3457
-```
-
-## Commands
-
-### Agent Creation
-
-| Command | Description |
-|---------|-------------|
-| `omni watch <prompt>` | Create a **watcher** agent — monitors conditions and alerts |
-| `omni do <prompt>` | Create a **doer** agent — executes periodic or one-shot tasks |
-| `omni do --once <prompt>` | Run a one-shot task and exit |
-| `omni do --schedule "0 9 * * *" <prompt>` | Schedule with cron expression |
-| `omni auto <prompt>` | Create an **auto** agent — autonomous judgment and action |
-
-### Agent Management
-
-| Command | Description |
-|---------|-------------|
-| `omni list` | List all agents with status |
-| `omni status <id>` | Show detailed agent status |
-| `omni logs <id>` | View agent logs |
-| `omni start <id>` | Start a stopped agent |
-| `omni stop <id>` | Restart an agent |
-| `omni destroy <id>` | Permanently remove an agent |
-| `omni chat <id>` | Interactive chat to modify an agent |
-| `omni config get/set` | Manage configuration |
-| `omni daemon start/stop` | Control the background daemon |
 
 ## Web Dashboard
 
-The Glass Console web dashboard runs on port 3457 with embedded API.
+The Glass Console dashboard (port 3457) provides full control over the platform.
 
 | Page | Path | Description |
 |------|------|-------------|
-| Dashboard | `/` | Agent status grid, system metrics, WebSocket real-time |
-| Agent List | `/agents` | Filterable table with status badges and quick actions |
-| Agent Detail | `/agents/[id]` | Logs, metrics, snapshots, chat, code editor |
-| Create Agent | `/agents/new` | Natural language prompt input with AI preview |
-| Mesh | `/mesh` | Agent event bus topology |
+| Dashboard | `/` | Agent status grid, system metrics, real-time WebSocket updates |
+| Agent List | `/agents` | Paginated, filterable table with bulk actions and status badges |
+| Agent Detail | `/agents/[id]` | Logs, metrics, snapshots, chat, code editor, spawn chain |
+| Create Agent | `/agents/new` | Natural language prompt input with AI-powered code preview |
+| Mesh | `/mesh` | Agent event bus topology, subscriptions, paginated event stream |
 | Analytics | `/analytics` | Metric charts, anomaly detection, alert rules CRUD |
-| Queue | `/queue` | Message queue stats, dead letter management |
-| Marketplace | `/marketplace` | Community recipe discovery and install |
+| Queue | `/queue` | Message queue stats, paginated dead letter management |
+| Marketplace | `/marketplace` | Community recipe discovery, install, and publish |
 | Recipes | `/recipes` | Built-in agent templates |
 | Usage | `/usage` | AI token usage and cost tracking |
-| Notifications | `/notifications` | Filterable notification history |
-| Tenants | `/tenants` | Multi-tenant and user management (admin) |
-| Settings | `/settings` | AI, notification, agent configuration |
-| Login | `/login` | API key authentication |
+| Notifications | `/notifications` | Paginated, filterable notification history |
+| Tenants | `/tenants` | Multi-tenant and user management (admin only) |
+| Settings | `/settings` | AI, notification, and agent configuration |
+| Login | `/login` | API key authentication with session management |
 
-## REST API
+## API
 
-40+ endpoints with zod validation and RBAC.
+- **REST API**: 45+ endpoints with Zod validation and RBAC authorization
+- **WebSocket**: Real-time agent status updates with heartbeat ping/pong
+- **MCP Server**: 7 tools and 3 resources for AI integration (Streamable HTTP)
+- **OpenAPI**: Swagger UI at `/api/docs` with full endpoint documentation
 
 ### Authentication
 
 ```bash
-# Use API key header
-curl -H "X-API-Key: omni_..." http://localhost:3457/api/agents
+# API key header
+curl -H "X-API-Key: omni_..." http://localhost:3456/api/agents
 
-# Or Bearer token (OAuth sessions)
-curl -H "Authorization: Bearer <token>" http://localhost:3457/api/agents
+# OAuth Bearer token
+curl -H "Authorization: Bearer <token>" http://localhost:3456/api/agents
 ```
 
-### Core Endpoints
+### Key Endpoints
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
@@ -185,6 +149,7 @@ curl -H "Authorization: Bearer <token>" http://localhost:3457/api/agents
 | DELETE | `/api/agents/:id` | operator+ | Destroy agent |
 | POST | `/api/agents/:id/start` | operator+ | Start agent |
 | POST | `/api/agents/:id/stop` | operator+ | Stop agent |
+| POST | `/api/agents/:id/restart` | operator+ | Restart agent |
 | GET | `/api/agents/:id/logs` | viewer+ | Agent logs |
 | GET | `/api/agents/:id/metrics` | viewer+ | Agent metrics |
 | GET | `/api/agents/:id/snapshots` | viewer+ | Time travel snapshots |
@@ -192,49 +157,27 @@ curl -H "Authorization: Bearer <token>" http://localhost:3457/api/agents
 | GET | `/api/mesh/events` | viewer+ | Mesh events |
 | GET | `/api/analytics/metrics` | viewer+ | Metric rollups |
 | GET | `/api/analytics/anomalies` | viewer+ | Anomaly detection |
-| GET/POST/PUT/DELETE | `/api/analytics/alerts` | operator+ | Alert rules CRUD |
+| CRUD | `/api/analytics/alerts` | operator+ | Alert rules |
 | GET | `/api/queue/stats` | viewer+ | Queue statistics |
 | GET | `/api/marketplace` | viewer+ | Browse recipes |
 | POST | `/api/marketplace/:id/install` | operator+ | Install recipe |
-| GET/POST | `/api/tenants` | admin | Tenant management |
-| GET/POST/DELETE | `/api/users` | admin | User management |
-| POST | `/api/mcp` | — | MCP Streamable HTTP |
-| GET | `/api/system/status` | — | System status |
-| WS | `/ws` | — | Real-time events |
-
-## Agent SDK
-
-Agents have access to a sandboxed SDK:
-
-```typescript
-export default async function agent(omni) {
-  // HTTP requests
-  const data = await omni.fetch('https://api.example.com/data');
-
-  // Persistent key-value storage
-  await omni.store.set('last_price', data.price);
-  const prev = await omni.store.get('last_price');
-
-  // Send notifications
-  omni.notify('Price dropped!', { severity: 'critical' });
-
-  // Structured logging
-  omni.log.info('Check completed', { price: data.price });
-
-  // Agent Mesh — publish events
-  omni.mesh.publish('price:updated', { price: data.price });
-
-  // Spawn child agents
-  const childId = await omni.spawn('Monitor sub-page', { maxDepth: 2 });
-
-  // Time travel — capture state
-  await omni.snapshot('before-update');
-}
-```
+| CRUD | `/api/tenants` | admin | Tenant management |
+| CRUD | `/api/users` | admin | User management |
+| POST | `/api/mcp` | -- | MCP Streamable HTTP |
+| GET | `/api/system/status` | -- | System health |
+| GET | `/api/docs` | -- | OpenAPI Swagger UI |
+| WS | `/ws` | -- | Real-time events |
 
 ## Security
 
-### Agent Sandbox Levels
+- **API key authentication** -- `omni_` prefix + 32 hex chars, SHA-256 hashed storage
+- **OAuth/OIDC** -- GitHub and Google login with CSRF state protection
+- **RBAC** -- Role-based access control: `admin` > `operator` > `viewer`
+- **Agent Sandbox** -- VM-based isolation with three security levels
+- **SQL injection prevention** -- Parameterized queries throughout
+- **Security audit log** -- All sandbox violations recorded in DB
+
+### Sandbox Levels
 
 | Level | Memory | Timeout | FS Access | Network |
 |-------|--------|---------|-----------|---------|
@@ -243,63 +186,78 @@ export default async function agent(omni) {
 | **Permissive** | 256 MB | 60s | Agent dir + tmp | All |
 
 ### Code Validation
-- **Forbidden imports**: `child_process`, `cluster`, `net`, `vm`, `worker_threads`
-- **Blocked patterns**: `eval()`, `new Function()`, `process.exit()`
-- **AST analysis**: Static code analysis before deployment
-- **isolated-vm**: V8 isolate for strict sandbox level
-- **Security audit log**: All violations recorded in DB
-
-### Authentication & RBAC
-- API key authentication (`omni_` + 32 hex chars, SHA-256 hashed)
-- Role-based access: `admin` > `operator` > `viewer`
-- Multi-tenant isolation with per-tenant agent filtering
-- OAuth/OIDC support (GitHub, Google)
+- Forbidden imports: `child_process`, `cluster`, `net`, `vm`, `worker_threads`
+- Blocked patterns: `eval()`, `new Function()`, `process.exit()`
+- AST-level static analysis before deployment
+- isolated-vm V8 isolate for strict sandbox
 
 ## Development
 
 ```bash
-# Build all packages (6 packages via Turborepo)
-pnpm build
+# Install dependencies
+pnpm install
 
-# Run all tests (280+ tests, 32 files)
-pnpm test
+# Build all packages (Turborepo)
+npx turbo build
 
 # Dev mode (watch)
-pnpm dev
+npx turbo dev
+
+# Run all tests (280+ tests, 34 files)
+npx vitest run
 
 # Type check
 pnpm lint
 ```
 
+## CI/CD
+
+GitHub Actions workflow runs on every push and PR to `main`:
+
+1. Checkout + pnpm setup
+2. `pnpm install --frozen-lockfile`
+3. `npx turbo build` (all 6 packages)
+4. `npx vitest run` (full test suite)
+
+## Database
+
+- **Engine**: SQLite with WAL mode (better-sqlite3)
+- **Tables**: 18 application tables + 1 migrations table
+- **Migrations**: 5 versioned migration files (v001-v005)
+- **Key tables**: agents, agent_logs, agent_metrics, agent_store, notifications, ai_usage, mesh_events, mesh_subscriptions, agent_snapshots, security_events, message_queue, dead_letters, tenants, users, metric_rollups, alert_rules, marketplace_recipes, oauth_sessions
+
 ## Project Structure
 
 ```
 omniwatch/
-├── apps/
-│   ├── cli/                    # CLI client (14 commands + Ink TUI)
-│   ├── daemon/                 # Background daemon
-│   │   ├── src/handlers/       # 7 RPC handler groups
-│   │   ├── src/agent/          # Agent runtime + SDK
-│   │   ├── src/sandbox.ts      # VM isolation + isolated-vm
-│   │   ├── src/message-queue.ts # Persistent queue
-│   │   ├── src/metrics-collector.ts
-│   │   └── src/anomaly-detector.ts
-│   ├── api/                    # Hono REST API
-│   │   ├── src/routes/         # 14 route groups
-│   │   ├── src/middleware/     # auth, error-handler, logger
-│   │   └── src/app.ts          # Hono app factory
-│   └── web/                    # Next.js 15 Dashboard
-│       ├── src/app/            # 13 pages (Glass Console)
-│       ├── src/components/     # AuthGuard
-│       └── src/lib/            # auth-store (zustand)
-├── packages/
-│   ├── shared/                 # Types, constants, errors, IPC, auth
-│   └── db/                     # SQLite schema + versioned migrations
-│       └── src/migrations/     # v001-v005
-├── tests/                      # 32 files, 280+ tests
-├── bin/omni.mjs                # CLI entry point
-├── turbo.json                  # Turborepo config
-└── pnpm-workspace.yaml         # Workspace definition
++-- apps/
+|   +-- cli/                    # CLI client (14 commands + Ink TUI)
+|   +-- daemon/                 # Background daemon
+|   |   +-- src/handlers/       # 7 RPC handler groups
+|   |   +-- src/agent/          # Agent runtime + SDK
+|   |   +-- src/sandbox.ts      # VM isolation + isolated-vm
+|   |   +-- src/message-queue.ts
+|   |   +-- src/metrics-collector.ts
+|   |   +-- src/anomaly-detector.ts
+|   +-- api/                    # Hono REST API
+|   |   +-- src/routes/         # 15 route groups
+|   |   +-- src/middleware/     # auth, error-handler, logger
+|   |   +-- src/openapi.ts      # OpenAPI/Swagger
+|   |   +-- src/ws.ts           # WebSocket server
+|   +-- web/                    # Next.js 15 Dashboard
+|       +-- src/app/            # 15 pages (Glass Console)
+|       +-- src/components/     # Pagination, AuthGuard, ToastContainer
+|       +-- src/lib/            # auth-store, toast-store, api wrapper
++-- packages/
+|   +-- shared/                 # Types, constants, errors, IPC, auth
+|   +-- db/                     # SQLite schema + versioned migrations
+|       +-- src/migrations/     # v001-v005
++-- tests/                      # 34 files, 280+ tests
++-- bin/omni.mjs                # CLI entry point
++-- Dockerfile                  # Production container
++-- docker-compose.yml          # Docker Compose config
++-- turbo.json                  # Turborepo config
++-- pnpm-workspace.yaml         # Workspace definition
 ```
 
 ## Tech Stack
@@ -320,6 +278,8 @@ omniwatch/
 | IPC | Unix Domain Socket (JSON-RPC 2.0) |
 | Build | tsup (esbuild) + next build |
 | Test | Vitest |
+| CI/CD | GitHub Actions |
+| Container | Docker + Docker Compose |
 
 ## License
 
