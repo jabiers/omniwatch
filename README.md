@@ -107,7 +107,7 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
                                        v
                                  [SQLite DB (WAL)]
                                  |-- 18 tables
-                                 +-- versioned migrations (v001-v005)
+                                 +-- versioned migrations (v001-v006)
 
                           [Next.js Dashboard] --API proxy--> [API Server]
 ```
@@ -236,7 +236,7 @@ npx turbo build
 # Dev mode (watch)
 npx turbo dev
 
-# Run all tests (375+ tests, 40 files)
+# Run all tests (349+ tests, 43 files)
 npx vitest run
 
 # Type check
@@ -256,7 +256,7 @@ GitHub Actions workflow runs on every push and PR to `main`:
 
 - **Engine**: SQLite with WAL mode (better-sqlite3)
 - **Tables**: 18 application tables + 1 migrations table
-- **Migrations**: 5 versioned migration files (v001-v005)
+- **Migrations**: 6 versioned migration files (v001-v006)
 - **Key tables**: agents, agent_logs, agent_metrics, agent_store, notifications, ai_usage, mesh_events, mesh_subscriptions, agent_snapshots, security_events, message_queue, dead_letters, tenants, users, metric_rollups, alert_rules, marketplace_recipes, oauth_sessions
 
 ## Project Structure
@@ -285,8 +285,8 @@ omniwatch/
 +-- packages/
 |   +-- shared/                 # Types, constants, errors, IPC, auth
 |   +-- db/                     # SQLite schema + versioned migrations
-|       +-- src/migrations/     # v001-v005
-+-- tests/                      # 40 files, 375+ tests
+|       +-- src/migrations/     # v001-v006
++-- tests/                      # 43 files, 349+ tests
 +-- bin/omni.mjs                # CLI entry point
 +-- Dockerfile                  # Production container
 +-- docker-compose.yml          # Docker Compose config
