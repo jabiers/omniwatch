@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Filter, Calendar, Check, Eye } from 'lucide-react';
 import { Pagination } from '../../components/pagination';
 import { apiFetch } from '../../lib/api';
+import { useWebSocket } from '../../lib/ws';
 
 interface Notification {
   id: number;
@@ -66,12 +67,32 @@ export default function NotificationsPage() {
     }
   }, [page]);
 
-  // Initial load + auto-refresh every 5s
+  // Initial load + auto-refresh every 30s (WebSocket handles real-time updates)
   useEffect(() => {
     loadNotifications();
-    const interval = setInterval(loadNotifications, 5000);
+    const interval = setInterval(loadNotifications, 30000);
     return () => clearInterval(interval);
   }, [loadNotifications]);
+
+  // WebSocket for real-time notification updates
+  const wsUrl = useMemo(() => {
+    if (typeof window === 'undefined') return 'ws://localhost:3456/ws';
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = process.env.NEXT_PUBLIC_WS_HOST || window.location.host;
+    return `${protocol}//${wsHost}/ws`;
+  }, []);
+
+  const handleWsMessage = useCallback(
+    (msg: unknown) => {
+      const data = msg as { type?: string };
+      if (data.type === 'notification') {
+        loadNotifications();
+      }
+    },
+    [loadNotifications],
+  );
+
+  useWebSocket(wsUrl, handleWsMessage);
 
   // Get unique agent names for filter
   const agentNames = Array.from(new Set(notifications.map((n) => n.agent_id)));

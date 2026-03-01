@@ -76,10 +76,10 @@ export default function DashboardPage() {
     }
   }, []);
 
-  // Initial load + auto-refresh every 5s
+  // Initial load + auto-refresh every 30s (WebSocket handles real-time updates)
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 5000);
+    const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
   }, [loadData]);
 
