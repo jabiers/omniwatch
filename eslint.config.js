@@ -39,6 +39,16 @@ export default [
     },
   },
   {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        URL: 'readonly',
+      },
+    },
+  },
+  {
     ignores: ['**/dist/**', '**/.next/**', '**/node_modules/**'],
   },
 ];
