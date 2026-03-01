@@ -135,7 +135,7 @@ export default function Footer() {
             </div>
             <p className="text-xs text-gray-500 mb-3">AI-powered autonomous monitoring platform</p>
             <span className="inline-block text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full mb-2">
-              v1.7.0
+              v1.8.0
             </span>
             <p className="text-xs text-gray-600">MIT License</p>
           </div>

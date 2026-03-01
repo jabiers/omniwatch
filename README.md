@@ -37,8 +37,11 @@ npx turbo dev
 # Set your AI key
 omni config set ai.api_key sk-ant-xxxxx
 
-# Start the daemon
+# Start the daemon (creates admin API key on first boot)
 omni daemon start
+
+# Or create an API key manually
+omni auth create-key --role admin
 
 # Create your first agent
 omni watch "Check Hacker News every hour for AI-related posts"
@@ -96,10 +99,10 @@ omni watch "Check Hacker News every hour for AI-related posts"
 
 | Layer | Role |
 |-------|------|
-| **CLI** (`omni`) | Lightweight terminal client. 14 commands + Ink TUI. |
+| **CLI** (`omni`) | Lightweight terminal client. 15 commands + Ink TUI. |
 | **Daemon** (`omnid`) | Background service. Agent lifecycle, health, AI, sandbox, queue, metrics. |
-| **API** (`apps/api`) | Hono REST API (45+ endpoints) + WebSocket + MCP. |
-| **Web** (`apps/web`) | Next.js 15 Glass Console. 15 pages with auth, charts, admin. |
+| **API** (`apps/api`) | Hono REST API (62+ endpoints) + WebSocket + MCP. |
+| **Web** (`apps/web`) | Next.js 15 Glass Console. 14 pages with auth, charts, admin. |
 | **Agent** | Sandboxed Node.js process with SDK (`omni.fetch`, `omni.notify`, `omni.store`). |
 
 ## Web Dashboard
@@ -125,7 +128,7 @@ The Glass Console dashboard (port 3457) provides full control over the platform.
 
 ## API
 
-- **REST API**: 45+ endpoints with Zod validation and RBAC authorization
+- **REST API**: 62+ endpoints with Zod validation and RBAC authorization
 - **WebSocket**: Real-time agent status updates with heartbeat ping/pong
 - **MCP Server**: 7 tools and 3 resources for AI integration (Streamable HTTP)
 - **OpenAPI**: Swagger UI at `/api/docs` with full endpoint documentation
@@ -154,17 +157,32 @@ curl -H "Authorization: Bearer <token>" http://localhost:3456/api/agents
 | GET | `/api/agents/:id/metrics` | viewer+ | Agent metrics |
 | GET | `/api/agents/:id/snapshots` | viewer+ | Time travel snapshots |
 | POST | `/api/agents/:id/chat` | operator+ | Chat with agent |
+| POST | `/api/agents/preview` | operator+ | AI code preview |
+| POST | `/api/agents/:id/apply` | operator+ | Apply previewed code |
+| POST | `/api/auth/login` | -- | API key login |
+| GET | `/api/auth/me` | token | Current user info |
+| POST | `/api/auth/logout` | token | Logout session |
+| GET | `/api/auth/github` | -- | GitHub OAuth start |
+| GET | `/api/auth/google` | -- | Google OAuth start |
 | GET | `/api/mesh/events` | viewer+ | Mesh events |
+| GET | `/api/mesh/topology` | viewer+ | Agent mesh topology |
 | GET | `/api/analytics/metrics` | viewer+ | Metric rollups |
 | GET | `/api/analytics/anomalies` | viewer+ | Anomaly detection |
 | CRUD | `/api/analytics/alerts` | operator+ | Alert rules |
+| GET | `/api/security/events` | admin | Security audit log |
 | GET | `/api/queue/stats` | viewer+ | Queue statistics |
+| GET | `/api/queue/dead-letters` | operator+ | Dead letter queue |
 | GET | `/api/marketplace` | viewer+ | Browse recipes |
+| POST | `/api/marketplace` | operator+ | Publish recipe |
 | POST | `/api/marketplace/:id/install` | operator+ | Install recipe |
+| DELETE | `/api/marketplace/:id` | admin | Remove recipe |
 | CRUD | `/api/tenants` | admin | Tenant management |
 | CRUD | `/api/users` | admin | User management |
-| POST | `/api/mcp` | -- | MCP Streamable HTTP |
+| POST | `/api/users/:id/rotate-key` | admin | Rotate user API key |
 | GET | `/api/system/status` | -- | System health |
+| GET | `/api/system/health/detailed` | -- | Detailed health check |
+| GET | `/api/system/ollama` | -- | Ollama status |
+| POST | `/api/mcp` | -- | MCP Streamable HTTP |
 | GET | `/api/docs` | -- | OpenAPI Swagger UI |
 | WS | `/ws` | -- | Real-time events |
 
@@ -203,7 +221,7 @@ npx turbo build
 # Dev mode (watch)
 npx turbo dev
 
-# Run all tests (280+ tests, 34 files)
+# Run all tests (380+ tests, 41 files)
 npx vitest run
 
 # Type check
@@ -231,7 +249,7 @@ GitHub Actions workflow runs on every push and PR to `main`:
 ```
 omniwatch/
 +-- apps/
-|   +-- cli/                    # CLI client (14 commands + Ink TUI)
+|   +-- cli/                    # CLI client (15 commands + Ink TUI)
 |   +-- daemon/                 # Background daemon
 |   |   +-- src/handlers/       # 7 RPC handler groups
 |   |   +-- src/agent/          # Agent runtime + SDK
@@ -245,14 +263,14 @@ omniwatch/
 |   |   +-- src/openapi.ts      # OpenAPI/Swagger
 |   |   +-- src/ws.ts           # WebSocket server
 |   +-- web/                    # Next.js 15 Dashboard
-|       +-- src/app/            # 15 pages (Glass Console)
+|       +-- src/app/            # 14 pages (Glass Console)
 |       +-- src/components/     # Pagination, AuthGuard, ToastContainer
 |       +-- src/lib/            # auth-store, toast-store, api wrapper
 +-- packages/
 |   +-- shared/                 # Types, constants, errors, IPC, auth
 |   +-- db/                     # SQLite schema + versioned migrations
 |       +-- src/migrations/     # v001-v005
-+-- tests/                      # 34 files, 280+ tests
++-- tests/                      # 41 files, 380+ tests
 +-- bin/omni.mjs                # CLI entry point
 +-- Dockerfile                  # Production container
 +-- docker-compose.yml          # Docker Compose config

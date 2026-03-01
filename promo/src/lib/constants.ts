@@ -107,7 +107,8 @@ export const VERSIONS: Version[] = [
   { version: 'v1.4', theme: 'UX', highlight: 'Dark/Light Theme + Search' },
   { version: 'v1.5', theme: 'Components', highlight: 'Skeleton + StatusBadge' },
   { version: 'v1.6', theme: 'Analytics', highlight: 'CSV Export + Charts' },
-  { version: 'v1.7', theme: 'Current', highlight: 'Tenant Mgmt + Marketplace UX' },
+  { version: 'v1.7', theme: 'Tenant Mgmt', highlight: 'Tenant Mgmt + Marketplace UX' },
+  { version: 'v1.8', theme: 'Current', highlight: 'CLI Auth + Login Flow + Docs Sync' },
 ];
 
 export interface Stat {
@@ -118,11 +119,11 @@ export interface Stat {
 
 export const STATS: Stat[] = [
   { value: 376, suffix: '+', label: 'Tests Passing' },
-  { value: 45, suffix: '+', label: 'API Endpoints' },
+  { value: 62, suffix: '+', label: 'API Endpoints' },
   { value: 18, suffix: '', label: 'Database Tables' },
-  { value: 15, suffix: '', label: 'Dashboard Pages' },
-  { value: 14, suffix: '', label: 'CLI Commands' },
-  { value: 14, suffix: '', label: 'Releases' },
+  { value: 14, suffix: '', label: 'Dashboard Pages' },
+  { value: 15, suffix: '', label: 'CLI Commands' },
+  { value: 15, suffix: '', label: 'Releases' },
 ];
 
 export interface TechCategory {
