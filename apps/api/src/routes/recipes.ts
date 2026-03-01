@@ -34,10 +34,12 @@ recipeRoutes.post('/recipes/:id/install', async (c) => {
   }
 
   try {
-    const result = await handleAgentRPC.create(
-      { name: recipe.name, prompt: recipe.prompt, type: 'watcher', template: recipe.template },
-      null as any,
-    );
+    const result = await handleAgentRPC.create({
+      name: recipe.name,
+      prompt: recipe.prompt,
+      type: 'watcher',
+      template: recipe.template,
+    });
     return c.json({ agent: result }, 201);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';

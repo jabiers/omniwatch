@@ -13,7 +13,7 @@ chatRoutes.post('/agents/:id/chat', async (c) => {
   }
 
   try {
-    const result = await handleChatRPC.chat({ id, message: body.message }, null as any);
+    const result = await handleChatRPC.chat({ id, message: body.message });
     return c.json({ result });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
@@ -30,10 +30,10 @@ chatRoutes.post('/agents/preview', async (c) => {
   }
 
   try {
-    const result = await handleChatRPC.preview(
-      { prompt: body.prompt, template: body.template },
-      null as any,
-    );
+    const result = await handleChatRPC.preview({
+      prompt: body.prompt,
+      template: body.template,
+    });
     return c.json({ result });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
@@ -51,7 +51,7 @@ chatRoutes.post('/agents/:id/apply', async (c) => {
   }
 
   try {
-    const result = await handleChatRPC.apply({ id, code: body.code }, null as any);
+    const result = await handleChatRPC.apply({ id, code: body.code });
     return c.json({ result });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';

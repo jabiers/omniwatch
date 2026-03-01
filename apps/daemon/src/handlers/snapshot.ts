@@ -1,9 +1,8 @@
 /** RPC handlers for Time Travel snapshot operations */
-import type { Socket } from 'node:net';
 import { captureSnapshot, restoreSnapshot, listSnapshots } from '../time-travel.js';
 
 export const handleSnapshotRPC = {
-  async capture(params: Record<string, unknown>, _client: Socket) {
+  async capture(params: Record<string, unknown>) {
     const agentId = params.agentId as string;
     if (!agentId) throw new Error('agentId is required');
     const label = params.label as string | undefined;
@@ -11,7 +10,7 @@ export const handleSnapshotRPC = {
     return { seq };
   },
 
-  async restore(params: Record<string, unknown>, _client: Socket) {
+  async restore(params: Record<string, unknown>) {
     const agentId = params.agentId as string;
     const seq = params.seq as number;
     if (!agentId || seq == null) throw new Error('agentId and seq are required');
@@ -19,7 +18,7 @@ export const handleSnapshotRPC = {
     return { success: true };
   },
 
-  async list(params: Record<string, unknown>, _client: Socket) {
+  async list(params: Record<string, unknown>) {
     const agentId = params.agentId as string;
     if (!agentId) throw new Error('agentId is required');
     return listSnapshots(agentId);

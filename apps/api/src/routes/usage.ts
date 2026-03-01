@@ -33,7 +33,11 @@ interface DailyRow {
 /** GET /usage - AI usage summary with cost tracking (tenant-scoped) */
 usageRoutes.get('/usage', (c) => {
   const auth = c.get('auth');
-  const days = Math.min(Number(c.req.query('days') || '30'), 365);
+  const rawDays = Number(c.req.query('days') || '30');
+  if (!Number.isFinite(rawDays) || rawDays < 1) {
+    return c.json({ error: 'days must be an integer between 1 and 365' }, 400);
+  }
+  const days = Math.min(Math.max(Math.floor(rawDays), 1), 365);
   const db = getDb();
 
   // Tenant filter: non-admin users see only their tenant's usage

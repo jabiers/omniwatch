@@ -100,7 +100,7 @@ function createMcpServer(): McpServer {
     async ({ agent_id, action }) => {
       try {
         const handler = handleAgentRPC[action as 'start' | 'stop' | 'restart'];
-        const result = await handler({ id: agent_id }, null as any);
+        const result = await handler({ id: agent_id });
         return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return {
@@ -126,7 +126,7 @@ function createMcpServer(): McpServer {
     },
     async ({ prompt, name }) => {
       try {
-        const result = await handleAgentRPC.create({ prompt, name }, null as any);
+        const result = await handleAgentRPC.create({ prompt, name });
         return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return {
@@ -174,7 +174,7 @@ function createMcpServer(): McpServer {
     },
     async ({ agent_id, label }) => {
       try {
-        const result = await handleSnapshotRPC.capture({ agentId: agent_id, label }, null as any);
+        const result = await handleSnapshotRPC.capture({ agentId: agent_id, label });
         return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return {

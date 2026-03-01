@@ -1,4 +1,3 @@
-import type { Socket } from 'node:net';
 import { handleChat, applyCodeChange } from '../chat-handler.js';
 import { restartAgent } from '../agent-manager.js';
 import { generateAgentCode } from '../code-generator.js';
@@ -8,7 +7,7 @@ import { validateCode } from '../code-validator.js';
 const conversations = new Map<string, Array<{ role: 'user' | 'assistant'; content: string }>>();
 
 export const handleChatRPC = {
-  async chat(params: Record<string, unknown>, _client: Socket) {
+  async chat(params: Record<string, unknown>) {
     const id = params.id as string;
     const message = params.message as string;
 
@@ -23,7 +22,7 @@ export const handleChatRPC = {
     return response;
   },
 
-  async preview(params: Record<string, unknown>, _client: Socket) {
+  async preview(params: Record<string, unknown>) {
     const prompt = params.prompt as string;
     const template = params.template as string | undefined;
     const result = await generateAgentCode(prompt, template);
@@ -31,7 +30,7 @@ export const handleChatRPC = {
     return { ...result, validation };
   },
 
-  async apply(params: Record<string, unknown>, _client: Socket) {
+  async apply(params: Record<string, unknown>) {
     const id = params.id as string;
     const code = params.code as string;
 

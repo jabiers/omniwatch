@@ -169,7 +169,7 @@ marketplaceRoutes.post(
 );
 
 /** POST /marketplace/:id/install — Install a marketplace recipe as an agent */
-marketplaceRoutes.post('/marketplace/:id/install', async (c) => {
+marketplaceRoutes.post('/marketplace/:id/install', requireRole('admin', 'operator'), async (c) => {
   const id = c.req.param('id');
   const auth = c.get('auth');
   const db = getDb();
@@ -184,16 +184,13 @@ marketplaceRoutes.post('/marketplace/:id/install', async (c) => {
 
   try {
     const config = JSON.parse(row.config || '{}');
-    const result = await handleAgentRPC.create(
-      {
-        name: row.name,
-        prompt: row.prompt,
-        type: config.type || 'watcher',
-        template: config.template,
-        tenantId: auth.tenantId,
-      },
-      null as any,
-    );
+    const result = await handleAgentRPC.create({
+      name: row.name,
+      prompt: row.prompt,
+      type: config.type || 'watcher',
+      template: config.template,
+      tenantId: auth.tenantId,
+    });
 
     // Increment download count
     db.prepare(

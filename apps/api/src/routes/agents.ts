@@ -93,10 +93,12 @@ agentRoutes.post(
     const auth = c.get('auth');
 
     try {
-      const result = await handleAgentRPC.create(
-        { name: body.name, prompt: body.prompt, type: body.type, tenantId: auth.tenantId },
-        null as any,
-      );
+      const result = await handleAgentRPC.create({
+        name: body.name,
+        prompt: body.prompt,
+        type: body.type,
+        tenantId: auth.tenantId,
+      });
       const created = result as { id?: string; name?: string };
       broadcast('agent:created', { id: created.id, name: created.name });
       return c.json({ agent: result }, 201);
@@ -112,7 +114,7 @@ agentRoutes.delete('/agents/:id', requireRole('admin', 'operator'), async (c) =>
   const { id } = c.req.param();
 
   try {
-    const result = await handleAgentRPC.destroy({ id }, null as any);
+    const result = await handleAgentRPC.destroy({ id });
     broadcast('agent:destroyed', { id });
     return c.json({ result });
   } catch (err) {
@@ -126,7 +128,7 @@ agentRoutes.post('/agents/:id/start', requireRole('admin', 'operator'), async (c
   const { id } = c.req.param();
 
   try {
-    const result = await handleAgentRPC.start({ id }, null as any);
+    const result = await handleAgentRPC.start({ id });
     broadcast('agent:status', { id, status: 'running' });
     return c.json({ result });
   } catch (err) {
@@ -140,7 +142,7 @@ agentRoutes.post('/agents/:id/stop', requireRole('admin', 'operator'), async (c)
   const { id } = c.req.param();
 
   try {
-    const result = await handleAgentRPC.stop({ id }, null as any);
+    const result = await handleAgentRPC.stop({ id });
     broadcast('agent:status', { id, status: 'stopped' });
     return c.json({ result });
   } catch (err) {
@@ -154,7 +156,7 @@ agentRoutes.post('/agents/:id/restart', requireRole('admin', 'operator'), async 
   const { id } = c.req.param();
 
   try {
-    const result = await handleAgentRPC.restart({ id }, null as any);
+    const result = await handleAgentRPC.restart({ id });
     broadcast('agent:status', { id, status: 'running' });
     return c.json({ result });
   } catch (err) {

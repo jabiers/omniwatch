@@ -1,4 +1,3 @@
-import type { Socket } from 'node:net';
 import {
   createAgentRecord,
   getAgent,
@@ -14,7 +13,7 @@ import { installDependencies } from '../dependency-installer.js';
 import { Errors, log } from '@omniwatch/shared';
 
 export const handleAgentRPC = {
-  async create(params: Record<string, unknown>, _client: Socket) {
+  async create(params: Record<string, unknown>) {
     const prompt = params.prompt as string;
     if (!prompt) throw new Error('prompt is required');
 
@@ -33,13 +32,9 @@ export const handleAgentRPC = {
 
     // 3. Create agent record (user-provided name takes priority)
     const agentName = (params.name as string)?.trim() || generated.name;
-    const agent = createAgentRecord(
-      prompt,
-      agentName,
-      generated.description,
-      generated.code,
-      { dependencies: generated.dependencies },
-    );
+    const agent = createAgentRecord(prompt, agentName, generated.description, generated.code, {
+      dependencies: generated.dependencies,
+    });
 
     // 4. Install npm dependencies
     if (generated.dependencies.length > 0) {
