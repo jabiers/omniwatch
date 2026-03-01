@@ -44,6 +44,7 @@ export default function QueuePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<number | null>(null);
+  const [bulkRetrying, setBulkRetrying] = useState(false);
   const [dlPage, setDlPage] = useState(1);
   const [dlHasNextPage, setDlHasNextPage] = useState(false);
 
@@ -77,10 +78,10 @@ export default function QueuePage() {
     }
   }, [dlPage]);
 
-  // Initial load + auto-refresh every 10s
+  // Initial load + auto-refresh every 30s
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 10_000);
+    const interval = setInterval(loadData, 30_000);
     return () => clearInterval(interval);
   }, [loadData]);
 
@@ -100,6 +101,22 @@ export default function QueuePage() {
       // Retry failed silently
     } finally {
       setRetrying(null);
+    }
+  }
+
+  /** Retry all dead letter entries */
+  async function handleRetryAll() {
+    setBulkRetrying(true);
+    try {
+      for (const dl of deadLetters) {
+        await apiFetch(`/api/queue/dead-letters/${dl.id}/retry`, { method: 'POST' });
+      }
+      setDeadLetters([]);
+      await loadData();
+    } catch {
+      // Bulk retry failed
+    } finally {
+      setBulkRetrying(false);
     }
   }
 
@@ -198,9 +215,22 @@ export default function QueuePage() {
             <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
             Dead Letter Queue
           </h2>
-          <span className="text-xs text-white/40">
-            {deadLetters.length} entr{deadLetters.length === 1 ? 'y' : 'ies'}
-          </span>
+          <div className="flex items-center gap-3">
+            {deadLetters.length > 0 && (
+              <button
+                onClick={handleRetryAll}
+                disabled={bulkRetrying}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 disabled:opacity-30 transition-colors"
+                aria-label="Retry all dead letters"
+              >
+                <RotateCcw className={`w-3 h-3 ${bulkRetrying ? 'animate-spin' : ''}`} />
+                Retry All
+              </button>
+            )}
+            <span className="text-xs text-white/40">
+              {deadLetters.length} entr{deadLetters.length === 1 ? 'y' : 'ies'}
+            </span>
+          </div>
         </div>
 
         {deadLetters.length === 0 ? (

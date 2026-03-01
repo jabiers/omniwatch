@@ -1,11 +1,22 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { Plus, Filter, Play, Square, RotateCcw, Trash2, CheckSquare, XSquare } from 'lucide-react';
+import {
+  Plus,
+  Filter,
+  Play,
+  Square,
+  RotateCcw,
+  Trash2,
+  CheckSquare,
+  XSquare,
+  Search,
+} from 'lucide-react';
 import { apiFetch } from '../../lib/api';
 import { Pagination } from '../../components/pagination';
 import { useToastStore } from '../../lib/toast-store';
+import { useWebSocket } from '../../lib/ws';
 
 interface Agent {
   id: string;
@@ -35,6 +46,7 @@ export default function AgentsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [bulkAction, setBulkAction] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
 
@@ -56,14 +68,37 @@ export default function AgentsPage() {
     }
   }, [page]);
 
-  // Initial load + auto-refresh every 5s
+  // Initial load + auto-refresh every 30s (WebSocket handles real-time updates)
   useEffect(() => {
     loadAgents();
-    const interval = setInterval(loadAgents, 5000);
+    const interval = setInterval(loadAgents, 30000);
     return () => clearInterval(interval);
   }, [loadAgents]);
 
-  const filtered = filter === 'all' ? agents : agents.filter((a) => a.status === filter);
+  // WebSocket for real-time agent updates
+  const wsUrl = useMemo(() => {
+    if (typeof window === 'undefined') return 'ws://localhost:3456/ws';
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = process.env.NEXT_PUBLIC_WS_HOST || window.location.host;
+    return `${protocol}//${wsHost}/ws`;
+  }, []);
+
+  const handleWsMessage = useCallback(
+    (msg: unknown) => {
+      const data = msg as { type?: string };
+      if (data.type === 'agent:status' || data.type === 'agent:update') {
+        loadAgents();
+      }
+    },
+    [loadAgents],
+  );
+
+  useWebSocket(wsUrl, handleWsMessage);
+
+  const searched = searchQuery
+    ? agents.filter((a) => a.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : agents;
+  const filtered = filter === 'all' ? searched : searched.filter((a) => a.status === filter);
 
   // Calculate total pages — if hasNextPage, allow at least one more page
   const totalPages = hasNextPage ? page + 1 : page;
@@ -163,30 +198,44 @@ export default function AgentsPage() {
         </Link>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2">
-        <Filter className="w-4 h-4 text-gray-500" />
-        <div className="flex gap-1">
-          {statusOptions.map((s) => {
-            const count = s === 'all' ? agents.length : agents.filter((a) => a.status === s).length;
-            return (
-              <button
-                key={s}
-                onClick={() => {
-                  setFilter(s);
-                  setSelected(new Set());
-                }}
-                className={`px-3 py-1 rounded-md text-xs capitalize transition-colors ${
-                  filter === s
-                    ? 'bg-white/[0.1] text-white'
-                    : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.05]'
-                }`}
-              >
-                {s}
-                {count > 0 && <span className="ml-1 text-gray-600">({count})</span>}
-              </button>
-            );
-          })}
+      {/* Search + Filter Tabs */}
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          <input
+            type="text"
+            placeholder="Search agents..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 pr-4 py-2 w-64 rounded-lg bg-white/[0.05] border border-white/[0.08] text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
+            aria-label="Search agents by name"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-gray-500" />
+          <div className="flex gap-1">
+            {statusOptions.map((s) => {
+              const count =
+                s === 'all' ? agents.length : agents.filter((a) => a.status === s).length;
+              return (
+                <button
+                  key={s}
+                  onClick={() => {
+                    setFilter(s);
+                    setSelected(new Set());
+                  }}
+                  className={`px-3 py-1 rounded-md text-xs capitalize transition-colors ${
+                    filter === s
+                      ? 'bg-white/[0.1] text-white'
+                      : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.05]'
+                  }`}
+                >
+                  {s}
+                  {count > 0 && <span className="ml-1 text-gray-600">({count})</span>}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
