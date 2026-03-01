@@ -93,9 +93,10 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
 - **Direct Function Calls** -- No more Unix Socket RPC; all engine calls are in-process
 - **CLI HTTP API** -- CLI communicates via HTTP (no daemon spawn, no Unix Socket)
 
-### Quality & Security (v3.0-v3.9)
-- **Test Suite** -- 477 tests across 59 files (367 root + 110 web)
-- **Query Optimization** -- Explicit SELECT columns in API routes and daemon modules
+### Quality & Security (v3.0+)
+- **Test Suite** -- 511 tests across 60 files (390 root + 121 web)
+- **Query Optimization** -- Zero SELECT * in production code; all queries use explicit columns
+- **Input Validation** -- Zod schemas on all API routes via @hono/zod-validator
 - **Security Hardening** -- Tenant isolation on bulk ops, SSRF prevention, webhook masking
 - **Dashboard Tests** -- All 14 pages covered with render tests
 
@@ -243,7 +244,7 @@ npx turbo build
 # Dev mode (watch)
 npx turbo dev
 
-# Run all tests (477 tests, 59 files)
+# Run all tests (511 tests, 60 files)
 npx turbo test
 
 # Type check

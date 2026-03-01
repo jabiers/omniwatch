@@ -93,6 +93,13 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
 - **직접 함수 호출** -- Unix Socket RPC 제거, 모든 엔진 호출이 인프로세스로 수행
 - **CLI HTTP API** -- CLI가 HTTP로 통신 (데몬 스폰 없음, Unix Socket 없음)
 
+### 품질 및 보안 (v3.0+)
+- **테스트 스위트** -- 60개 파일, 511개 테스트 (루트 390 + 웹 121)
+- **쿼리 최적화** -- 프로덕션 코드 SELECT * 제로; 모든 쿼리 명시적 컬럼 사용
+- **입력 검증** -- @hono/zod-validator를 통한 모든 API 라우트 Zod 스키마 적용
+- **보안 강화** -- 벌크 작업 테넌트 격리, SSRF 방지, 웹훅 마스킹
+- **대시보드 테스트** -- 14개 전체 페이지 렌더 테스트 커버
+
 ## 아키텍처
 
 ```
@@ -237,7 +244,7 @@ npx turbo build
 # 개발 모드 (watch)
 npx turbo dev
 
-# 전체 테스트 실행 (395개 이상 테스트, 45개 파일)
+# 전체 테스트 실행 (511개 테스트, 60개 파일)
 npx vitest run
 
 # 타입 체크
@@ -287,7 +294,7 @@ omniwatch/
 |   +-- shared/                 # 타입, 상수, 에러, IPC, 인증
 |   +-- db/                     # SQLite 스키마 + 버전별 마이그레이션
 |       +-- src/migrations/     # v001-v006
-+-- tests/                      # 45개 파일, 395개 이상 테스트
++-- tests/                      # 60개 파일, 511개 테스트
 +-- bin/omni.mjs                # CLI 진입점
 +-- Dockerfile                  # 프로덕션 컨테이너
 +-- docker-compose.yml          # Docker Compose 설정
