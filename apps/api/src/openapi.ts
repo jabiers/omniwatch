@@ -22,7 +22,7 @@ const spec = {
     title: 'OmniWatch API',
     version: APP_VERSION,
     description:
-      'AI Agent Orchestration Platform — 65+ endpoints for agent lifecycle, mesh, analytics, marketplace, and more.',
+      'AI Agent Orchestration Platform — 70+ endpoints for agent lifecycle, mesh, analytics, marketplace, and more.',
   },
   servers: [{ url: 'http://localhost:3456', description: 'Local development' }],
   paths: {
@@ -641,7 +641,7 @@ const spec = {
     '/api/security/events': {
       get: {
         summary: 'Security audit log',
-        tags: ['Analytics'],
+        tags: ['Security'],
         parameters: paginationParams,
         responses: {
           '200': {
@@ -724,6 +724,11 @@ const spec = {
         tags: ['Notifications'],
         parameters: [
           { name: 'agent_id', in: 'query', schema: { type: 'string' } },
+          {
+            name: 'severity',
+            in: 'query',
+            schema: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
+          },
           ...paginationParams,
         ],
         responses: {
@@ -1004,28 +1009,39 @@ const spec = {
             'application/json': {
               schema: {
                 type: 'object',
-                properties: { key: { type: 'string' } },
-                required: ['key'],
+                properties: { apiKey: { type: 'string' } },
+                required: ['apiKey'],
               },
             },
           },
         },
         responses: {
           '200': {
-            description: 'Session token',
+            description: 'Session token and user info',
             content: {
               'application/json': {
                 schema: {
                   type: 'object',
                   properties: {
                     token: { type: 'string' },
-                    role: { type: 'string' },
-                    tenant_id: { type: 'string' },
+                    user: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        tenant_id: { type: 'string' },
+                        email: { type: 'string' },
+                        role: { type: 'string' },
+                        display_name: { type: 'string', nullable: true },
+                        avatar_url: { type: 'string', nullable: true },
+                        provider: { type: 'string' },
+                      },
+                    },
                   },
                 },
               },
             },
           },
+          '401': { description: 'Invalid API key' },
         },
       },
     },
@@ -1049,9 +1065,12 @@ const spec = {
                   type: 'object',
                   properties: {
                     id: { type: 'string' },
+                    tenant_id: { type: 'string' },
                     email: { type: 'string' },
                     role: { type: 'string' },
-                    tenant_id: { type: 'string' },
+                    display_name: { type: 'string', nullable: true },
+                    avatar_url: { type: 'string', nullable: true },
+                    provider: { type: 'string' },
                   },
                 },
               },
