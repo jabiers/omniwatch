@@ -26,7 +26,9 @@ export function stopScheduler(): void {
 function checkSchedules(): void {
   const db = getDb();
   const scheduled = db
-    .prepare("SELECT * FROM agents WHERE schedule IS NOT NULL AND status IN ('ready', 'stopped')")
+    .prepare(
+      "SELECT * FROM agents WHERE schedule IS NOT NULL AND status IN ('ready', 'stopped') LIMIT 100",
+    )
     .all() as Agent[];
 
   for (const agent of scheduled) {

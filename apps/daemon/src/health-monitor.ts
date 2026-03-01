@@ -86,7 +86,7 @@ function handleUnresponsiveAgent(agentId: string): void {
 function checkZombieAgents(): void {
   const db = getDb();
   const runningAgents = db
-    .prepare("SELECT * FROM agents WHERE status = 'running'")
+    .prepare("SELECT * FROM agents WHERE status = 'running' LIMIT 100")
     .all() as Agent[];
 
   for (const agent of runningAgents) {
@@ -138,7 +138,9 @@ function checkZombieAgents(): void {
 
 function checkErrorAgents(): void {
   const db = getDb();
-  const errorAgents = db.prepare("SELECT * FROM agents WHERE status = 'error'").all() as Agent[];
+  const errorAgents = db
+    .prepare("SELECT * FROM agents WHERE status = 'error' LIMIT 100")
+    .all() as Agent[];
 
   for (const agent of errorAgents) {
     if (agent.heal_count >= MAX_HEAL_ATTEMPTS) continue;

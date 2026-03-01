@@ -5,6 +5,7 @@ import { up as v002 } from './v002-mesh-spawn-timetravel.js';
 import { up as v003 } from './v003-sandbox-queue-tenant-analytics.js';
 import { up as v004 } from './v004-marketplace.js';
 import { up as v005 } from './v005-oauth.js';
+import { up as v006 } from './v006-performance-indexes.js';
 
 interface Migration {
   version: number;
@@ -18,6 +19,7 @@ const migrations: Migration[] = [
   { version: 3, name: 'sandbox-queue-tenant-analytics', up: v003 },
   { version: 4, name: 'marketplace', up: v004 },
   { version: 5, name: 'oauth', up: v005 },
+  { version: 6, name: 'performance-indexes', up: v006 },
 ];
 
 /** Run all pending migrations */
@@ -32,8 +34,9 @@ export function runMigrations(db: Database.Database): void {
   `);
 
   const applied = new Set(
-    (db.prepare('SELECT version FROM _migrations').all() as { version: number }[])
-      .map(r => r.version)
+    (db.prepare('SELECT version FROM _migrations').all() as { version: number }[]).map(
+      (r) => r.version,
+    ),
   );
 
   for (const migration of migrations) {
@@ -41,7 +44,10 @@ export function runMigrations(db: Database.Database): void {
 
     db.transaction(() => {
       migration.up(db);
-      db.prepare('INSERT INTO _migrations (version, name) VALUES (?, ?)').run(migration.version, migration.name);
+      db.prepare('INSERT INTO _migrations (version, name) VALUES (?, ?)').run(
+        migration.version,
+        migration.name,
+      );
     })();
   }
 }
