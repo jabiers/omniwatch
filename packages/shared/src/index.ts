@@ -101,4 +101,5 @@ export { BUILT_IN_RECIPES, listRecipes, getRecipe, searchRecipes } from './recip
 export { generateApiKey, hashApiKey, isValidApiKeyFormat } from './auth.js';
 
 // Environment configuration
+export type { EnvConfig } from './env.js';
 export { getEnvConfig, validateEnv } from './env.js';

@@ -1,52 +1,56 @@
 /**
- * Environment configuration helper.
+ * Environment configuration with Zod validation.
  * Provides typed access to environment variables with sensible defaults.
  */
-export function getEnvConfig() {
-  return {
-    nodeEnv: process.env.NODE_ENV || 'development',
-    isDev: process.env.NODE_ENV !== 'production',
-    isProd: process.env.NODE_ENV === 'production',
-    dataDir: process.env.OMNI_DATA_DIR || '',
-    port: parseInt(process.env.PORT || '3456'),
-  };
-}
+import { z } from 'zod';
 
-/** Optional but important environment variables (missing ones are logged as warnings) */
-const OPTIONAL_ENV_VARS = [
-  'ANTHROPIC_API_KEY',
-  'OPENAI_API_KEY',
-  'OLLAMA_URL',
-  'GITHUB_CLIENT_ID',
-  'GITHUB_CLIENT_SECRET',
-  'GITHUB_REDIRECT_URI',
-  'GOOGLE_CLIENT_ID',
-  'GOOGLE_CLIENT_SECRET',
-  'GOOGLE_REDIRECT_URI',
-  'SLACK_WEBHOOK_URL',
-  'DISCORD_WEBHOOK_URL',
-  'TELEGRAM_BOT_TOKEN',
-  'TELEGRAM_CHAT_ID',
-] as const;
+const envSchema = z.object({
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  OMNI_DATA_DIR: z.string().default(''),
+  PORT: z.coerce.number().default(3456),
+  CORS_ORIGINS: z.string().default('http://localhost:3457'),
+  OMNI_API_KEY: z.string().optional(),
+  GITHUB_CLIENT_ID: z.string().optional(),
+  GITHUB_CLIENT_SECRET: z.string().optional(),
+  GITHUB_REDIRECT_URI: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_REDIRECT_URI: z.string().optional(),
+  ANTHROPIC_API_KEY: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
+  OLLAMA_URL: z.string().optional(),
+  SLACK_WEBHOOK_URL: z.string().optional(),
+  DISCORD_WEBHOOK_URL: z.string().optional(),
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
+  TELEGRAM_CHAT_ID: z.string().optional(),
+});
+
+export type EnvConfig = z.infer<typeof envSchema>;
+
+let _validated: EnvConfig | null = null;
+
+/**
+ * Get validated environment config (singleton).
+ * Returns a typed object with defaults applied.
+ */
+export function getEnvConfig(): EnvConfig {
+  if (!_validated) {
+    _validated = envSchema.parse(process.env);
+  }
+  return _validated;
+}
 
 /**
  * Validate environment variables at startup.
- * OMNI_DATA_DIR has a sensible default (~/.omniwatch), so nothing is strictly required.
- * Logs warnings for missing optional vars.
+ * Logs warnings for missing optional AI provider keys.
  */
 export function validateEnv(): void {
-  const missingOptional: string[] = [];
+  _validated = envSchema.parse(process.env);
 
-  for (const key of OPTIONAL_ENV_VARS) {
-    if (!process.env[key]) {
-      missingOptional.push(key);
-    }
-  }
-
-  if (missingOptional.length > 0) {
-    // Log at warn level — non-fatal, just informational
-    console.warn(
-      `[omniwatch] Missing optional env vars: ${missingOptional.join(', ')}`
-    );
+  // Log optional AI keys status
+  const optionalKeys = ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'OLLAMA_URL'] as const;
+  const missing = optionalKeys.filter((k) => !_validated![k]);
+  if (missing.length > 0) {
+    console.warn(`[omniwatch] Missing optional env vars: ${missing.join(', ')}`);
   }
 }
