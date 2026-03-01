@@ -124,9 +124,9 @@ agentRoutes.delete('/agents/:id', requireRole('admin', 'operator'), async (c) =>
   const { id } = c.req.param();
 
   try {
-    const result = await handleAgentRPC.destroy({ id });
+    await handleAgentRPC.destroy({ id });
     broadcast('agent:destroyed', { id });
-    return c.json({ result });
+    return c.body(null, 204);
   } catch (err) {
     return c.json({ error: getErrorMessage(err) }, 502);
   }

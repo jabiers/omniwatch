@@ -311,7 +311,7 @@ describe('Auth Middleware', () => {
         method: 'DELETE',
         headers: { 'X-API-Key': apiKey },
       });
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(204);
     });
 
     it('viewer cannot access admin-only routes → 403', async () => {

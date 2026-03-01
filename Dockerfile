@@ -32,8 +32,6 @@ RUN apk add --no-cache libstdc++
 WORKDIR /app
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/package.json ./apps/api/
-COPY --from=builder /app/apps/daemon/dist ./apps/daemon/dist
-COPY --from=builder /app/apps/daemon/package.json ./apps/daemon/
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY --from=builder /app/packages/shared/package.json ./packages/shared/
 COPY --from=builder /app/packages/db/dist ./packages/db/dist

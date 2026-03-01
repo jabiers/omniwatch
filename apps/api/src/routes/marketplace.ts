@@ -222,5 +222,5 @@ marketplaceRoutes.delete('/marketplace/:id', requireRole('admin'), (c) => {
   }
 
   db.prepare('DELETE FROM marketplace_recipes WHERE id = ?').run(id);
-  return c.json({ deleted: true });
+  return c.body(null, 204);
 });

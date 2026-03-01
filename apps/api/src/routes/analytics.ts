@@ -127,8 +127,8 @@ analyticsRoutes.put(
 analyticsRoutes.delete('/analytics/alerts/:id', requireRole('admin'), async (c) => {
   try {
     const id = Number(c.req.param('id'));
-    const result = handleAnalyticsRPC.deleteAlert({ id });
-    return c.json(result);
+    handleAnalyticsRPC.deleteAlert({ id });
+    return c.body(null, 204);
   } catch (err) {
     return c.json({ error: getErrorMessage(err) }, 500);
   }

@@ -214,5 +214,5 @@ tenantRoutes.delete('/users/:id', requireRole('admin'), (c) => {
   if (!user) return c.json({ error: 'User not found' }, 404);
 
   db.prepare('DELETE FROM users WHERE id = ?').run(userId);
-  return c.json({ deleted: true });
+  return c.body(null, 204);
 });
