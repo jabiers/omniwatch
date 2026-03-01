@@ -30,7 +30,9 @@ function writePidFile(): void {
 function removePidFile(): void {
   try {
     if (existsSync(PID_FILE)) unlinkSync(PID_FILE);
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 async function shutdown(signal: string): Promise<void> {
@@ -82,12 +84,12 @@ async function main(): Promise<void> {
   resetStaleProcessing();
 
   // v0.6: Start metric rollup cron (hourly)
-  const rollupTimer = setInterval(() => {
+  setInterval(() => {
     performHourlyRollup();
   }, METRIC_ROLLUP_INTERVAL);
 
   // v0.6: Start alert check cron (every 5 min)
-  const alertTimer = setInterval(() => {
+  setInterval(() => {
     checkAlertRules().catch(() => {});
   }, ALERT_CHECK_INTERVAL);
 

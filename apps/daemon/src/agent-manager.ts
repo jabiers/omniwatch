@@ -3,8 +3,14 @@ import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { nanoid } from 'nanoid';
-import { AGENTS_DIR, AGENT_MEMORY_LIMIT, MAX_AGENTS, log, Errors } from '@omniwatch/shared';
-import type { Agent, AgentConfig, AgentMessage, AgentType, DaemonToAgentMessage } from '@omniwatch/shared';
+import { AGENTS_DIR, MAX_AGENTS, log, Errors } from '@omniwatch/shared';
+import type {
+  Agent,
+  AgentConfig,
+  AgentMessage,
+  AgentType,
+  DaemonToAgentMessage,
+} from '@omniwatch/shared';
 import { getDb } from '@omniwatch/db';
 import { sendNotification } from './notifier.js';
 import { recordHeartbeat } from './health-monitor.js';
@@ -14,12 +20,21 @@ import { meshPublish, meshSubscribe, meshUnsubscribe, meshRemoveAgent } from './
 import { spawnChildAgent, getChildAgents } from './spawn-manager.js';
 import { captureSnapshot } from './time-travel.js';
 import { getSandboxMemoryLimit, getSandboxTimeout, logSecurityEvent } from './sandbox.js';
-import { recordAgentStart, recordAgentStop, recordAgentError, recordAgentHeal } from './metrics-collector.js';
+import {
+  recordAgentStart,
+  recordAgentStop,
+  recordAgentError,
+  recordAgentHeal,
+} from './metrics-collector.js';
 import type { SandboxLevel } from '@omniwatch/shared';
 
 /** Auto-capture snapshot with error suppression (best-effort) */
 function autoSnapshot(agentId: string, label: string): void {
-  try { captureSnapshot(agentId, label); } catch (_) { /* ignore - agent may not exist yet */ }
+  try {
+    captureSnapshot(agentId, label);
+  } catch {
+    /* ignore - agent may not exist yet */
+  }
 }
 
 // In-memory map of running agent processes
@@ -31,9 +46,11 @@ export function getRunningProcesses(): Map<string, ChildProcess> {
 
 export function enforceAgentLimit(): void {
   const db = getDb();
-  const { count } = db.prepare(
-    "SELECT COUNT(*) as count FROM agents WHERE status IN ('running', 'creating', 'ready')"
-  ).get() as { count: number };
+  const { count } = db
+    .prepare(
+      "SELECT COUNT(*) as count FROM agents WHERE status IN ('running', 'creating', 'ready')",
+    )
+    .get() as { count: number };
 
   if (count >= MAX_AGENTS) {
     throw Errors.MAX_AGENTS_EXCEEDED(count, MAX_AGENTS);
@@ -54,38 +71,51 @@ export function createAgentRecord(
   const id = `agent-${nanoid(8)}`;
   const codeHash = createHash('sha256').update(code).digest('hex').slice(0, 16);
 
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO agents (id, name, type, prompt, description, status, code_hash, config)
     VALUES (?, ?, ?, ?, ?, 'creating', ?, ?)
-  `).run(id, name, type, prompt, description, codeHash, JSON.stringify(config));
+  `,
+  ).run(id, name, type, prompt, description, codeHash, JSON.stringify(config));
 
   // Write agent code to disk
   const agentDir = join(AGENTS_DIR, id);
   mkdirSync(agentDir, { recursive: true });
   writeFileSync(join(agentDir, 'index.js'), code);
-  writeFileSync(join(agentDir, 'package.json'), JSON.stringify({
-    name: `omniwatch-agent-${id}`,
-    private: true,
-    type: 'module',
-    dependencies: Object.fromEntries(
-      (config.dependencies || []).map(dep => [dep, 'latest'])
+  writeFileSync(
+    join(agentDir, 'package.json'),
+    JSON.stringify(
+      {
+        name: `omniwatch-agent-${id}`,
+        private: true,
+        type: 'module',
+        dependencies: Object.fromEntries((config.dependencies || []).map((dep) => [dep, 'latest'])),
+      },
+      null,
+      2,
     ),
-  }, null, 2));
+  );
 
   return getAgent(id)!;
 }
 
 export function getAgent(id: string): Agent | null {
   const db = getDb();
-  return db.prepare('SELECT * FROM agents WHERE id = ? AND status != ?').get(id, 'destroyed') as Agent | null;
+  return db
+    .prepare('SELECT * FROM agents WHERE id = ? AND status != ?')
+    .get(id, 'destroyed') as Agent | null;
 }
 
 export function listAgents(status?: string): Agent[] {
   const db = getDb();
   if (status) {
-    return db.prepare('SELECT * FROM agents WHERE status = ? ORDER BY created_at DESC').all(status) as Agent[];
+    return db
+      .prepare('SELECT * FROM agents WHERE status = ? ORDER BY created_at DESC')
+      .all(status) as Agent[];
   }
-  return db.prepare("SELECT * FROM agents WHERE status != 'destroyed' ORDER BY created_at DESC").all() as Agent[];
+  return db
+    .prepare("SELECT * FROM agents WHERE status != 'destroyed' ORDER BY created_at DESC")
+    .all() as Agent[];
 }
 
 export function updateAgent(id: string, updates: Partial<Agent>): void {
@@ -117,7 +147,11 @@ export async function startAgent(id: string): Promise<void> {
   const memoryLimit = getSandboxMemoryLimit(sandboxLevel);
   const timeout = getSandboxTimeout(sandboxLevel);
 
-  logSecurityEvent(agent.id, 'sandbox_start', `level=${sandboxLevel} memory=${memoryLimit}MB timeout=${timeout}ms`);
+  logSecurityEvent(
+    agent.id,
+    'sandbox_start',
+    `level=${sandboxLevel} memory=${memoryLimit}MB timeout=${timeout}ms`,
+  );
 
   // runtime.js is in the same dist directory: dist/agent/runtime.js
   const distRuntime = resolve(new URL('./agent/runtime.js', import.meta.url).pathname);
@@ -320,7 +354,9 @@ function handleAgentExit(agentId: string, code: number | null, signal: string | 
 
   // Trigger self-healing immediately on crash
   attemptHeal(agentId)
-    .then(() => { recordAgentHeal(agentId, true); })
+    .then(() => {
+      recordAgentHeal(agentId, true);
+    })
     .catch((err) => {
       recordAgentHeal(agentId, false);
       log('error', `Auto-heal on exit failed for ${agentId}: ${err}`);
@@ -335,7 +371,11 @@ function handleSpawnMessage(agentId: string, msg: AgentMessage): void {
 
   spawnChildAgent(agentId, msg.prompt, msg.options || {})
     .then((childId) => {
-      child.send({ type: 'spawn.result', requestId: msg.requestId, agentId: childId } as DaemonToAgentMessage);
+      child.send({
+        type: 'spawn.result',
+        requestId: msg.requestId,
+        agentId: childId,
+      } as DaemonToAgentMessage);
     })
     .catch((err) => {
       const error = err instanceof Error ? err.message : String(err);
@@ -363,7 +403,8 @@ function handleStoreMessage(agentId: string, msg: AgentMessage): void {
   if (!child) return;
 
   if (msg.type === 'store.get') {
-    const row = db.prepare('SELECT value FROM agent_store WHERE agent_id = ? AND key = ?')
+    const row = db
+      .prepare('SELECT value FROM agent_store WHERE agent_id = ? AND key = ?')
       .get(agentId, msg.key) as { value: string } | undefined;
     const response: DaemonToAgentMessage = {
       type: 'store.result',
@@ -372,14 +413,24 @@ function handleStoreMessage(agentId: string, msg: AgentMessage): void {
     };
     child.send(response);
   } else if (msg.type === 'store.set') {
-    db.prepare(`
+    db.prepare(
+      `
       INSERT OR REPLACE INTO agent_store (agent_id, key, value, updated_at)
       VALUES (?, ?, ?, datetime('now'))
-    `).run(agentId, msg.key, JSON.stringify(msg.value));
-    child.send({ type: 'store.result', requestId: msg.requestId, value: true } as DaemonToAgentMessage);
+    `,
+    ).run(agentId, msg.key, JSON.stringify(msg.value));
+    child.send({
+      type: 'store.result',
+      requestId: msg.requestId,
+      value: true,
+    } as DaemonToAgentMessage);
   } else if (msg.type === 'store.delete') {
     db.prepare('DELETE FROM agent_store WHERE agent_id = ? AND key = ?').run(agentId, msg.key);
-    child.send({ type: 'store.result', requestId: msg.requestId, value: true } as DaemonToAgentMessage);
+    child.send({
+      type: 'store.result',
+      requestId: msg.requestId,
+      value: true,
+    } as DaemonToAgentMessage);
   }
 }
 
@@ -392,10 +443,12 @@ function insertLog(
   if (!message) return;
   const db = getDb();
   const metaJson = metadata ? JSON.stringify(metadata) : null;
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO agent_logs (agent_id, level, message, metadata)
     VALUES (?, ?, ?, ?)
-  `).run(agentId, level, message, metaJson);
+  `,
+  ).run(agentId, level, message, metaJson);
 
   // Broadcast to streaming clients
   broadcastLogEntry(agentId, {

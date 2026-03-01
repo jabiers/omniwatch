@@ -1,19 +1,10 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useCallback, useMemo } from "react";
-import Link from "next/link";
-import {
-  Bot,
-  AlertTriangle,
-  Play,
-  Bell,
-  Square,
-  Activity,
-  Wifi,
-  WifiOff,
-} from "lucide-react";
-import { useWebSocket } from "../lib/ws";
-import { apiFetch } from "../lib/api";
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import Link from 'next/link';
+import { Bot, AlertTriangle, Play, Bell, Square, Activity, Wifi, WifiOff } from 'lucide-react';
+import { useWebSocket } from '../lib/ws';
+import { apiFetch } from '../lib/api';
 
 interface Agent {
   id: string;
@@ -42,10 +33,10 @@ interface SystemStatus {
 }
 
 const statusColor: Record<string, string> = {
-  running: "bg-emerald-500",
-  stopped: "bg-gray-500",
-  error: "bg-red-500",
-  healing: "bg-yellow-500",
+  running: 'bg-emerald-500',
+  stopped: 'bg-gray-500',
+  error: 'bg-red-500',
+  healing: 'bg-yellow-500',
 };
 
 export default function DashboardPage() {
@@ -57,28 +48,28 @@ export default function DashboardPage() {
   const loadData = useCallback(async () => {
     try {
       const [agentsRes, notifsRes, statusRes] = await Promise.allSettled([
-        apiFetch("/api/agents"),
-        apiFetch("/api/notifications"),
-        apiFetch("/api/system/status"),
+        apiFetch('/api/agents'),
+        apiFetch('/api/notifications'),
+        apiFetch('/api/system/status'),
       ]);
 
-      if (agentsRes.status === "fulfilled" && agentsRes.value.ok) {
+      if (agentsRes.status === 'fulfilled' && agentsRes.value.ok) {
         const data = (await agentsRes.value.json()) as Agent[] | { agents?: Agent[] };
-        setAgents(Array.isArray(data) ? data : data.agents ?? []);
+        setAgents(Array.isArray(data) ? data : (data.agents ?? []));
       }
 
-      if (notifsRes.status === "fulfilled" && notifsRes.value.ok) {
-        const data = (await notifsRes.value.json()) as Notification[] | { notifications?: Notification[] };
-        setNotifications(
-          Array.isArray(data) ? data : data.notifications ?? []
-        );
+      if (notifsRes.status === 'fulfilled' && notifsRes.value.ok) {
+        const data = (await notifsRes.value.json()) as
+          | Notification[]
+          | { notifications?: Notification[] };
+        setNotifications(Array.isArray(data) ? data : (data.notifications ?? []));
       }
 
-      if (statusRes.status === "fulfilled" && statusRes.value.ok) {
+      if (statusRes.status === 'fulfilled' && statusRes.value.ok) {
         const data = (await statusRes.value.json()) as SystemStatus;
         setSystemStatus(data);
       }
-    } catch (_) {
+    } catch {
       // API might not be available yet
     } finally {
       setLoading(false);
@@ -94,8 +85,8 @@ export default function DashboardPage() {
 
   // WebSocket for real-time updates
   const wsUrl = useMemo(() => {
-    if (typeof window === "undefined") return "ws://localhost:3456/ws";
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    if (typeof window === 'undefined') return 'ws://localhost:3456/ws';
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsHost = process.env.NEXT_PUBLIC_WS_HOST || window.location.host;
     return `${protocol}//${wsHost}/ws`;
   }, []);
@@ -104,37 +95,37 @@ export default function DashboardPage() {
     (msg: unknown) => {
       const data = msg as { type?: string };
       if (
-        data.type === "agent:status" ||
-        data.type === "agent:update" ||
-        data.type === "notification"
+        data.type === 'agent:status' ||
+        data.type === 'agent:update' ||
+        data.type === 'notification'
       ) {
         loadData();
       }
     },
-    [loadData]
+    [loadData],
   );
 
   const { connected: wsConnected } = useWebSocket(wsUrl, handleWsMessage);
 
   /** Send start/stop action for an agent */
-  async function sendAction(agentId: string, action: "start" | "stop") {
+  async function sendAction(agentId: string, action: 'start' | 'stop') {
     setActionLoading(`${agentId}-${action}`);
     try {
       const res = await apiFetch(`/api/agents/${agentId}/${action}`, {
-        method: "POST",
+        method: 'POST',
       });
       if (res.ok) {
         await loadData();
       }
-    } catch (_) {
+    } catch {
       // handle error
     } finally {
       setActionLoading(null);
     }
   }
 
-  const running = agents.filter((a) => a.status === "running").length;
-  const errors = agents.filter((a) => a.status === "error").length;
+  const running = agents.filter((a) => a.status === 'running').length;
+  const errors = agents.filter((a) => a.status === 'error').length;
   const todayNotifs = notifications.filter((n) => {
     const d = new Date(n.created_at);
     const today = new Date();
@@ -143,28 +134,28 @@ export default function DashboardPage() {
 
   const stats = [
     {
-      label: "Total Agents",
+      label: 'Total Agents',
       value: systemStatus?.agentCount ?? agents.length,
       icon: Bot,
-      color: "text-blue-400",
+      color: 'text-blue-400',
     },
     {
-      label: "Running",
+      label: 'Running',
       value: systemStatus?.runningCount ?? running,
       icon: Play,
-      color: "text-emerald-400",
+      color: 'text-emerald-400',
     },
     {
-      label: "Errors",
+      label: 'Errors',
       value: errors,
       icon: AlertTriangle,
-      color: "text-red-400",
+      color: 'text-red-400',
     },
     {
-      label: "Notifications Today",
+      label: 'Notifications Today',
       value: todayNotifs,
       icon: Bell,
-      color: "text-yellow-400",
+      color: 'text-yellow-400',
     },
   ];
 
@@ -197,9 +188,7 @@ export default function DashboardPage() {
                 <span className="text-sm text-gray-400">{stat.label}</span>
                 <Icon className={`w-4 h-4 ${stat.color}`} />
               </div>
-              <div className="text-3xl font-bold">
-                {loading ? "—" : stat.value}
-              </div>
+              <div className="text-3xl font-bold">{loading ? '—' : stat.value}</div>
             </div>
           );
         })}
@@ -210,9 +199,7 @@ export default function DashboardPage() {
         <div className="glass-card flex items-center gap-3">
           <Activity className="w-4 h-4 text-emerald-400" />
           <span className="text-sm text-gray-400">System Uptime:</span>
-          <span className="text-sm font-mono">
-            {formatUptime(systemStatus.uptime)}
-          </span>
+          <span className="text-sm font-mono">{formatUptime(systemStatus.uptime)}</span>
         </div>
       )}
 
@@ -221,10 +208,7 @@ export default function DashboardPage() {
         <div className="glass-card">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-medium">Recent Agents</h2>
-            <Link
-              href="/agents"
-              className="text-xs text-emerald-400 hover:text-emerald-300"
-            >
+            <Link href="/agents" className="text-xs text-emerald-400 hover:text-emerald-300">
               View all
             </Link>
           </div>
@@ -232,11 +216,8 @@ export default function DashboardPage() {
             <p className="text-sm text-gray-500">Loading...</p>
           ) : agents.length === 0 ? (
             <p className="text-sm text-gray-500">
-              No agents yet.{" "}
-              <Link
-                href="/agents/new"
-                className="text-emerald-400 hover:underline"
-              >
+              No agents yet.{' '}
+              <Link href="/agents/new" className="text-emerald-400 hover:underline">
                 Create one
               </Link>
             </p>
@@ -252,17 +233,15 @@ export default function DashboardPage() {
                     className="flex items-center gap-3 flex-1 min-w-0"
                   >
                     <span
-                      className={`w-2 h-2 rounded-full shrink-0 ${statusColor[agent.status] ?? "bg-gray-500"}`}
+                      className={`w-2 h-2 rounded-full shrink-0 ${statusColor[agent.status] ?? 'bg-gray-500'}`}
                     />
                     <span className="text-sm truncate">{agent.name}</span>
-                    <span className="text-xs text-gray-500 capitalize shrink-0">
-                      {agent.type}
-                    </span>
+                    <span className="text-xs text-gray-500 capitalize shrink-0">{agent.type}</span>
                   </Link>
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {agent.status !== "running" && (
+                    {agent.status !== 'running' && (
                       <button
-                        onClick={() => sendAction(agent.id, "start")}
+                        onClick={() => sendAction(agent.id, 'start')}
                         disabled={actionLoading === `${agent.id}-start`}
                         className="p-1 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 disabled:opacity-30 transition-colors"
                         title="Start"
@@ -270,9 +249,9 @@ export default function DashboardPage() {
                         <Play className="w-3 h-3" />
                       </button>
                     )}
-                    {agent.status === "running" && (
+                    {agent.status === 'running' && (
                       <button
-                        onClick={() => sendAction(agent.id, "stop")}
+                        onClick={() => sendAction(agent.id, 'stop')}
                         disabled={actionLoading === `${agent.id}-stop`}
                         className="p-1 rounded bg-white/[0.05] text-gray-400 hover:bg-white/[0.1] disabled:opacity-30 transition-colors"
                         title="Stop"
@@ -291,10 +270,7 @@ export default function DashboardPage() {
         <div className="glass-card">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-medium">Recent Notifications</h2>
-            <Link
-              href="/notifications"
-              className="text-xs text-emerald-400 hover:text-emerald-300"
-            >
+            <Link href="/notifications" className="text-xs text-emerald-400 hover:text-emerald-300">
               View all
             </Link>
           </div>
@@ -305,16 +281,12 @@ export default function DashboardPage() {
           ) : (
             <div className="space-y-2">
               {notifications.slice(0, 5).map((n) => (
-                <div
-                  key={n.id}
-                  className="flex items-start gap-3 py-2 px-3 rounded-lg"
-                >
+                <div key={n.id} className="flex items-start gap-3 py-2 px-3 rounded-lg">
                   <SeverityBadge severity={n.severity} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm truncate">{n.message}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      {n.agent_id} &middot;{" "}
-                      {new Date(n.created_at).toLocaleTimeString()}
+                      {n.agent_id} &middot; {new Date(n.created_at).toLocaleTimeString()}
                     </p>
                   </div>
                 </div>
@@ -330,13 +302,13 @@ export default function DashboardPage() {
 /** Severity badge with colored background */
 function SeverityBadge({ severity }: { severity: string }) {
   const config: Record<string, { dot: string; text: string; bg: string }> = {
-    critical: { dot: "bg-red-500", text: "text-red-400", bg: "bg-red-500/10" },
+    critical: { dot: 'bg-red-500', text: 'text-red-400', bg: 'bg-red-500/10' },
     warning: {
-      dot: "bg-yellow-500",
-      text: "text-yellow-400",
-      bg: "bg-yellow-500/10",
+      dot: 'bg-yellow-500',
+      text: 'text-yellow-400',
+      bg: 'bg-yellow-500/10',
     },
-    info: { dot: "bg-blue-500", text: "text-blue-400", bg: "bg-blue-500/10" },
+    info: { dot: 'bg-blue-500', text: 'text-blue-400', bg: 'bg-blue-500/10' },
   };
   const sc = config[severity] ?? config.info;
   return (
@@ -358,5 +330,5 @@ function formatUptime(seconds: number): string {
   if (d > 0) parts.push(`${d}d`);
   if (h > 0) parts.push(`${h}h`);
   parts.push(`${m}m`);
-  return parts.join(" ");
+  return parts.join(' ');
 }

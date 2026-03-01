@@ -1,4 +1,10 @@
-import { HEARTBEAT_TIMEOUT, MAX_HEAL_ATTEMPTS, ZOMBIE_ERROR_THRESHOLD, ZOMBIE_CHECK_WINDOW, log } from '@omniwatch/shared';
+import {
+  HEARTBEAT_TIMEOUT,
+  MAX_HEAL_ATTEMPTS,
+  ZOMBIE_ERROR_THRESHOLD,
+  ZOMBIE_CHECK_WINDOW,
+  log,
+} from '@omniwatch/shared';
 import type { Agent } from '@omniwatch/shared';
 import { getDb } from '@omniwatch/db';
 import { getRunningProcesses, getAgent, updateAgent } from './agent-manager.js';
@@ -32,7 +38,7 @@ function checkAgentHealth(): void {
   const processes = getRunningProcesses();
   const now = Date.now();
 
-  for (const [agentId, child] of processes) {
+  for (const [agentId] of processes) {
     const lastBeat = heartbeats.get(agentId);
 
     // If we have a heartbeat record and it's too old, the agent is unresponsive
@@ -79,26 +85,33 @@ function handleUnresponsiveAgent(agentId: string): void {
 // Detect zombie agents: process alive but repeatedly logging errors
 function checkZombieAgents(): void {
   const db = getDb();
-  const runningAgents = db.prepare(
-    "SELECT * FROM agents WHERE status = 'running'"
-  ).all() as Agent[];
+  const runningAgents = db
+    .prepare("SELECT * FROM agents WHERE status = 'running'")
+    .all() as Agent[];
 
   for (const agent of runningAgents) {
     if (agent.heal_count >= MAX_HEAL_ATTEMPTS) continue;
 
-    const errorCount = db.prepare(
-      `SELECT COUNT(*) as cnt FROM agent_logs
+    const errorCount = db
+      .prepare(
+        `SELECT COUNT(*) as cnt FROM agent_logs
        WHERE agent_id = ? AND level = 'error'
-       AND created_at >= datetime('now', '-${ZOMBIE_CHECK_WINDOW} seconds')`
-    ).get(agent.id) as { cnt: number };
+       AND created_at >= datetime('now', '-${ZOMBIE_CHECK_WINDOW} seconds')`,
+      )
+      .get(agent.id) as { cnt: number };
 
     if (errorCount.cnt >= ZOMBIE_ERROR_THRESHOLD) {
       // Get the most recent error message for context
-      const lastErr = db.prepare(
-        "SELECT message FROM agent_logs WHERE agent_id = ? AND level = 'error' ORDER BY created_at DESC LIMIT 1"
-      ).get(agent.id) as { message: string } | undefined;
+      const lastErr = db
+        .prepare(
+          "SELECT message FROM agent_logs WHERE agent_id = ? AND level = 'error' ORDER BY created_at DESC LIMIT 1",
+        )
+        .get(agent.id) as { message: string } | undefined;
 
-      log('warn', `Zombie agent detected: ${agent.id} (${agent.name}) - ${errorCount.cnt} errors in ${ZOMBIE_CHECK_WINDOW}s`);
+      log(
+        'warn',
+        `Zombie agent detected: ${agent.id} (${agent.name}) - ${errorCount.cnt} errors in ${ZOMBIE_CHECK_WINDOW}s`,
+      );
 
       updateAgent(agent.id, {
         status: 'error',
@@ -125,9 +138,7 @@ function checkZombieAgents(): void {
 
 function checkErrorAgents(): void {
   const db = getDb();
-  const errorAgents = db.prepare(
-    "SELECT * FROM agents WHERE status = 'error'"
-  ).all() as Agent[];
+  const errorAgents = db.prepare("SELECT * FROM agents WHERE status = 'error'").all() as Agent[];
 
   for (const agent of errorAgents) {
     if (agent.heal_count >= MAX_HEAL_ATTEMPTS) continue;

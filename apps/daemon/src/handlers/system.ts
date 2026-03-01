@@ -1,14 +1,18 @@
-import type { Socket } from 'node:net';
-import type { Agent } from '@omniwatch/shared';
 import { getDb } from '@omniwatch/db';
 import { getRunningProcesses } from '../agent-manager.js';
 
 export const handleSystemRPC = {
   async stats() {
     const db = getDb();
-    const total = db.prepare("SELECT COUNT(*) as count FROM agents WHERE status != 'destroyed'").get() as { count: number };
-    const running = db.prepare("SELECT COUNT(*) as count FROM agents WHERE status = 'running'").get() as { count: number };
-    const errors = db.prepare("SELECT COUNT(*) as count FROM agents WHERE status = 'error'").get() as { count: number };
+    const total = db
+      .prepare("SELECT COUNT(*) as count FROM agents WHERE status != 'destroyed'")
+      .get() as { count: number };
+    const running = db
+      .prepare("SELECT COUNT(*) as count FROM agents WHERE status = 'running'")
+      .get() as { count: number };
+    const errors = db
+      .prepare("SELECT COUNT(*) as count FROM agents WHERE status = 'error'")
+      .get() as { count: number };
     const processes = getRunningProcesses();
 
     return {

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from 'react';
 import {
   Building2,
   Users,
@@ -12,8 +12,8 @@ import {
   X,
   Copy,
   CheckCircle,
-} from "lucide-react";
-import { apiFetch } from "../../lib/api";
+} from 'lucide-react';
+import { apiFetch } from '../../lib/api';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -31,7 +31,7 @@ interface User {
   id: string;
   tenant_id: string;
   email: string;
-  role: "admin" | "operator" | "viewer";
+  role: 'admin' | 'operator' | 'viewer';
   created_at: string;
 }
 
@@ -40,15 +40,15 @@ interface User {
 /* ------------------------------------------------------------------ */
 
 const roleBadge: Record<string, string> = {
-  admin: "bg-red-500/10 text-red-400",
-  operator: "bg-amber-500/10 text-amber-400",
-  viewer: "bg-emerald-500/10 text-emerald-400",
+  admin: 'bg-red-500/10 text-red-400',
+  operator: 'bg-amber-500/10 text-amber-400',
+  viewer: 'bg-emerald-500/10 text-emerald-400',
 };
 
 const planBadge: Record<string, string> = {
-  free: "bg-gray-500/10 text-gray-400",
-  pro: "bg-blue-500/10 text-blue-400",
-  enterprise: "bg-purple-500/10 text-purple-400",
+  free: 'bg-gray-500/10 text-gray-400',
+  pro: 'bg-blue-500/10 text-blue-400',
+  enterprise: 'bg-purple-500/10 text-purple-400',
 };
 
 /* ------------------------------------------------------------------ */
@@ -59,7 +59,7 @@ export default function TenantsPage() {
   // Data
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [selectedTenantId, setSelectedTenantId] = useState<string>("");
+  const [selectedTenantId, setSelectedTenantId] = useState<string>('');
 
   // Loading
   const [loading, setLoading] = useState(true);
@@ -68,8 +68,8 @@ export default function TenantsPage() {
   // Create tenant modal
   const [showCreateTenant, setShowCreateTenant] = useState(false);
   const [tenantForm, setTenantForm] = useState({
-    name: "",
-    plan: "free",
+    name: '',
+    plan: 'free',
     max_agents: 10,
   });
   const [tenantCreating, setTenantCreating] = useState(false);
@@ -77,9 +77,9 @@ export default function TenantsPage() {
   // Create user modal
   const [showCreateUser, setShowCreateUser] = useState(false);
   const [userForm, setUserForm] = useState({
-    tenant_id: "",
-    email: "",
-    role: "viewer" as "admin" | "operator" | "viewer",
+    tenant_id: '',
+    email: '',
+    role: 'viewer' as 'admin' | 'operator' | 'viewer',
   });
   const [userCreating, setUserCreating] = useState(false);
 
@@ -88,9 +88,7 @@ export default function TenantsPage() {
   const [keyCopied, setKeyCopied] = useState(false);
 
   // Delete confirm
-  const [confirmDeleteUser, setConfirmDeleteUser] = useState<string | null>(
-    null
-  );
+  const [confirmDeleteUser, setConfirmDeleteUser] = useState<string | null>(null);
 
   // Error / toast
   const [error, setError] = useState<string | null>(null);
@@ -101,20 +99,18 @@ export default function TenantsPage() {
 
   const loadTenants = useCallback(async () => {
     try {
-      const res = await apiFetch("/api/tenants");
+      const res = await apiFetch('/api/tenants');
       if (res.ok) {
         const data = (await res.json()) as Tenant[] | { tenants?: Tenant[] };
-        const list: Tenant[] = Array.isArray(data)
-          ? data
-          : data.tenants ?? [];
+        const list: Tenant[] = Array.isArray(data) ? data : (data.tenants ?? []);
         setTenants(list);
         // Auto-select first tenant if none selected
         if (!selectedTenantId && list.length > 0) {
           setSelectedTenantId(list[0].id);
         }
       }
-    } catch (_) {
-      setError("Failed to load tenants. API may be unavailable.");
+    } catch {
+      setError('Failed to load tenants. API may be unavailable.');
     } finally {
       setLoading(false);
     }
@@ -127,9 +123,9 @@ export default function TenantsPage() {
       const res = await apiFetch(`/api/users?tenant_id=${tenantId}`);
       if (res.ok) {
         const data = (await res.json()) as User[] | { users?: User[] };
-        setUsers(Array.isArray(data) ? data : data.users ?? []);
+        setUsers(Array.isArray(data) ? data : (data.users ?? []));
       }
-    } catch (_) {
+    } catch {
       // API not available
     } finally {
       setUsersLoading(false);
@@ -157,20 +153,20 @@ export default function TenantsPage() {
     setTenantCreating(true);
     setError(null);
     try {
-      const res = await apiFetch("/api/tenants", {
-        method: "POST",
+      const res = await apiFetch('/api/tenants', {
+        method: 'POST',
         body: JSON.stringify(tenantForm),
       });
       if (res.ok) {
         setShowCreateTenant(false);
-        setTenantForm({ name: "", plan: "free", max_agents: 10 });
+        setTenantForm({ name: '', plan: 'free', max_agents: 10 });
         await loadTenants();
       } else {
         const data = (await res.json().catch(() => ({}))) as { message?: string };
         setError(data.message ?? `Failed to create tenant (${res.status})`);
       }
-    } catch (_) {
-      setError("Failed to create tenant. API may be unavailable.");
+    } catch {
+      setError('Failed to create tenant. API may be unavailable.');
     } finally {
       setTenantCreating(false);
     }
@@ -181,14 +177,14 @@ export default function TenantsPage() {
     setUserCreating(true);
     setError(null);
     try {
-      const res = await apiFetch("/api/users", {
-        method: "POST",
+      const res = await apiFetch('/api/users', {
+        method: 'POST',
         body: JSON.stringify(userForm),
       });
       if (res.ok) {
         const data = (await res.json()) as { apiKey?: string };
         setShowCreateUser(false);
-        setUserForm({ tenant_id: "", email: "", role: "viewer" });
+        setUserForm({ tenant_id: '', email: '', role: 'viewer' });
         // Show API key in modal
         if (data.apiKey) {
           setRevealedApiKey(data.apiKey);
@@ -199,8 +195,8 @@ export default function TenantsPage() {
         const data = (await res.json().catch(() => ({}))) as { message?: string };
         setError(data.message ?? `Failed to create user (${res.status})`);
       }
-    } catch (_) {
-      setError("Failed to create user. API may be unavailable.");
+    } catch {
+      setError('Failed to create user. API may be unavailable.');
     } finally {
       setUserCreating(false);
     }
@@ -209,15 +205,15 @@ export default function TenantsPage() {
   /** Delete a user */
   async function handleDeleteUser(userId: string) {
     try {
-      const res = await apiFetch(`/api/users/${userId}`, { method: "DELETE" });
+      const res = await apiFetch(`/api/users/${userId}`, { method: 'DELETE' });
       if (res.ok) {
         setUsers((prev) => prev.filter((u) => u.id !== userId));
       } else {
         const data = (await res.json().catch(() => ({}))) as { message?: string };
         setError(data.message ?? `Failed to delete user (${res.status})`);
       }
-    } catch (_) {
-      setError("Failed to delete user. API may be unavailable.");
+    } catch {
+      setError('Failed to delete user. API may be unavailable.');
     } finally {
       setConfirmDeleteUser(null);
     }
@@ -230,7 +226,7 @@ export default function TenantsPage() {
       await navigator.clipboard.writeText(revealedApiKey);
       setKeyCopied(true);
       setTimeout(() => setKeyCopied(false), 2000);
-    } catch (_) {
+    } catch {
       // Fallback: select text
     }
   }
@@ -286,9 +282,7 @@ export default function TenantsPage() {
           <h2 className="text-sm font-medium flex items-center gap-2">
             <Building2 className="w-3.5 h-3.5 text-emerald-400" />
             Tenants
-            <span className="text-xs text-gray-500 font-normal">
-              ({tenants.length})
-            </span>
+            <span className="text-xs text-gray-500 font-normal">({tenants.length})</span>
           </h2>
           <button
             onClick={() => setShowCreateTenant(true)}
@@ -308,21 +302,13 @@ export default function TenantsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/[0.08]">
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                    Name
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                    ID
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                    Plan
-                  </th>
+                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Name</th>
+                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">ID</th>
+                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Plan</th>
                   <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">
                     Max Agents
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                    Created
-                  </th>
+                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Created</th>
                 </tr>
               </thead>
               <tbody>
@@ -333,18 +319,12 @@ export default function TenantsPage() {
                       key={tenant.id}
                       onClick={() => setSelectedTenantId(tenant.id)}
                       className={`border-b border-white/[0.04] cursor-pointer transition-colors ${
-                        isActive
-                          ? "bg-emerald-500/5"
-                          : "hover:bg-white/[0.02]"
+                        isActive ? 'bg-emerald-500/5' : 'hover:bg-white/[0.02]'
                       }`}
                     >
-                      <td className="px-4 py-3 text-sm font-medium">
-                        {tenant.name}
-                      </td>
+                      <td className="px-4 py-3 text-sm font-medium">{tenant.name}</td>
                       <td className="px-4 py-3 text-sm text-gray-500 font-mono">
-                        {tenant.id.length > 12
-                          ? `${tenant.id.slice(0, 12)}...`
-                          : tenant.id}
+                        {tenant.id.length > 12 ? `${tenant.id.slice(0, 12)}...` : tenant.id}
                       </td>
                       <td className="px-4 py-3">
                         <span
@@ -388,8 +368,8 @@ export default function TenantsPage() {
             onClick={() => {
               setUserForm({
                 tenant_id: selectedTenantId,
-                email: "",
-                role: "viewer",
+                email: '',
+                role: 'viewer',
               });
               setShowCreateUser(true);
             }}
@@ -419,18 +399,10 @@ export default function TenantsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/[0.08]">
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                    Email
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                    Role
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                    User ID
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                    Created
-                  </th>
+                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Email</th>
+                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Role</th>
+                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">User ID</th>
+                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Created</th>
                   <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">
                     Actions
                   </th>
@@ -454,9 +426,7 @@ export default function TenantsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500 font-mono">
-                      {user.id.length > 12
-                        ? `${user.id.slice(0, 12)}...`
-                        : user.id}
+                      {user.id.length > 12 ? `${user.id.slice(0, 12)}...` : user.id}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500">
                       {new Date(user.created_at).toLocaleDateString()}
@@ -522,9 +492,7 @@ export default function TenantsPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">
-                  Tenant Name
-                </label>
+                <label className="text-sm text-gray-400 mb-1 block">Tenant Name</label>
                 <input
                   type="text"
                   value={tenantForm.name}
@@ -538,9 +506,7 @@ export default function TenantsPage() {
               </div>
 
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">
-                  Plan
-                </label>
+                <label className="text-sm text-gray-400 mb-1 block">Plan</label>
                 <select
                   value={tenantForm.plan}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
@@ -555,9 +521,7 @@ export default function TenantsPage() {
               </div>
 
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">
-                  Max Agents
-                </label>
+                <label className="text-sm text-gray-400 mb-1 block">Max Agents</label>
                 <input
                   type="number"
                   min={1}
@@ -603,10 +567,7 @@ export default function TenantsPage() {
       {/* ============================================================ */}
       {showCreateUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/60"
-            onClick={() => setShowCreateUser(false)}
-          />
+          <div className="absolute inset-0 bg-black/60" onClick={() => setShowCreateUser(false)} />
           <div className="relative z-10 w-full max-w-md mx-4 rounded-xl bg-gray-900 border border-gray-700 p-6 space-y-5">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium flex items-center gap-2">
@@ -623,9 +584,7 @@ export default function TenantsPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">
-                  Tenant
-                </label>
+                <label className="text-sm text-gray-400 mb-1 block">Tenant</label>
                 <select
                   value={userForm.tenant_id}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
@@ -643,9 +602,7 @@ export default function TenantsPage() {
               </div>
 
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">
-                  Email
-                </label>
+                <label className="text-sm text-gray-400 mb-1 block">Email</label>
                 <input
                   type="email"
                   value={userForm.email}
@@ -658,15 +615,13 @@ export default function TenantsPage() {
               </div>
 
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">
-                  Role
-                </label>
+                <label className="text-sm text-gray-400 mb-1 block">Role</label>
                 <select
                   value={userForm.role}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                     setUserForm((f) => ({
                       ...f,
-                      role: e.target.value as "admin" | "operator" | "viewer",
+                      role: e.target.value as 'admin' | 'operator' | 'viewer',
                     }))
                   }
                   className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50"
@@ -676,8 +631,7 @@ export default function TenantsPage() {
                   <option value="admin">Admin</option>
                 </select>
                 <p className="text-xs text-gray-600 mt-1">
-                  Admin: full access &middot; Operator: manage agents &middot;
-                  Viewer: read-only
+                  Admin: full access &middot; Operator: manage agents &middot; Viewer: read-only
                 </p>
               </div>
             </div>
@@ -691,9 +645,7 @@ export default function TenantsPage() {
               </button>
               <button
                 onClick={handleCreateUser}
-                disabled={
-                  !userForm.tenant_id || !userForm.email.trim() || userCreating
-                }
+                disabled={!userForm.tenant_id || !userForm.email.trim() || userCreating}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 {userCreating ? (
@@ -745,9 +697,9 @@ export default function TenantsPage() {
             </div>
 
             <div className="px-3 py-2 rounded-lg bg-amber-500/5 border border-amber-500/10 text-xs text-amber-400/80">
-              Store this API key securely. It grants access to the OmniWatch API
-              based on the user&apos;s assigned role. You will not be able to
-              retrieve this key after closing this dialog.
+              Store this API key securely. It grants access to the OmniWatch API based on the
+              user&apos;s assigned role. You will not be able to retrieve this key after closing
+              this dialog.
             </div>
 
             <div className="flex justify-end">

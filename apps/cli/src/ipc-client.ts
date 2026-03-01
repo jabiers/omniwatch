@@ -83,7 +83,7 @@ export async function rpcCall(
       }
     });
 
-    socket.on('error', (err) => {
+    socket.on('error', (_err) => {
       if (!settled) {
         settled = true;
         clearTimeout(timer);
@@ -112,15 +112,16 @@ export async function rpcStream(
     let settled = false;
 
     // timeout=0 means no timeout (for long-running streams)
-    const timer = timeout > 0
-      ? setTimeout(() => {
-          if (!settled) {
-            settled = true;
-            socket.destroy();
-            reject(new Error(`RPC call '${method}' timed out`));
-          }
-        }, timeout)
-      : null;
+    const timer =
+      timeout > 0
+        ? setTimeout(() => {
+            if (!settled) {
+              settled = true;
+              socket.destroy();
+              reject(new Error(`RPC call '${method}' timed out`));
+            }
+          }, timeout)
+        : null;
 
     socket.on('connect', () => {
       socket.write(encodeMessage(request));
@@ -151,7 +152,7 @@ export async function rpcStream(
       }
     });
 
-    socket.on('error', (err) => {
+    socket.on('error', (_err) => {
       if (!settled) {
         settled = true;
         if (timer) clearTimeout(timer);
@@ -161,9 +162,7 @@ export async function rpcStream(
   });
 }
 
-export function connectStream(
-  onNotification: (type: string, data: unknown) => void,
-): Socket {
+export function connectStream(onNotification: (type: string, data: unknown) => void): Socket {
   const socket = connect(SOCKET_PATH);
   let buffer = '';
 

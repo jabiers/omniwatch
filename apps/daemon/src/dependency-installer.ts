@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { AGENTS_DIR, WHITELISTED_PACKAGES, log, Errors } from '@omniwatch/shared';
 
@@ -17,7 +17,7 @@ export async function installDependencies(agentId: string): Promise<void> {
   if (deps.length === 0) return;
 
   // Validate against whitelist
-  const disallowed = deps.filter(d => !WHITELISTED_PACKAGES.includes(d));
+  const disallowed = deps.filter((d) => !WHITELISTED_PACKAGES.includes(d));
   if (disallowed.length > 0) {
     log('warn', `Non-whitelisted packages requested: ${disallowed.join(', ')}`);
     // For MVP, allow but warn. In future, block.

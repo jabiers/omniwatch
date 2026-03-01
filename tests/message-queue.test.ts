@@ -10,12 +10,25 @@ vi.mock('@omniwatch/db', () => ({
     prepare: (sql: string) => ({
       run: (...args: any[]) => {
         if (sql.includes('INSERT INTO message_queue')) {
-          const msg = { id: nextId++, topic: args[0], payload: args[1], from_agent: args[2], status: 'pending', retry_count: 0 };
+          const msg = {
+            id: nextId++,
+            topic: args[0],
+            payload: args[1],
+            from_agent: args[2],
+            status: 'pending',
+            retry_count: 0,
+          };
           queueTable.push(msg);
           return { lastInsertRowid: msg.id, changes: 1 };
         }
         if (sql.includes('INSERT INTO dead_letters')) {
-          deadLetterTable.push({ id: nextId++, original_id: args[0], topic: args[1], payload: args[2], error: args[3] });
+          deadLetterTable.push({
+            id: nextId++,
+            original_id: args[0],
+            topic: args[1],
+            payload: args[2],
+            error: args[3],
+          });
           return { changes: 1 };
         }
         if (sql.includes("UPDATE message_queue SET status = 'processing'")) {
@@ -23,69 +36,88 @@ vi.mock('@omniwatch/db', () => ({
           return { changes: args.length };
         }
         if (sql.includes("UPDATE message_queue SET status = 'done'")) {
-          const msg = queueTable.find(m => m.id === args[0]);
+          const msg = queueTable.find((m) => m.id === args[0]);
           if (msg) msg.status = 'done';
           return { changes: msg ? 1 : 0 };
         }
         if (sql.includes("UPDATE message_queue SET status = 'pending', retry_count")) {
-          const msg = queueTable.find(m => m.id === args[0]);
-          if (msg) { msg.status = 'pending'; msg.retry_count++; }
+          const msg = queueTable.find((m) => m.id === args[0]);
+          if (msg) {
+            msg.status = 'pending';
+            msg.retry_count++;
+          }
           return { changes: msg ? 1 : 0 };
         }
         if (sql.includes("UPDATE message_queue SET status = 'failed'")) {
-          const msg = queueTable.find(m => m.id === args[0]);
+          const msg = queueTable.find((m) => m.id === args[0]);
           if (msg) msg.status = 'failed';
           return { changes: 1 };
         }
         if (sql.includes("DELETE FROM message_queue WHERE status = 'done'")) {
           const before = queueTable.length;
-          queueTable = queueTable.filter(m => m.status !== 'done');
+          queueTable = queueTable.filter((m) => m.status !== 'done');
           return { changes: before - queueTable.length };
         }
-        if (sql.includes("UPDATE message_queue SET status = 'pending' WHERE status = 'processing'")) {
+        if (
+          sql.includes("UPDATE message_queue SET status = 'pending' WHERE status = 'processing'")
+        ) {
           let count = 0;
-          queueTable.forEach(m => { if (m.status === 'processing') { m.status = 'pending'; count++; } });
+          queueTable.forEach((m) => {
+            if (m.status === 'processing') {
+              m.status = 'pending';
+              count++;
+            }
+          });
           return { changes: count };
         }
         if (sql.includes('DELETE FROM dead_letters WHERE id')) {
           const before = deadLetterTable.length;
-          deadLetterTable = deadLetterTable.filter(d => d.id !== args[0]);
+          deadLetterTable = deadLetterTable.filter((d) => d.id !== args[0]);
           return { changes: before - deadLetterTable.length };
         }
         return { changes: 0, lastInsertRowid: 0 };
       },
       get: (...args: any[]) => {
         if (sql.includes('COUNT(*)') && sql.includes('from_agent')) {
-          const count = queueTable.filter(m => m.from_agent === args[0] && m.status === 'pending').length;
+          const count = queueTable.filter(
+            (m) => m.from_agent === args[0] && m.status === 'pending',
+          ).length;
           return { c: count };
         }
         if (sql.includes('COUNT(*)') && sql.includes("status = 'pending'")) {
-          return { c: queueTable.filter(m => m.status === 'pending').length };
+          return { c: queueTable.filter((m) => m.status === 'pending').length };
         }
         if (sql.includes('COUNT(*)') && sql.includes("status = 'processing'")) {
-          return { c: queueTable.filter(m => m.status === 'processing').length };
+          return { c: queueTable.filter((m) => m.status === 'processing').length };
         }
         if (sql.includes('COUNT(*)') && sql.includes("status = 'done'")) {
-          return { c: queueTable.filter(m => m.status === 'done').length };
+          return { c: queueTable.filter((m) => m.status === 'done').length };
         }
         if (sql.includes('COUNT(*)') && sql.includes('dead_letters')) {
           return { c: deadLetterTable.length };
         }
         if (sql.includes('FROM message_queue WHERE id')) {
-          return queueTable.find(m => m.id === args[0]) || null;
+          return queueTable.find((m) => m.id === args[0]) || null;
         }
         if (sql.includes('FROM dead_letters WHERE id')) {
-          return deadLetterTable.find(d => d.id === args[0]) || null;
+          return deadLetterTable.find((d) => d.id === args[0]) || null;
         }
         return null;
       },
       all: (...args: any[]) => {
-        if (sql.includes("FROM message_queue WHERE topic =") && sql.includes("status = 'pending'")) {
-          return queueTable.filter(m => m.topic === args[0] && m.status === 'pending').slice(0, args[1] || 50);
+        if (
+          sql.includes('FROM message_queue WHERE topic =') &&
+          sql.includes("status = 'pending'")
+        ) {
+          return queueTable
+            .filter((m) => m.topic === args[0] && m.status === 'pending')
+            .slice(0, args[1] || 50);
         }
-        if (sql.includes("FROM message_queue WHERE topic LIKE")) {
+        if (sql.includes('FROM message_queue WHERE topic LIKE')) {
           const prefix = (args[0] as string).replace('%', '');
-          return queueTable.filter(m => m.topic.startsWith(prefix) && m.status === 'pending').slice(0, args[1] || 50);
+          return queueTable
+            .filter((m) => m.topic.startsWith(prefix) && m.status === 'pending')
+            .slice(0, args[1] || 50);
         }
         if (sql.includes('FROM dead_letters')) {
           return deadLetterTable.slice(0, args[0] || 50);
@@ -107,9 +139,14 @@ vi.mock('@omniwatch/shared', async (importOriginal) => {
 });
 
 import {
-  enqueueMessage, dequeueMessages, ackMessage, nackMessage,
-  getQueueStats, getDeadLetters, retryDeadLetter,
-  cleanupOldMessages, resetStaleProcessing,
+  enqueueMessage,
+  dequeueMessages,
+  ackMessage,
+  nackMessage,
+  getQueueStats,
+  getDeadLetters,
+  retryDeadLetter,
+  resetStaleProcessing,
 } from '../apps/daemon/src/message-queue.js';
 
 describe('Message Queue', () => {
@@ -136,7 +173,14 @@ describe('Message Queue', () => {
     it('should reject when backpressure limit exceeded', () => {
       // Fill up to 1000 pending messages
       for (let i = 0; i < 1000; i++) {
-        queueTable.push({ id: nextId++, topic: 'test', payload: '{}', from_agent: 'agent-spam', status: 'pending', retry_count: 0 });
+        queueTable.push({
+          id: nextId++,
+          topic: 'test',
+          payload: '{}',
+          from_agent: 'agent-spam',
+          status: 'pending',
+          retry_count: 0,
+        });
       }
       expect(() => enqueueMessage('test', {}, 'agent-spam')).toThrow('backpressure');
     });

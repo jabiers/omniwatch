@@ -5,19 +5,13 @@ const mockGet = vi.fn();
 const mockRun = vi.fn().mockReturnValue({ changes: 0, lastInsertRowid: 1 });
 const mockAll = vi.fn().mockReturnValue([]);
 
-// Track SQL queries to route mock responses correctly
-let preparedSql = '';
-
 vi.mock('@omniwatch/db', () => ({
   getDb: () => ({
-    prepare: (sql: string) => {
-      preparedSql = sql;
-      return {
-        run: mockRun,
-        get: mockGet,
-        all: mockAll,
-      };
-    },
+    prepare: (_sql: string) => ({
+      run: mockRun,
+      get: mockGet,
+      all: mockAll,
+    }),
   }),
 }));
 
@@ -47,7 +41,6 @@ import { ANOMALY_Z_THRESHOLD } from '@omniwatch/shared';
 describe('Anomaly Detector', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    preparedSql = '';
     mockRun.mockReturnValue({ changes: 0, lastInsertRowid: 1 });
     mockAll.mockReturnValue([]);
   });
@@ -324,9 +317,7 @@ describe('Anomaly Detector', () => {
 
       const result = createAlertRule(newRule);
       expect(result).toEqual(savedRule);
-      expect(mockRun).toHaveBeenCalledWith(
-        'default', 'error_count', 'gt', 10, 5, '["console"]', 1,
-      );
+      expect(mockRun).toHaveBeenCalledWith('default', 'error_count', 'gt', 10, 5, '["console"]', 1);
     });
   });
 

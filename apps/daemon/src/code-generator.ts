@@ -1,5 +1,9 @@
 import { log } from '@omniwatch/shared';
-import { BASE_SYSTEM_PROMPT, getTemplate, registerTemplate } from './agent/templates/base-prompt.js';
+import {
+  BASE_SYSTEM_PROMPT,
+  getTemplate,
+  registerTemplate,
+} from './agent/templates/base-prompt.js';
 import { getAIProvider, setAIContext } from './ai-provider.js';
 import { webMonitorTemplate } from './agent/templates/web-monitor.js';
 import { apiCheckerTemplate } from './agent/templates/api-checker.js';
@@ -66,9 +70,7 @@ export async function generateAgentCode(
   log('info', 'Generating agent code with AI...');
   setAIContext({ operation: 'generate' });
 
-  const text = await ai.chat(BASE_SYSTEM_PROMPT, [
-    { role: 'user', content: finalPrompt },
-  ]);
+  const text = await ai.chat(BASE_SYSTEM_PROMPT, [{ role: 'user', content: finalPrompt }]);
 
   try {
     const result = JSON.parse(extractJson(text)) as GeneratedAgent;
@@ -87,7 +89,7 @@ export async function generateAgentCode(
     return result;
   } catch (err) {
     log('error', `Failed to parse generated code: ${err}`);
-    throw new Error(`Failed to parse AI response: ${err}`);
+    throw new Error('Failed to parse AI response', { cause: err });
   }
 }
 
@@ -105,7 +107,12 @@ export async function regenerateAgentCode(
     { role: 'user', content: prompt },
     {
       role: 'assistant',
-      content: JSON.stringify({ name: 'agent', description: '', code: currentCode, dependencies: [] }),
+      content: JSON.stringify({
+        name: 'agent',
+        description: '',
+        code: currentCode,
+        dependencies: [],
+      }),
     },
     {
       role: 'user',

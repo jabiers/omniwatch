@@ -7,7 +7,7 @@ const mockAll = vi.fn().mockReturnValue([]);
 
 vi.mock('@omniwatch/db', () => ({
   getDb: () => ({
-    prepare: (sql: string) => ({
+    prepare: (_sql: string) => ({
       run: mockRun,
       get: mockGet,
       all: mockAll,
@@ -80,7 +80,7 @@ import {
   listAgents,
   updateAgent,
 } from '../apps/daemon/src/agent-manager.js';
-import { MAX_AGENTS, AGENTS_DIR, Errors } from '@omniwatch/shared';
+import { MAX_AGENTS, AGENTS_DIR } from '@omniwatch/shared';
 import { join } from 'node:path';
 
 describe('Agent Manager', () => {
@@ -152,10 +152,7 @@ describe('Agent Manager', () => {
       expect(mockWriteFileSync).toHaveBeenCalledTimes(2);
 
       // index.js written
-      expect(mockWriteFileSync).toHaveBeenCalledWith(
-        join(expectedDir, 'index.js'),
-        sampleCode,
-      );
+      expect(mockWriteFileSync).toHaveBeenCalledWith(join(expectedDir, 'index.js'), sampleCode);
 
       // package.json written with dependencies
       const packageJsonCall = mockWriteFileSync.mock.calls[1];
@@ -169,9 +166,9 @@ describe('Agent Manager', () => {
     it('should throw when agent limit is reached', () => {
       mockGet.mockReturnValueOnce({ count: MAX_AGENTS });
 
-      expect(() =>
-        createAgentRecord('test', 'name', null, 'code', {} as any, 'watcher'),
-      ).toThrow('Agent limit reached');
+      expect(() => createAgentRecord('test', 'name', null, 'code', {} as any, 'watcher')).toThrow(
+        'Agent limit reached',
+      );
     });
 
     it('should handle config with no dependencies', () => {

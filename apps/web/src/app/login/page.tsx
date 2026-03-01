@@ -1,39 +1,39 @@
-"use client";
+'use client';
 
-import { useState, FormEvent, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Activity, KeyRound, Loader2, AlertCircle } from "lucide-react";
-import { useAuthStore } from "../../lib/auth-store";
+import { useState, FormEvent, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Activity, KeyRound, Loader2, AlertCircle } from 'lucide-react';
+import { useAuthStore } from '../../lib/auth-store';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3456";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3456';
 
 export default function LoginPage() {
   const router = useRouter();
   const { setAuth, isAuthenticated } = useAuthStore();
-  const [apiKey, setApiKey] = useState("");
-  const [error, setError] = useState("");
+  const [apiKey, setApiKey] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated()) {
-      router.replace("/");
+      router.replace('/');
     }
   }, [isAuthenticated, router]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!apiKey.trim()) {
-      setError("API key is required");
+      setError('API key is required');
       return;
     }
 
     setLoading(true);
-    setError("");
+    setError('');
 
     try {
       const res = await fetch(`${API_BASE}/api/agents`, {
-        headers: { "X-API-Key": apiKey.trim() },
+        headers: { 'X-API-Key': apiKey.trim() },
       });
 
       if (res.ok) {
@@ -42,15 +42,15 @@ export default function LoginPage() {
         // The API returns successfully - key is valid
         // Role and tenantId can be fetched from a /api/auth/me endpoint later;
         // for now we store what we know
-        setAuth(apiKey.trim(), "admin", "default");
-        router.replace("/");
+        setAuth(apiKey.trim(), 'admin', 'default');
+        router.replace('/');
       } else if (res.status === 401 || res.status === 403) {
-        setError("Invalid API key. Please check and try again.");
+        setError('Invalid API key. Please check and try again.');
       } else {
         setError(`Server error (${res.status}). Please try again.`);
       }
-    } catch (_) {
-      setError("Cannot connect to OmniWatch API. Is the daemon running?");
+    } catch {
+      setError('Cannot connect to OmniWatch API. Is the daemon running?');
     } finally {
       setLoading(false);
     }
@@ -64,28 +64,19 @@ export default function LoginPage() {
           <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 flex items-center justify-center mb-4">
             <Activity className="w-7 h-7 text-emerald-400" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
-            OmniWatch
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            AI-Powered Autonomous Monitoring
-          </p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">OmniWatch</h1>
+          <p className="text-sm text-gray-500 mt-1">AI-Powered Autonomous Monitoring</p>
         </div>
 
         {/* Login Card */}
         <div className="bg-gray-900 border border-gray-700 rounded-xl p-6">
           <h2 className="text-lg font-semibold text-white mb-1">Sign in</h2>
-          <p className="text-sm text-gray-400 mb-6">
-            Enter your API key to access the dashboard
-          </p>
+          <p className="text-sm text-gray-400 mb-6">Enter your API key to access the dashboard</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* API Key Input */}
             <div>
-              <label
-                htmlFor="apiKey"
-                className="block text-sm font-medium text-gray-300 mb-2"
-              >
+              <label htmlFor="apiKey" className="block text-sm font-medium text-gray-300 mb-2">
                 API Key
               </label>
               <div className="relative">
@@ -96,7 +87,7 @@ export default function LoginPage() {
                   value={apiKey}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setApiKey(e.target.value);
-                    setError("");
+                    setError('');
                   }}
                   placeholder="omni_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                   className="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors"
@@ -127,14 +118,14 @@ export default function LoginPage() {
                   Verifying...
                 </>
               ) : (
-                "Sign in"
+                'Sign in'
               )}
             </button>
           </form>
 
           {/* Help text */}
           <p className="text-xs text-gray-500 mt-4 text-center">
-            API keys can be generated via{" "}
+            API keys can be generated via{' '}
             <code className="text-gray-400 bg-gray-800 px-1.5 py-0.5 rounded">
               omni auth create-key
             </code>

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 interface UseWebSocketReturn {
   connected: boolean;
@@ -58,19 +58,19 @@ export function useWebSocket(url: string, onMessage: (data: unknown) => void): U
           const msg = JSON.parse(event.data);
 
           // Respond to server ping with pong
-          if (msg.type === "ping") {
+          if (msg.type === 'ping') {
             if (ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ type: "pong" }));
+              ws.send(JSON.stringify({ type: 'pong' }));
             }
             return;
           }
 
           onMessageRef.current(msg);
-        } catch (_) {
+        } catch {
           // Ignore malformed messages
         }
       };
-    } catch (_) {
+    } catch {
       // WebSocket not available
       setConnected(false);
     }

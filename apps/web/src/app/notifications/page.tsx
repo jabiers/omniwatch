@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useCallback } from "react";
-import { Filter, Calendar, Check, Eye } from "lucide-react";
-import { Pagination } from "../../components/pagination";
-import { apiFetch } from "../../lib/api";
+import { useEffect, useState, useCallback } from 'react';
+import { Filter, Calendar, Check, Eye } from 'lucide-react';
+import { Pagination } from '../../components/pagination';
+import { apiFetch } from '../../lib/api';
 
 interface Notification {
   id: number;
@@ -16,38 +16,35 @@ interface Notification {
   created_at: string;
 }
 
-const severityConfig: Record<
-  string,
-  { dot: string; text: string; bg: string }
-> = {
+const severityConfig: Record<string, { dot: string; text: string; bg: string }> = {
   critical: {
-    dot: "bg-red-500",
-    text: "text-red-400",
-    bg: "bg-red-500/10",
+    dot: 'bg-red-500',
+    text: 'text-red-400',
+    bg: 'bg-red-500/10',
   },
   warning: {
-    dot: "bg-yellow-500",
-    text: "text-yellow-400",
-    bg: "bg-yellow-500/10",
+    dot: 'bg-yellow-500',
+    text: 'text-yellow-400',
+    bg: 'bg-yellow-500/10',
   },
   info: {
-    dot: "bg-blue-500",
-    text: "text-blue-400",
-    bg: "bg-blue-500/10",
+    dot: 'bg-blue-500',
+    text: 'text-blue-400',
+    bg: 'bg-blue-500/10',
   },
 };
 
-const severityOptions = ["all", "critical", "warning", "info"];
+const severityOptions = ['all', 'critical', 'warning', 'info'];
 
 const PAGE_LIMIT = 20;
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterSeverity, setFilterSeverity] = useState("all");
-  const [filterAgent, setFilterAgent] = useState("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [filterSeverity, setFilterSeverity] = useState('all');
+  const [filterAgent, setFilterAgent] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -58,11 +55,11 @@ export default function NotificationsPage() {
       const res = await apiFetch(`/api/notifications?limit=${PAGE_LIMIT}&offset=${offset}`);
       if (res.ok) {
         const data = (await res.json()) as Notification[] | { notifications?: Notification[] };
-        const list = Array.isArray(data) ? data : data.notifications ?? [];
+        const list = Array.isArray(data) ? data : (data.notifications ?? []);
         setNotifications(list);
         setHasNextPage(list.length === PAGE_LIMIT);
       }
-    } catch (_) {
+    } catch {
       // API not available
     } finally {
       setLoading(false);
@@ -77,15 +74,12 @@ export default function NotificationsPage() {
   }, [loadNotifications]);
 
   // Get unique agent names for filter
-  const agentNames = Array.from(
-    new Set(notifications.map((n) => n.agent_id))
-  );
+  const agentNames = Array.from(new Set(notifications.map((n) => n.agent_id)));
 
   // Filter notifications (client-side filtering applied on the current page)
   const filtered = notifications.filter((n) => {
-    if (filterSeverity !== "all" && n.severity !== filterSeverity) return false;
-    if (filterAgent !== "all" && (n.agent_id) !== filterAgent)
-      return false;
+    if (filterSeverity !== 'all' && n.severity !== filterSeverity) return false;
+    if (filterAgent !== 'all' && n.agent_id !== filterAgent) return false;
 
     // Date range filter
     if (dateFrom) {
@@ -152,8 +146,8 @@ export default function NotificationsPage() {
                 }}
                 className={`px-3 py-1 rounded-md text-xs capitalize transition-colors ${
                   filterSeverity === s
-                    ? "bg-white/[0.1] text-white"
-                    : "text-gray-500 hover:text-gray-300 hover:bg-white/[0.05]"
+                    ? 'bg-white/[0.1] text-white'
+                    : 'text-gray-500 hover:text-gray-300 hover:bg-white/[0.05]'
                 }`}
               >
                 {s}
@@ -210,8 +204,8 @@ export default function NotificationsPage() {
           {(dateFrom || dateTo) && (
             <button
               onClick={() => {
-                setDateFrom("");
-                setDateTo("");
+                setDateFrom('');
+                setDateTo('');
               }}
               className="text-xs text-gray-500 hover:text-gray-300"
             >
@@ -223,10 +217,10 @@ export default function NotificationsPage() {
 
       {/* Results count */}
       <div className="text-xs text-gray-500">
-        {filtered.length} notification{filtered.length !== 1 ? "s" : ""}
-        {filterSeverity !== "all" || filterAgent !== "all" || dateFrom || dateTo
-          ? " (filtered)"
-          : ""}
+        {filtered.length} notification{filtered.length !== 1 ? 's' : ''}
+        {filterSeverity !== 'all' || filterAgent !== 'all' || dateFrom || dateTo
+          ? ' (filtered)'
+          : ''}
       </div>
 
       {/* Table */}
@@ -237,39 +231,23 @@ export default function NotificationsPage() {
               <th className="text-left text-xs font-medium text-gray-500 px-6 py-3 w-10">
                 {/* Read indicator */}
               </th>
-              <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                Severity
-              </th>
-              <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                Message
-              </th>
-              <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                Agent
-              </th>
-              <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                Timestamp
-              </th>
-              <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">
-                Actions
-              </th>
+              <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Severity</th>
+              <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Message</th>
+              <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Agent</th>
+              <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Timestamp</th>
+              <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td
-                  colSpan={6}
-                  className="text-center text-sm text-gray-500 py-8"
-                >
+                <td colSpan={6} className="text-center text-sm text-gray-500 py-8">
                   Loading...
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td
-                  colSpan={6}
-                  className="text-center text-sm text-gray-500 py-8"
-                >
+                <td colSpan={6} className="text-center text-sm text-gray-500 py-8">
                   No notifications found.
                 </td>
               </tr>
@@ -281,41 +259,31 @@ export default function NotificationsPage() {
                   <tr
                     key={n.id}
                     className={`border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors ${
-                      isRead ? "opacity-50" : ""
+                      isRead ? 'opacity-50' : ''
                     }`}
                   >
                     {/* Unread dot */}
                     <td className="px-6 py-3">
-                      {!isRead && (
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 block" />
-                      )}
+                      {!isRead && <span className="w-2 h-2 rounded-full bg-emerald-500 block" />}
                     </td>
                     {/* Severity badge */}
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs capitalize ${sc.bg} ${sc.text}`}
                       >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${sc.dot}`}
-                        />
+                        <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
                         {n.severity}
                       </span>
                     </td>
                     {/* Message */}
                     <td className="px-4 py-3 text-sm max-w-md">
                       {n.title && (
-                        <span className={`block text-xs text-gray-500 mb-0.5`}>
-                          {n.title}
-                        </span>
+                        <span className={`block text-xs text-gray-500 mb-0.5`}>{n.title}</span>
                       )}
-                      <span className={isRead ? "" : "font-medium"}>
-                        {n.message}
-                      </span>
+                      <span className={isRead ? '' : 'font-medium'}>{n.message}</span>
                     </td>
                     {/* Agent */}
-                    <td className="px-4 py-3 text-sm text-gray-400">
-                      {n.agent_id}
-                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-400">{n.agent_id}</td>
                     {/* Timestamp */}
                     <td className="px-4 py-3 text-sm text-gray-500">
                       {new Date(n.created_at).toLocaleString()}

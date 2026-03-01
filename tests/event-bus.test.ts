@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock @omniwatch/shared
 vi.mock('@omniwatch/shared', () => ({
@@ -27,14 +27,14 @@ vi.mock('../apps/daemon/src/agent-manager.js', () => ({
 
 // Inline import after mocks
 const eventBusModule = await import('../apps/daemon/src/event-bus.js');
-const { meshPublish, meshSubscribe, meshUnsubscribe, meshRemoveAgent, getMeshTopology, topicMatches } = eventBusModule as unknown as {
-  meshPublish: (id: string, topic: string, payload: unknown) => void;
-  meshSubscribe: (id: string, topic: string) => void;
-  meshUnsubscribe: (id: string, topic: string) => void;
-  meshRemoveAgent: (id: string) => void;
-  getMeshTopology: () => { nodes: string[]; subscriptions: { agentId: string; topic: string }[] };
-  topicMatches: (pattern: string, topic: string) => boolean;
-};
+const { meshPublish, meshSubscribe, meshUnsubscribe, meshRemoveAgent, getMeshTopology } =
+  eventBusModule as unknown as {
+    meshPublish: (id: string, topic: string, payload: unknown) => void;
+    meshSubscribe: (id: string, topic: string) => void;
+    meshUnsubscribe: (id: string, topic: string) => void;
+    meshRemoveAgent: (id: string) => void;
+    getMeshTopology: () => { nodes: string[]; subscriptions: { agentId: string; topic: string }[] };
+  };
 
 describe('Event Bus (Agent Mesh)', () => {
   beforeEach(() => {
@@ -55,7 +55,7 @@ describe('Event Bus (Agent Mesh)', () => {
       meshSubscribe('agent-dup', 'test.topic');
       const topology = getMeshTopology();
       const matches = topology.subscriptions.filter(
-        s => s.agentId === 'agent-dup' && s.topic === 'test.topic'
+        (s) => s.agentId === 'agent-dup' && s.topic === 'test.topic',
       );
       expect(matches.length).toBe(1);
     });
@@ -67,7 +67,7 @@ describe('Event Bus (Agent Mesh)', () => {
       meshUnsubscribe('agent-unsub', 'remove.me');
       const topology = getMeshTopology();
       const matches = topology.subscriptions.filter(
-        s => s.agentId === 'agent-unsub' && s.topic === 'remove.me'
+        (s) => s.agentId === 'agent-unsub' && s.topic === 'remove.me',
       );
       expect(matches.length).toBe(0);
     });
@@ -78,10 +78,7 @@ describe('Event Bus (Agent Mesh)', () => {
       const { log } = await import('@omniwatch/shared');
       const bigPayload = 'x'.repeat(70_000);
       meshPublish('agent-pub', 'big.topic', bigPayload);
-      expect(log).toHaveBeenCalledWith(
-        'warn',
-        expect.stringContaining('payload exceeds')
-      );
+      expect(log).toHaveBeenCalledWith('warn', expect.stringContaining('payload exceeds'));
     });
 
     it('should deliver events to matching subscribers', () => {
@@ -98,7 +95,7 @@ describe('Event Bus (Agent Mesh)', () => {
           topic: 'test.event',
           payload: { value: 42 },
           from: 'agent-pub',
-        })
+        }),
       );
     });
 
@@ -120,7 +117,7 @@ describe('Event Bus (Agent Mesh)', () => {
       meshSubscribe('agent-remove', 'topic.b');
       meshRemoveAgent('agent-remove');
       const topology = getMeshTopology();
-      const matches = topology.subscriptions.filter(s => s.agentId === 'agent-remove');
+      const matches = topology.subscriptions.filter((s) => s.agentId === 'agent-remove');
       expect(matches.length).toBe(0);
     });
   });

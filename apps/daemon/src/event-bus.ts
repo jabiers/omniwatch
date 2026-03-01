@@ -1,5 +1,4 @@
 /** Agent Mesh — In-memory pub/sub event bus for inter-agent communication */
-import { nanoid } from 'nanoid';
 import { log, MESH_RATE_LIMIT, MESH_MAX_PAYLOAD_SIZE } from '@omniwatch/shared';
 import type { DaemonToAgentMessage } from '@omniwatch/shared';
 import { getDb } from '@omniwatch/db';
@@ -32,7 +31,7 @@ function checkRateLimit(agentId: string): boolean {
   const timestamps = publishTimestamps.get(agentId) || [];
 
   // Remove entries older than 1 minute
-  const recent = timestamps.filter(t => now - t < 60_000);
+  const recent = timestamps.filter((t) => now - t < 60_000);
   publishTimestamps.set(agentId, recent);
 
   return recent.length < MESH_RATE_LIMIT;
@@ -43,7 +42,10 @@ export function meshPublish(publisherId: string, topic: string, payload: unknown
   // Validate payload size
   const payloadStr = JSON.stringify(payload);
   if (payloadStr.length > MESH_MAX_PAYLOAD_SIZE) {
-    log('warn', `Mesh publish from ${publisherId} rejected: payload exceeds ${MESH_MAX_PAYLOAD_SIZE} bytes`);
+    log(
+      'warn',
+      `Mesh publish from ${publisherId} rejected: payload exceeds ${MESH_MAX_PAYLOAD_SIZE} bytes`,
+    );
     return;
   }
 
@@ -60,10 +62,12 @@ export function meshPublish(publisherId: string, topic: string, payload: unknown
 
   // Persist event to DB
   const db = getDb();
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO mesh_events (publisher_id, topic, payload)
     VALUES (?, ?, ?)
-  `).run(publisherId, topic, payloadStr);
+  `,
+  ).run(publisherId, topic, payloadStr);
 
   // Route to matching subscribers
   const processes = getRunningProcesses();
@@ -95,29 +99,30 @@ export function meshPublish(publisherId: string, topic: string, payload: unknown
 /** Subscribe an agent to a topic */
 export function meshSubscribe(agentId: string, topic: string): void {
   // Avoid duplicate subscriptions
-  const exists = subscriptions.some(s => s.agentId === agentId && s.topic === topic);
+  const exists = subscriptions.some((s) => s.agentId === agentId && s.topic === topic);
   if (exists) return;
 
   subscriptions.push({ agentId, topic });
 
   // Persist to DB
   const db = getDb();
-  db.prepare(`
+  db.prepare(
+    `
     INSERT OR IGNORE INTO mesh_subscriptions (agent_id, topic)
     VALUES (?, ?)
-  `).run(agentId, topic);
+  `,
+  ).run(agentId, topic);
 
   log('info', `Agent ${agentId} subscribed to "${topic}"`);
 }
 
 /** Unsubscribe an agent from a topic */
 export function meshUnsubscribe(agentId: string, topic: string): void {
-  const idx = subscriptions.findIndex(s => s.agentId === agentId && s.topic === topic);
+  const idx = subscriptions.findIndex((s) => s.agentId === agentId && s.topic === topic);
   if (idx >= 0) subscriptions.splice(idx, 1);
 
   const db = getDb();
-  db.prepare('DELETE FROM mesh_subscriptions WHERE agent_id = ? AND topic = ?')
-    .run(agentId, topic);
+  db.prepare('DELETE FROM mesh_subscriptions WHERE agent_id = ? AND topic = ?').run(agentId, topic);
 
   log('info', `Agent ${agentId} unsubscribed from "${topic}"`);
 }
@@ -135,14 +140,18 @@ export function meshRemoveAgent(agentId: string): void {
 /** Restore subscriptions from DB (called on daemon start) */
 export function restoreMeshSubscriptions(): void {
   const db = getDb();
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(
+      `
     SELECT s.agent_id, s.topic FROM mesh_subscriptions s
     JOIN agents a ON s.agent_id = a.id
     WHERE a.status != 'destroyed'
-  `).all() as { agent_id: string; topic: string }[];
+  `,
+    )
+    .all() as { agent_id: string; topic: string }[];
 
   for (const row of rows) {
-    const exists = subscriptions.some(s => s.agentId === row.agent_id && s.topic === row.topic);
+    const exists = subscriptions.some((s) => s.agentId === row.agent_id && s.topic === row.topic);
     if (!exists) {
       subscriptions.push({ agentId: row.agent_id, topic: row.topic });
     }
@@ -151,14 +160,17 @@ export function restoreMeshSubscriptions(): void {
 }
 
 /** Get mesh topology for API */
-export function getMeshTopology(): { nodes: string[]; subscriptions: { agentId: string; topic: string }[] } {
+export function getMeshTopology(): {
+  nodes: string[];
+  subscriptions: { agentId: string; topic: string }[];
+} {
   const nodeSet = new Set<string>();
   for (const sub of subscriptions) {
     nodeSet.add(sub.agentId);
   }
   return {
     nodes: Array.from(nodeSet),
-    subscriptions: subscriptions.map(s => ({ agentId: s.agentId, topic: s.topic })),
+    subscriptions: subscriptions.map((s) => ({ agentId: s.agentId, topic: s.topic })),
   };
 }
 
@@ -166,11 +178,19 @@ export function getMeshTopology(): { nodes: string[]; subscriptions: { agentId: 
 export function getMeshEvents(limit = 50, topic?: string): unknown[] {
   const db = getDb();
   if (topic) {
-    return db.prepare(`
+    return db
+      .prepare(
+        `
       SELECT * FROM mesh_events WHERE topic = ? ORDER BY created_at DESC LIMIT ?
-    `).all(topic, limit);
+    `,
+      )
+      .all(topic, limit);
   }
-  return db.prepare(`
+  return db
+    .prepare(
+      `
     SELECT * FROM mesh_events ORDER BY created_at DESC LIMIT ?
-  `).all(limit);
+  `,
+    )
+    .all(limit);
 }

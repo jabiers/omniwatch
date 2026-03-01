@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from 'react';
 import {
   Layers,
   RefreshCw,
@@ -10,9 +10,9 @@ import {
   Loader2,
   AlertTriangle,
   Inbox,
-} from "lucide-react";
-import { Pagination } from "../../components/pagination";
-import { apiFetch } from "../../lib/api";
+} from 'lucide-react';
+import { Pagination } from '../../components/pagination';
+import { apiFetch } from '../../lib/api';
 
 interface QueueStats {
   pending: number;
@@ -51,27 +51,27 @@ export default function QueuePage() {
     try {
       const dlOffset = (dlPage - 1) * PAGE_LIMIT;
       const [statsRes, dlRes] = await Promise.allSettled([
-        apiFetch("/api/queue/stats"),
+        apiFetch('/api/queue/stats'),
         apiFetch(`/api/queue/dead-letters?limit=${PAGE_LIMIT}&offset=${dlOffset}`),
       ]);
 
-      if (statsRes.status === "fulfilled" && statsRes.value.ok) {
+      if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
         const data = (await statsRes.value.json()) as QueueStats;
         setStats(data ?? defaultStats);
       }
 
-      if (dlRes.status === "fulfilled" && dlRes.value.ok) {
-        const data = (await dlRes.value.json()) as DeadLetter[] | { dead_letters?: DeadLetter[]; deadLetters?: DeadLetter[] };
-        const list = Array.isArray(data)
-          ? data
-          : data.dead_letters ?? data.deadLetters ?? [];
+      if (dlRes.status === 'fulfilled' && dlRes.value.ok) {
+        const data = (await dlRes.value.json()) as
+          | DeadLetter[]
+          | { dead_letters?: DeadLetter[]; deadLetters?: DeadLetter[] };
+        const list = Array.isArray(data) ? data : (data.dead_letters ?? data.deadLetters ?? []);
         setDeadLetters(list);
         setDlHasNextPage(list.length === PAGE_LIMIT);
       }
 
       setError(null);
-    } catch (_) {
-      setError("Failed to connect to API server");
+    } catch {
+      setError('Failed to connect to API server');
     } finally {
       setLoading(false);
     }
@@ -89,14 +89,14 @@ export default function QueuePage() {
     setRetrying(id);
     try {
       const res = await apiFetch(`/api/queue/dead-letters/${id}/retry`, {
-        method: "POST",
+        method: 'POST',
       });
       if (res.ok) {
         // Remove from local list and reload stats
         setDeadLetters((prev) => prev.filter((d) => d.id !== id));
         await loadData();
       }
-    } catch (_) {
+    } catch {
       // Retry failed silently
     } finally {
       setRetrying(null);
@@ -105,32 +105,32 @@ export default function QueuePage() {
 
   const statCards = [
     {
-      label: "Pending",
+      label: 'Pending',
       value: stats.pending,
       icon: Clock,
-      color: "text-yellow-400",
-      bg: "bg-yellow-500/10",
+      color: 'text-yellow-400',
+      bg: 'bg-yellow-500/10',
     },
     {
-      label: "Processing",
+      label: 'Processing',
       value: stats.processing,
       icon: Loader2,
-      color: "text-blue-400",
-      bg: "bg-blue-500/10",
+      color: 'text-blue-400',
+      bg: 'bg-blue-500/10',
     },
     {
-      label: "Done Today",
+      label: 'Done Today',
       value: stats.done_today,
       icon: CheckCircle2,
-      color: "text-emerald-400",
-      bg: "bg-emerald-500/10",
+      color: 'text-emerald-400',
+      bg: 'bg-emerald-500/10',
     },
     {
-      label: "Dead Letters",
+      label: 'Dead Letters',
       value: stats.dead_letters,
       icon: AlertTriangle,
-      color: "text-red-400",
-      bg: "bg-red-500/10",
+      color: 'text-red-400',
+      bg: 'bg-red-500/10',
     },
   ];
 
@@ -151,9 +151,7 @@ export default function QueuePage() {
             <Layers className="w-6 h-6 text-emerald-400" />
             Message Queue
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Queue throughput and dead letter management
-          </p>
+          <p className="text-sm text-gray-500 mt-1">Queue throughput and dead letter management</p>
         </div>
         <button
           onClick={loadData}
@@ -181,9 +179,7 @@ export default function QueuePage() {
               className="rounded-xl bg-white/[0.04] border border-white/[0.08] p-5"
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs text-white/60 uppercase tracking-wider">
-                  {card.label}
-                </span>
+                <span className="text-xs text-white/60 uppercase tracking-wider">{card.label}</span>
                 <span className={`p-2 rounded-lg ${card.bg}`}>
                   <Icon className={`w-4 h-4 ${card.color}`} />
                 </span>
@@ -202,7 +198,7 @@ export default function QueuePage() {
             Dead Letter Queue
           </h2>
           <span className="text-xs text-white/40">
-            {deadLetters.length} entr{deadLetters.length === 1 ? "y" : "ies"}
+            {deadLetters.length} entr{deadLetters.length === 1 ? 'y' : 'ies'}
           </span>
         </div>
 
@@ -234,9 +230,7 @@ export default function QueuePage() {
                   disabled={retrying === dl.id}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
                 >
-                  <RotateCcw
-                    className={`w-3 h-3 ${retrying === dl.id ? "animate-spin" : ""}`}
-                  />
+                  <RotateCcw className={`w-3 h-3 ${retrying === dl.id ? 'animate-spin' : ''}`} />
                   Retry
                 </button>
               </div>

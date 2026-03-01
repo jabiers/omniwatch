@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { AGENTS_DIR, MAX_HEAL_ATTEMPTS, log, Errors } from '@omniwatch/shared';
+import { AGENTS_DIR, MAX_HEAL_ATTEMPTS, log } from '@omniwatch/shared';
 import type { Agent, AgentLog } from '@omniwatch/shared';
 import { getDb } from '@omniwatch/db';
 import { getAgent, updateAgent, startAgent } from './agent-manager.js';
@@ -21,15 +21,24 @@ function getBackoffMs(healCount: number): number {
 
 function getRecentLogs(agentId: string, limit = 20): string {
   const db = getDb();
-  const logs = db.prepare(
-    'SELECT level, message, created_at FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT ?'
-  ).all(agentId, limit) as Pick<AgentLog, 'level' | 'message' | 'created_at'>[];
-  return logs.reverse().map(l => `[${l.level}] ${l.message}`).join('\n');
+  const logs = db
+    .prepare(
+      'SELECT level, message, created_at FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT ?',
+    )
+    .all(agentId, limit) as Pick<AgentLog, 'level' | 'message' | 'created_at'>[];
+  return logs
+    .reverse()
+    .map((l) => `[${l.level}] ${l.message}`)
+    .join('\n');
 }
 
 export async function attemptHeal(agentId: string): Promise<void> {
   // v0.5: Auto-capture snapshot before healing
-  try { captureSnapshot(agentId, 'pre-heal'); } catch { /* ignore */ }
+  try {
+    captureSnapshot(agentId, 'pre-heal');
+  } catch {
+    /* ignore */
+  }
 
   const agent = getAgent(agentId);
   if (!agent) return;
@@ -37,10 +46,14 @@ export async function attemptHeal(agentId: string): Promise<void> {
   if (agent.heal_count >= MAX_HEAL_ATTEMPTS) {
     log('warn', `Agent ${agentId} exceeded max heal attempts (${MAX_HEAL_ATTEMPTS})`);
     updateAgent(agentId, { status: 'error' } as Partial<Agent>);
-    sendNotification(agentId, `Agent ${agent.name} failed after ${MAX_HEAL_ATTEMPTS} heal attempts. Manual intervention required.`, {
-      title: 'Self-Healing Exhausted',
-      severity: 'critical',
-    }).catch(() => {});
+    sendNotification(
+      agentId,
+      `Agent ${agent.name} failed after ${MAX_HEAL_ATTEMPTS} heal attempts. Manual intervention required.`,
+      {
+        title: 'Self-Healing Exhausted',
+        severity: 'critical',
+      },
+    ).catch(() => {});
     return;
   }
 
@@ -57,7 +70,10 @@ export async function attemptHeal(agentId: string): Promise<void> {
     return;
   }
 
-  log('info', `Attempting self-heal for agent ${agentId} (attempt ${agent.heal_count + 1}/${MAX_HEAL_ATTEMPTS})`);
+  log(
+    'info',
+    `Attempting self-heal for agent ${agentId} (attempt ${agent.heal_count + 1}/${MAX_HEAL_ATTEMPTS})`,
+  );
 
   updateAgent(agentId, { status: 'healing' } as Partial<Agent>);
   lastHealTime.set(agentId, Date.now());
@@ -71,7 +87,10 @@ export async function attemptHeal(agentId: string): Promise<void> {
     const missingModuleMatch = errorMessage.match(/Cannot find (?:module|package) '([^']+)'/);
     if (missingModuleMatch) {
       const missingPkg = missingModuleMatch[1];
-      log('info', `Agent ${agentId} missing module "${missingPkg}", adding to package.json and installing...`);
+      log(
+        'info',
+        `Agent ${agentId} missing module "${missingPkg}", adding to package.json and installing...`,
+      );
 
       // Ensure package.json has the missing dependency + any from agent config
       const pkgPath = join(agentDir, 'package.json');
@@ -85,7 +104,9 @@ export async function attemptHeal(agentId: string): Promise<void> {
           if (!pkg.dependencies[dep]) pkg.dependencies[dep] = 'latest';
         }
         writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
 
       await installDependencies(agentId);
       updateAgent(agentId, {
@@ -110,11 +131,7 @@ export async function attemptHeal(agentId: string): Promise<void> {
     ].join('\n');
 
     // Call Claude to fix the code with full context
-    const regenerated = await regenerateAgentCode(
-      agent.prompt,
-      currentCode,
-      enrichedError,
-    );
+    const regenerated = await regenerateAgentCode(agent.prompt, currentCode, enrichedError);
 
     // Validate the fixed code
     const validation = validateCode(regenerated.code);
@@ -143,7 +160,9 @@ export async function attemptHeal(agentId: string): Promise<void> {
           }
         }
         writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       await installDependencies(agentId);
     }
 

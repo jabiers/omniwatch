@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -11,7 +11,7 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-} from "recharts";
+} from 'recharts';
 import {
   BarChart3,
   RefreshCw,
@@ -24,8 +24,8 @@ import {
   Trash2,
   X,
   Check,
-} from "lucide-react";
-import { apiFetch } from "../../lib/api";
+} from 'lucide-react';
+import { apiFetch } from '../../lib/api';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -75,26 +75,26 @@ interface AlertFormData {
   notify_channels: string;
 }
 
-const OPERATORS = [">", "<", ">=", "<="] as const;
+const OPERATORS = ['>', '<', '>=', '<='] as const;
 
 const DEFAULT_FORM: AlertFormData = {
-  metric_name: "",
-  operator: ">",
+  metric_name: '',
+  operator: '>',
   threshold: 0,
   window_minutes: 5,
-  notify_channels: "log",
+  notify_channels: 'log',
 };
 
 /** Color palette for chart lines */
 const CHART_COLORS = [
-  "#34d399", // emerald-400
-  "#60a5fa", // blue-400
-  "#f472b6", // pink-400
-  "#fbbf24", // amber-400
-  "#a78bfa", // violet-400
-  "#fb923c", // orange-400
-  "#2dd4bf", // teal-400
-  "#f87171", // red-400
+  '#34d399', // emerald-400
+  '#60a5fa', // blue-400
+  '#f472b6', // pink-400
+  '#fbbf24', // amber-400
+  '#a78bfa', // violet-400
+  '#fb923c', // orange-400
+  '#2dd4bf', // teal-400
+  '#f87171', // red-400
 ];
 
 /* ------------------------------------------------------------------ */
@@ -103,7 +103,7 @@ const CHART_COLORS = [
 
 export default function AnalyticsPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [selectedAgent, setSelectedAgent] = useState<string>("");
+  const [selectedAgent, setSelectedAgent] = useState<string>('');
   const [metrics, setMetrics] = useState<MetricRow[]>([]);
   const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
   const [alertRules, setAlertRules] = useState<AlertRule[]>([]);
@@ -125,16 +125,16 @@ export default function AnalyticsPage() {
   /** Load agent list for the selector */
   const loadAgents = useCallback(async () => {
     try {
-      const res = await apiFetch("/api/agents");
+      const res = await apiFetch('/api/agents');
       if (res.ok) {
         const data = (await res.json()) as Agent[] | { agents?: Agent[] };
-        const list: Agent[] = Array.isArray(data) ? data : data.agents ?? [];
+        const list: Agent[] = Array.isArray(data) ? data : (data.agents ?? []);
         setAgents(list);
         if (!selectedAgent && list.length > 0) {
           setSelectedAgent(list[0].id);
         }
       }
-    } catch (_) {
+    } catch {
       // API not available
     }
   }, [selectedAgent]);
@@ -144,34 +144,30 @@ export default function AnalyticsPage() {
     setError(null);
     try {
       const fetches: Promise<Response>[] = [
-        apiFetch("/api/analytics/anomalies"),
-        apiFetch("/api/analytics/alerts"),
+        apiFetch('/api/analytics/anomalies'),
+        apiFetch('/api/analytics/alerts'),
       ];
 
       if (selectedAgent) {
-        fetches.push(
-          apiFetch(
-            `/api/analytics/metrics?agentId=${selectedAgent}&period=hourly`
-          )
-        );
+        fetches.push(apiFetch(`/api/analytics/metrics?agentId=${selectedAgent}&period=hourly`));
       }
 
       const results = await Promise.allSettled(fetches);
 
       // Anomalies
-      if (results[0].status === "fulfilled" && results[0].value.ok) {
+      if (results[0].status === 'fulfilled' && results[0].value.ok) {
         const data = (await results[0].value.json()) as Anomaly[];
         setAnomalies(Array.isArray(data) ? data : []);
       }
 
       // Alert Rules
-      if (results[1].status === "fulfilled" && results[1].value.ok) {
+      if (results[1].status === 'fulfilled' && results[1].value.ok) {
         const data = (await results[1].value.json()) as AlertRule[];
         setAlertRules(Array.isArray(data) ? data : []);
       }
 
       // Metrics
-      if (results[2]?.status === "fulfilled" && results[2].value.ok) {
+      if (results[2]?.status === 'fulfilled' && results[2].value.ok) {
         const data = (await results[2].value.json()) as MetricRow[];
         setMetrics(Array.isArray(data) ? data : []);
       } else if (selectedAgent) {
@@ -179,8 +175,8 @@ export default function AnalyticsPage() {
       }
 
       setLastRefresh(new Date());
-    } catch (_) {
-      setError("Failed to load analytics data. API may be unavailable.");
+    } catch {
+      setError('Failed to load analytics data. API may be unavailable.');
     } finally {
       setLoading(false);
     }
@@ -203,10 +199,7 @@ export default function AnalyticsPage() {
   /* ---------------------------------------------------------------- */
 
   /** Distinct metric names present in the data */
-  const metricNames = useMemo(
-    () => [...new Set(metrics.map((m) => m.metric_name))],
-    [metrics]
-  );
+  const metricNames = useMemo(() => [...new Set(metrics.map((m) => m.metric_name))], [metrics]);
 
   /**
    * Build time-series data for LineChart.
@@ -221,16 +214,14 @@ export default function AnalyticsPage() {
         grouped.set(key, {
           time: key,
           label: d.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
+            hour: '2-digit',
+            minute: '2-digit',
           }),
         });
       }
       grouped.get(key)![row.metric_name] = Number(row.avg_value.toFixed(2));
     }
-    return [...grouped.values()].sort((a, b) =>
-      String(a.time).localeCompare(String(b.time))
-    );
+    return [...grouped.values()].sort((a, b) => String(a.time).localeCompare(String(b.time)));
   }, [metrics]);
 
   /**
@@ -268,9 +259,9 @@ export default function AnalyticsPage() {
     let channels: string;
     try {
       const parsed = JSON.parse(rule.notify_channels) as unknown;
-      channels = Array.isArray(parsed) ? parsed.join(", ") : String(parsed);
-    } catch (_) {
-      channels = rule.notify_channels || "log";
+      channels = Array.isArray(parsed) ? parsed.join(', ') : String(parsed);
+    } catch {
+      channels = rule.notify_channels || 'log';
     }
     setAlertForm({
       metric_name: rule.metric_name,
@@ -294,7 +285,7 @@ export default function AnalyticsPage() {
 
     // Build channels as JSON array
     const channelsArray = alertForm.notify_channels
-      .split(",")
+      .split(',')
       .map((c) => c.trim())
       .filter(Boolean);
 
@@ -307,10 +298,8 @@ export default function AnalyticsPage() {
     };
 
     try {
-      const url = editingRule
-        ? `/api/analytics/alerts/${editingRule.id}`
-        : "/api/analytics/alerts";
-      const method = editingRule ? "PUT" : "POST";
+      const url = editingRule ? `/api/analytics/alerts/${editingRule.id}` : '/api/analytics/alerts';
+      const method = editingRule ? 'PUT' : 'POST';
 
       const res = await apiFetch(url, {
         method,
@@ -322,10 +311,10 @@ export default function AnalyticsPage() {
         await loadAnalytics();
       } else {
         const err = await res.text();
-        setError(`Failed to ${editingRule ? "update" : "create"} rule: ${err}`);
+        setError(`Failed to ${editingRule ? 'update' : 'create'} rule: ${err}`);
       }
-    } catch (_) {
-      setError("Network error while saving alert rule.");
+    } catch {
+      setError('Network error while saving alert rule.');
     } finally {
       setAlertSaving(false);
     }
@@ -335,15 +324,15 @@ export default function AnalyticsPage() {
     setDeletingId(id);
     try {
       const res = await apiFetch(`/api/analytics/alerts/${id}`, {
-        method: "DELETE",
+        method: 'DELETE',
       });
       if (res.ok) {
         await loadAnalytics();
       } else {
-        setError("Failed to delete alert rule.");
+        setError('Failed to delete alert rule.');
       }
-    } catch (_) {
-      setError("Network error while deleting alert rule.");
+    } catch {
+      setError('Network error while deleting alert rule.');
     } finally {
       setDeletingId(null);
     }
@@ -360,18 +349,18 @@ export default function AnalyticsPage() {
 
   function formatOperator(op: string): string {
     const map: Record<string, string> = {
-      ">": ">",
-      "<": "<",
-      ">=": ">=",
-      "<=": "<=",
-      "==": "=",
-      "!=": "!=",
-      gt: ">",
-      lt: "<",
-      gte: ">=",
-      lte: "<=",
-      eq: "=",
-      neq: "!=",
+      '>': '>',
+      '<': '<',
+      '>=': '>=',
+      '<=': '<=',
+      '==': '=',
+      '!=': '!=',
+      gt: '>',
+      lt: '<',
+      gte: '>=',
+      lte: '<=',
+      eq: '=',
+      neq: '!=',
     };
     return map[op] ?? op;
   }
@@ -380,19 +369,13 @@ export default function AnalyticsPage() {
   /*  Custom recharts tooltip                                          */
   /* ---------------------------------------------------------------- */
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function CustomTooltip({ active, payload, label }: any) {
     if (!active || !payload?.length) return null;
     return (
       <div className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 shadow-lg">
         <p className="text-xs text-gray-400 mb-1">{label}</p>
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {payload.map((entry: any) => (
-          <p
-            key={entry.dataKey}
-            className="text-xs font-mono"
-            style={{ color: entry.color }}
-          >
+          <p key={entry.dataKey} className="text-xs font-mono" style={{ color: entry.color }}>
             {entry.dataKey}: {entry.value}
           </p>
         ))}
@@ -427,9 +410,7 @@ export default function AnalyticsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-600">
-            {lastRefresh.toLocaleTimeString()}
-          </span>
+          <span className="text-xs text-gray-600">{lastRefresh.toLocaleTimeString()}</span>
           <button
             onClick={loadAnalytics}
             className="p-2 rounded-lg bg-white/[0.05] text-gray-400 hover:bg-white/[0.1] transition-colors"
@@ -480,11 +461,7 @@ export default function AnalyticsPage() {
         </div>
         <div className="glass-card text-center">
           <p className="text-xs text-gray-500 mb-1">Anomalies</p>
-          <p
-            className={`text-2xl font-bold ${
-              anomalies.length > 0 ? "text-amber-400" : ""
-            }`}
-          >
+          <p className={`text-2xl font-bold ${anomalies.length > 0 ? 'text-amber-400' : ''}`}>
             {anomalies.length}
           </p>
         </div>
@@ -517,19 +494,16 @@ export default function AnalyticsPage() {
           <div className="p-4">
             <ResponsiveContainer width="100%" height={320}>
               <LineChart data={lineChartData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="rgba(255,255,255,0.06)"
-                />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                 <XAxis
                   dataKey="label"
-                  tick={{ fill: "#6b7280", fontSize: 11 }}
-                  axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                  tick={{ fill: '#6b7280', fontSize: 11 }}
+                  axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fill: "#6b7280", fontSize: 11 }}
-                  axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                  tick={{ fill: '#6b7280', fontSize: 11 }}
+                  axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
                   tickLine={false}
                   width={50}
                 />
@@ -554,13 +528,10 @@ export default function AnalyticsPage() {
                   <span
                     className="w-2.5 h-2.5 rounded-full"
                     style={{
-                      backgroundColor:
-                        CHART_COLORS[idx % CHART_COLORS.length],
+                      backgroundColor: CHART_COLORS[idx % CHART_COLORS.length],
                     }}
                   />
-                  <span className="text-xs text-gray-400 font-mono">
-                    {name}
-                  </span>
+                  <span className="text-xs text-gray-400 font-mono">{name}</span>
                 </div>
               ))}
             </div>
@@ -576,67 +547,42 @@ export default function AnalyticsPage() {
           <h2 className="text-sm font-medium flex items-center gap-2">
             <BarChart3 className="w-3.5 h-3.5 text-blue-400" />
             Agent Metric Comparison
-            <span className="text-xs text-gray-500 font-normal">
-              &mdash; latest period
-            </span>
+            <span className="text-xs text-gray-500 font-normal">&mdash; latest period</span>
           </h2>
         </div>
         {barChartData.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-10">
-            No metric data to compare.
-          </p>
+          <p className="text-sm text-gray-500 text-center py-10">No metric data to compare.</p>
         ) : (
           <div className="p-4">
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={barChartData} barGap={2}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="rgba(255,255,255,0.06)"
-                />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                 <XAxis
                   dataKey="metric"
-                  tick={{ fill: "#6b7280", fontSize: 11 }}
-                  axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                  tick={{ fill: '#6b7280', fontSize: 11 }}
+                  axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
                   tickLine={false}
                 />
                 <YAxis
-                  tick={{ fill: "#6b7280", fontSize: 11 }}
-                  axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                  tick={{ fill: '#6b7280', fontSize: 11 }}
+                  axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
                   tickLine={false}
                   width={50}
                 />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar
-                  dataKey="avg"
-                  fill="#34d399"
-                  radius={[4, 4, 0, 0]}
-                  name="Avg"
-                />
-                <Bar
-                  dataKey="min"
-                  fill="#60a5fa"
-                  radius={[4, 4, 0, 0]}
-                  name="Min"
-                />
-                <Bar
-                  dataKey="max"
-                  fill="#f472b6"
-                  radius={[4, 4, 0, 0]}
-                  name="Max"
-                />
+                <Bar dataKey="avg" fill="#34d399" radius={[4, 4, 0, 0]} name="Avg" />
+                <Bar dataKey="min" fill="#60a5fa" radius={[4, 4, 0, 0]} name="Min" />
+                <Bar dataKey="max" fill="#f472b6" radius={[4, 4, 0, 0]} name="Max" />
               </BarChart>
             </ResponsiveContainer>
             <div className="flex gap-4 mt-3 px-1">
               {[
-                { label: "Avg", color: "#34d399" },
-                { label: "Min", color: "#60a5fa" },
-                { label: "Max", color: "#f472b6" },
+                { label: 'Avg', color: '#34d399' },
+                { label: 'Min', color: '#60a5fa' },
+                { label: 'Max', color: '#f472b6' },
               ].map(({ label, color }) => (
                 <div key={label} className="flex items-center gap-1.5">
-                  <span
-                    className="w-2.5 h-2.5 rounded-full"
-                    style={{ backgroundColor: color }}
-                  />
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
                   <span className="text-xs text-gray-400">{label}</span>
                 </div>
               ))}
@@ -664,24 +610,16 @@ export default function AnalyticsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/[0.08]">
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                    Agent
-                  </th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                    Metric
-                  </th>
+                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Agent</th>
+                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Metric</th>
                   <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">
                     Current
                   </th>
-                  <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">
-                    Mean
-                  </th>
+                  <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">Mean</th>
                   <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">
                     Z-Score
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                    Std Dev
-                  </th>
+                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Std Dev</th>
                 </tr>
               </thead>
               <tbody>
@@ -690,12 +628,8 @@ export default function AnalyticsPage() {
                     key={`${a.agent_id}-${a.metric_name}`}
                     className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors"
                   >
-                    <td className="px-4 py-3 text-sm text-gray-300">
-                      {agentName(a.agent_id)}
-                    </td>
-                    <td className="px-4 py-3 text-sm font-mono text-amber-400">
-                      {a.metric_name}
-                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-300">{agentName(a.agent_id)}</td>
+                    <td className="px-4 py-3 text-sm font-mono text-amber-400">{a.metric_name}</td>
                     <td className="px-4 py-3 text-sm text-right text-gray-300 font-mono">
                       {a.current_value.toFixed(2)}
                     </td>
@@ -706,8 +640,8 @@ export default function AnalyticsPage() {
                       <span
                         className={`px-2 py-0.5 rounded ${
                           Math.abs(a.z_score) >= 3
-                            ? "bg-red-500/10 text-red-400"
-                            : "bg-amber-500/10 text-amber-400"
+                            ? 'bg-red-500/10 text-red-400'
+                            : 'bg-amber-500/10 text-amber-400'
                         }`}
                       >
                         {a.z_score.toFixed(2)}
@@ -749,9 +683,7 @@ export default function AnalyticsPage() {
               <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                 {/* Metric Name */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">
-                    Metric Name
-                  </label>
+                  <label className="block text-xs text-gray-500 mb-1">Metric Name</label>
                   <input
                     type="text"
                     required
@@ -766,9 +698,7 @@ export default function AnalyticsPage() {
 
                 {/* Operator */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">
-                    Operator
-                  </label>
+                  <label className="block text-xs text-gray-500 mb-1">Operator</label>
                   <select
                     value={alertForm.operator}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
@@ -786,9 +716,7 @@ export default function AnalyticsPage() {
 
                 {/* Threshold */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">
-                    Threshold
-                  </label>
+                  <label className="block text-xs text-gray-500 mb-1">Threshold</label>
                   <input
                     type="number"
                     step="any"
@@ -806,9 +734,7 @@ export default function AnalyticsPage() {
 
                 {/* Window Minutes */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">
-                    Window (min)
-                  </label>
+                  <label className="block text-xs text-gray-500 mb-1">Window (min)</label>
                   <input
                     type="number"
                     min={1}
@@ -826,9 +752,7 @@ export default function AnalyticsPage() {
 
                 {/* Notify Channels */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">
-                    Channels
-                  </label>
+                  <label className="block text-xs text-gray-500 mb-1">Channels</label>
                   <input
                     type="text"
                     required
@@ -856,7 +780,7 @@ export default function AnalyticsPage() {
                   ) : (
                     <Check className="w-3.5 h-3.5" />
                   )}
-                  {editingRule ? "Update Rule" : "Create Rule"}
+                  {editingRule ? 'Update Rule' : 'Create Rule'}
                 </button>
                 <button
                   type="button"
@@ -874,17 +798,14 @@ export default function AnalyticsPage() {
         {/* Rules Table */}
         {alertRules.length === 0 && !showAlertForm ? (
           <p className="text-sm text-gray-500 text-center py-6">
-            No alert rules configured. Click &ldquo;New Rule&rdquo; to create
-            one.
+            No alert rules configured. Click &ldquo;New Rule&rdquo; to create one.
           </p>
         ) : alertRules.length === 0 ? null : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/[0.08]">
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                    Metric
-                  </th>
+                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Metric</th>
                   <th className="text-center text-xs font-medium text-gray-500 px-4 py-3">
                     Condition
                   </th>
@@ -907,9 +828,9 @@ export default function AnalyticsPage() {
                   let channels: string[];
                   try {
                     const parsed = JSON.parse(rule.notify_channels) as unknown;
-                    channels = Array.isArray(parsed) ? parsed as string[] : [String(parsed)];
-                  } catch (_) {
-                    channels = [rule.notify_channels || "log"];
+                    channels = Array.isArray(parsed) ? (parsed as string[]) : [String(parsed)];
+                  } catch {
+                    channels = [rule.notify_channels || 'log'];
                   }
 
                   return (

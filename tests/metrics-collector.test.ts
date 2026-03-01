@@ -7,7 +7,7 @@ const mockGet = vi.fn();
 
 vi.mock('@omniwatch/db', () => ({
   getDb: () => ({
-    prepare: (sql: string) => ({
+    prepare: (_sql: string) => ({
       run: mockRun,
       all: mockAll,
       get: mockGet,
@@ -49,13 +49,13 @@ describe('Metrics Collector', () => {
     it('should insert a metric record into metric_rollups', () => {
       recordMetric('agent-1', 'cpu_usage', 75.5);
 
-      expect(mockRun).toHaveBeenCalledWith(
-        'agent-1', 'cpu_usage', 75.5, 75.5, 75.5,
-      );
+      expect(mockRun).toHaveBeenCalledWith('agent-1', 'cpu_usage', 75.5, 75.5, 75.5);
     });
 
     it('should silently ignore errors', () => {
-      mockRun.mockImplementationOnce(() => { throw new Error('DB error'); });
+      mockRun.mockImplementationOnce(() => {
+        throw new Error('DB error');
+      });
 
       // Should not throw
       expect(() => recordMetric('agent-1', 'cpu_usage', 50)).not.toThrow();
@@ -77,9 +77,7 @@ describe('Metrics Collector', () => {
     it('should record start_count metric with value 1', () => {
       recordAgentStart('agent-1');
 
-      expect(mockRun).toHaveBeenCalledWith(
-        'agent-1', 'start_count', 1, 1, 1,
-      );
+      expect(mockRun).toHaveBeenCalledWith('agent-1', 'start_count', 1, 1, 1);
     });
   });
 
@@ -88,9 +86,7 @@ describe('Metrics Collector', () => {
     it('should record stop_count metric with value 1', () => {
       recordAgentStop('agent-2');
 
-      expect(mockRun).toHaveBeenCalledWith(
-        'agent-2', 'stop_count', 1, 1, 1,
-      );
+      expect(mockRun).toHaveBeenCalledWith('agent-2', 'stop_count', 1, 1, 1);
     });
   });
 
@@ -99,9 +95,7 @@ describe('Metrics Collector', () => {
     it('should record error_count metric with value 1', () => {
       recordAgentError('agent-3');
 
-      expect(mockRun).toHaveBeenCalledWith(
-        'agent-3', 'error_count', 1, 1, 1,
-      );
+      expect(mockRun).toHaveBeenCalledWith('agent-3', 'error_count', 1, 1, 1);
     });
   });
 
@@ -110,17 +104,13 @@ describe('Metrics Collector', () => {
     it('should record heal_success when heal succeeds', () => {
       recordAgentHeal('agent-4', true);
 
-      expect(mockRun).toHaveBeenCalledWith(
-        'agent-4', 'heal_success', 1, 1, 1,
-      );
+      expect(mockRun).toHaveBeenCalledWith('agent-4', 'heal_success', 1, 1, 1);
     });
 
     it('should record heal_failure when heal fails', () => {
       recordAgentHeal('agent-4', false);
 
-      expect(mockRun).toHaveBeenCalledWith(
-        'agent-4', 'heal_failure', 1, 1, 1,
-      );
+      expect(mockRun).toHaveBeenCalledWith('agent-4', 'heal_failure', 1, 1, 1);
     });
   });
 
@@ -129,9 +119,7 @@ describe('Metrics Collector', () => {
     it('should record mesh_events_sent metric', () => {
       recordMeshEventSent('agent-5');
 
-      expect(mockRun).toHaveBeenCalledWith(
-        'agent-5', 'mesh_events_sent', 1, 1, 1,
-      );
+      expect(mockRun).toHaveBeenCalledWith('agent-5', 'mesh_events_sent', 1, 1, 1);
     });
   });
 
@@ -139,9 +127,7 @@ describe('Metrics Collector', () => {
     it('should record mesh_events_received metric', () => {
       recordMeshEventReceived('agent-5');
 
-      expect(mockRun).toHaveBeenCalledWith(
-        'agent-5', 'mesh_events_received', 1, 1, 1,
-      );
+      expect(mockRun).toHaveBeenCalledWith('agent-5', 'mesh_events_received', 1, 1, 1);
     });
   });
 
@@ -155,7 +141,9 @@ describe('Metrics Collector', () => {
     });
 
     it('should return 0 on failure', () => {
-      mockRun.mockImplementationOnce(() => { throw new Error('rollup error'); });
+      mockRun.mockImplementationOnce(() => {
+        throw new Error('rollup error');
+      });
 
       const result = performHourlyRollup();
       expect(result).toBe(0);
@@ -172,7 +160,9 @@ describe('Metrics Collector', () => {
     });
 
     it('should return 0 on failure', () => {
-      mockRun.mockImplementationOnce(() => { throw new Error('daily error'); });
+      mockRun.mockImplementationOnce(() => {
+        throw new Error('daily error');
+      });
 
       const result = performDailyRollup();
       expect(result).toBe(0);

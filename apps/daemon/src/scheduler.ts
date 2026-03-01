@@ -1,7 +1,7 @@
 import { log } from '@omniwatch/shared';
 import type { Agent } from '@omniwatch/shared';
 import { getDb } from '@omniwatch/db';
-import { startAgent, stopAgent, getAgent, getRunningProcesses } from './agent-manager.js';
+import { startAgent } from './agent-manager.js';
 
 let interval: ReturnType<typeof setInterval> | null = null;
 
@@ -25,9 +25,9 @@ export function stopScheduler(): void {
 
 function checkSchedules(): void {
   const db = getDb();
-  const scheduled = db.prepare(
-    "SELECT * FROM agents WHERE schedule IS NOT NULL AND status IN ('ready', 'stopped')"
-  ).all() as Agent[];
+  const scheduled = db
+    .prepare("SELECT * FROM agents WHERE schedule IS NOT NULL AND status IN ('ready', 'stopped')")
+    .all() as Agent[];
 
   for (const agent of scheduled) {
     if (!agent.schedule) continue;

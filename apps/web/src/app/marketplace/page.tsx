@@ -1,19 +1,9 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import {
-  Store,
-  Download,
-  Star,
-  Search,
-  Tag,
-  Plus,
-  Loader2,
-  CheckCircle,
-  X,
-} from "lucide-react";
-import { Pagination } from "../../components/pagination";
-import { apiFetch } from "../../lib/api";
+import { useState, useEffect, useCallback } from 'react';
+import { Store, Download, Star, Search, Tag, Plus, Loader2, CheckCircle, X } from 'lucide-react';
+import { Pagination } from '../../components/pagination';
+import { apiFetch } from '../../lib/api';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -46,38 +36,38 @@ interface PublishForm {
 /* ------------------------------------------------------------------ */
 
 const CATEGORIES = [
-  { key: "", label: "All" },
-  { key: "general", label: "General" },
-  { key: "monitoring", label: "Monitoring" },
-  { key: "security", label: "Security" },
-  { key: "performance", label: "Performance" },
-  { key: "data", label: "Data" },
-  { key: "automation", label: "Automation" },
+  { key: '', label: 'All' },
+  { key: 'general', label: 'General' },
+  { key: 'monitoring', label: 'Monitoring' },
+  { key: 'security', label: 'Security' },
+  { key: 'performance', label: 'Performance' },
+  { key: 'data', label: 'Data' },
+  { key: 'automation', label: 'Automation' },
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
-  general: "bg-gray-500/10 text-gray-400",
-  monitoring: "bg-blue-500/10 text-blue-400",
-  security: "bg-red-500/10 text-red-400",
-  performance: "bg-amber-500/10 text-amber-400",
-  data: "bg-cyan-500/10 text-cyan-400",
-  automation: "bg-purple-500/10 text-purple-400",
+  general: 'bg-gray-500/10 text-gray-400',
+  monitoring: 'bg-blue-500/10 text-blue-400',
+  security: 'bg-red-500/10 text-red-400',
+  performance: 'bg-amber-500/10 text-amber-400',
+  data: 'bg-cyan-500/10 text-cyan-400',
+  automation: 'bg-purple-500/10 text-purple-400',
 };
 
 const SORT_OPTIONS = [
-  { key: "downloads", label: "Most Downloaded" },
-  { key: "rating", label: "Top Rated" },
-  { key: "newest", label: "Newest" },
+  { key: 'downloads', label: 'Most Downloaded' },
+  { key: 'rating', label: 'Top Rated' },
+  { key: 'newest', label: 'Newest' },
 ] as const;
 
 const PAGE_LIMIT = 20;
 
 const DEFAULT_FORM: PublishForm = {
-  name: "",
-  description: "",
-  prompt: "",
-  category: "general",
-  tags: "",
+  name: '',
+  description: '',
+  prompt: '',
+  category: 'general',
+  tags: '',
 };
 
 /* ------------------------------------------------------------------ */
@@ -95,9 +85,7 @@ function StarRating({ rating }: { rating: number }) {
       {Array.from({ length: full }).map((_, i) => (
         <Star key={`f${i}`} className="w-3 h-3 fill-amber-400 text-amber-400" />
       ))}
-      {half && (
-        <Star className="w-3 h-3 text-amber-400" style={{ clipPath: "inset(0 50% 0 0)" }} />
-      )}
+      {half && <Star className="w-3 h-3 text-amber-400" style={{ clipPath: 'inset(0 50% 0 0)' }} />}
       {Array.from({ length: empty }).map((_, i) => (
         <Star key={`e${i}`} className="w-3 h-3 text-gray-600" />
       ))}
@@ -113,9 +101,9 @@ function StarRating({ rating }: { rating: number }) {
 export default function MarketplacePage() {
   const [recipes, setRecipes] = useState<MarketplaceRecipe[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("");
-  const [sort, setSort] = useState<string>("downloads");
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('');
+  const [sort, setSort] = useState<string>('downloads');
   const [installing, setInstalling] = useState<string | null>(null);
   const [installed, setInstalled] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
@@ -135,11 +123,11 @@ export default function MarketplacePage() {
     setLoading(true);
     const offset = (page - 1) * PAGE_LIMIT;
     const params = new URLSearchParams();
-    params.set("limit", String(PAGE_LIMIT));
-    params.set("offset", String(offset));
-    if (search) params.set("search", search);
-    if (category) params.set("category", category);
-    if (sort) params.set("sort", sort);
+    params.set('limit', String(PAGE_LIMIT));
+    params.set('offset', String(offset));
+    if (search) params.set('search', search);
+    if (category) params.set('category', category);
+    if (sort) params.set('sort', sort);
 
     try {
       const res = await apiFetch(`/api/marketplace?${params}`);
@@ -152,7 +140,7 @@ export default function MarketplacePage() {
         setRecipes([]);
         setHasNextPage(false);
       }
-    } catch (_) {
+    } catch {
       setRecipes([]);
       setHasNextPage(false);
     } finally {
@@ -171,15 +159,15 @@ export default function MarketplacePage() {
   async function handleInstall(id: string) {
     setInstalling(id);
     try {
-      const res = await apiFetch(`/api/marketplace/${id}/install`, { method: "POST" });
+      const res = await apiFetch(`/api/marketplace/${id}/install`, { method: 'POST' });
       if (res.ok) {
         setInstalled((prev) => new Set([...prev, id]));
         // Update download count locally
         setRecipes((prev) =>
-          prev.map((r) => (r.id === id ? { ...r, downloads: r.downloads + 1 } : r))
+          prev.map((r) => (r.id === id ? { ...r, downloads: r.downloads + 1 } : r)),
         );
       }
-    } catch (_) {
+    } catch {
       // API error — silently fail
     } finally {
       setInstalling(null);
@@ -208,13 +196,13 @@ export default function MarketplacePage() {
     setPublishError(null);
 
     const tagsArray = publishForm.tags
-      .split(",")
+      .split(',')
       .map((t) => t.trim())
       .filter(Boolean);
 
     try {
-      const res = await apiFetch("/api/marketplace", {
-        method: "POST",
+      const res = await apiFetch('/api/marketplace', {
+        method: 'POST',
         body: JSON.stringify({
           name: publishForm.name,
           description: publishForm.description || undefined,
@@ -228,11 +216,13 @@ export default function MarketplacePage() {
         closePublish();
         await loadRecipes();
       } else {
-        const data = (await res.json().catch(() => ({ error: "Failed to publish recipe" }))) as { error?: string };
-        setPublishError(data.error || "Failed to publish recipe");
+        const data = (await res.json().catch(() => ({ error: 'Failed to publish recipe' }))) as {
+          error?: string;
+        };
+        setPublishError(data.error || 'Failed to publish recipe');
       }
-    } catch (_) {
-      setPublishError("Network error. Please try again.");
+    } catch {
+      setPublishError('Network error. Please try again.');
     } finally {
       setPublishing(false);
     }
@@ -273,7 +263,10 @@ export default function MarketplacePage() {
             <input
               type="text"
               value={search}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setSearch(e.target.value); setPage(1); }}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               placeholder="Search marketplace..."
               className="w-full pl-10 pr-4 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
             />
@@ -282,7 +275,10 @@ export default function MarketplacePage() {
           {/* Sort dropdown */}
           <select
             value={sort}
-            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => { setSort(e.target.value); setPage(1); }}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+              setSort(e.target.value);
+              setPage(1);
+            }}
             className="px-3 py-2 rounded-lg text-sm bg-white/[0.04] border border-white/[0.08] text-gray-300 focus:outline-none focus:border-emerald-500/50 transition-colors"
           >
             {SORT_OPTIONS.map((opt) => (
@@ -298,11 +294,14 @@ export default function MarketplacePage() {
           {CATEGORIES.map((c) => (
             <button
               key={c.key}
-              onClick={() => { setCategory(c.key); setPage(1); }}
+              onClick={() => {
+                setCategory(c.key);
+                setPage(1);
+              }}
               className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                 category === c.key
-                  ? "bg-emerald-500/20 text-emerald-400"
-                  : "text-gray-500 hover:bg-white/[0.05]"
+                  ? 'bg-emerald-500/20 text-emerald-400'
+                  : 'text-gray-500 hover:bg-white/[0.05]'
               }`}
             >
               {c.label}
@@ -321,23 +320,17 @@ export default function MarketplacePage() {
         <div className="text-center text-gray-500 py-16">
           <Store className="w-10 h-10 mx-auto mb-3 text-gray-600" />
           <p>No recipes found.</p>
-          <p className="text-xs mt-1 text-gray-600">
-            Try a different search or category filter.
-          </p>
+          <p className="text-xs mt-1 text-gray-600">Try a different search or category filter.</p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {recipes.map((recipe) => {
             const isInstalled = installed.has(recipe.id);
             const isInstalling = installing === recipe.id;
-            const catColor =
-              CATEGORY_COLORS[recipe.category] || "bg-gray-500/10 text-gray-400";
+            const catColor = CATEGORY_COLORS[recipe.category] || 'bg-gray-500/10 text-gray-400';
 
             return (
-              <div
-                key={recipe.id}
-                className="glass-card flex flex-col"
-              >
+              <div key={recipe.id} className="glass-card flex flex-col">
                 {/* Header: category badge + version */}
                 <div className="flex items-center justify-between mb-3">
                   <span
@@ -345,17 +338,13 @@ export default function MarketplacePage() {
                   >
                     {recipe.category}
                   </span>
-                  <span className="text-[10px] text-gray-600 font-mono">
-                    v{recipe.version}
-                  </span>
+                  <span className="text-[10px] text-gray-600 font-mono">v{recipe.version}</span>
                 </div>
 
                 {/* Name + Description */}
-                <h3 className="font-medium text-sm mb-1 truncate">
-                  {recipe.name}
-                </h3>
+                <h3 className="font-medium text-sm mb-1 truncate">{recipe.name}</h3>
                 <p className="text-xs text-gray-500 line-clamp-2 mb-3 min-h-[2rem]">
-                  {recipe.description || "No description provided."}
+                  {recipe.description || 'No description provided.'}
                 </p>
 
                 {/* Tags */}
@@ -394,8 +383,8 @@ export default function MarketplacePage() {
                     disabled={isInstalling || isInstalled}
                     className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg text-sm transition-colors ${
                       isInstalled
-                        ? "bg-emerald-500/10 text-emerald-400 cursor-default"
-                        : "bg-white/[0.05] hover:bg-emerald-500/20 hover:text-emerald-400 disabled:opacity-40"
+                        ? 'bg-emerald-500/10 text-emerald-400 cursor-default'
+                        : 'bg-white/[0.05] hover:bg-emerald-500/20 hover:text-emerald-400 disabled:opacity-40'
                     }`}
                   >
                     {isInstalling ? (
@@ -440,10 +429,7 @@ export default function MarketplacePage() {
       {showPublish && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={closePublish}
-          />
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={closePublish} />
 
           {/* Modal */}
           <div className="relative w-full max-w-lg mx-4 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl">
@@ -472,9 +458,7 @@ export default function MarketplacePage() {
 
               {/* Name */}
               <div>
-                <label className="block text-xs text-gray-400 mb-1.5">
-                  Recipe Name *
-                </label>
+                <label className="block text-xs text-gray-400 mb-1.5">Recipe Name *</label>
                 <input
                   type="text"
                   required
@@ -489,9 +473,7 @@ export default function MarketplacePage() {
 
               {/* Description */}
               <div>
-                <label className="block text-xs text-gray-400 mb-1.5">
-                  Description
-                </label>
+                <label className="block text-xs text-gray-400 mb-1.5">Description</label>
                 <textarea
                   value={publishForm.description}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -505,9 +487,7 @@ export default function MarketplacePage() {
 
               {/* Prompt */}
               <div>
-                <label className="block text-xs text-gray-400 mb-1.5">
-                  Agent Prompt *
-                </label>
+                <label className="block text-xs text-gray-400 mb-1.5">Agent Prompt *</label>
                 <textarea
                   required
                   value={publishForm.prompt}
@@ -524,9 +504,7 @@ export default function MarketplacePage() {
               <div className="grid grid-cols-2 gap-3">
                 {/* Category */}
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1.5">
-                    Category
-                  </label>
+                  <label className="block text-xs text-gray-400 mb-1.5">Category</label>
                   <select
                     value={publishForm.category}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
@@ -534,7 +512,7 @@ export default function MarketplacePage() {
                     }
                     className="w-full px-3 py-2 rounded-lg text-sm bg-white/[0.04] border border-white/[0.08] text-gray-300 focus:outline-none focus:border-emerald-500/50 transition-colors"
                   >
-                    {CATEGORIES.filter((c) => c.key !== "").map((c) => (
+                    {CATEGORIES.filter((c) => c.key !== '').map((c) => (
                       <option key={c.key} value={c.key}>
                         {c.label}
                       </option>
@@ -544,9 +522,7 @@ export default function MarketplacePage() {
 
                 {/* Tags */}
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1.5">
-                    Tags
-                  </label>
+                  <label className="block text-xs text-gray-400 mb-1.5">Tags</label>
                   <input
                     type="text"
                     value={publishForm.tags}

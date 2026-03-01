@@ -54,7 +54,6 @@ describe('health-monitor', () => {
   });
 
   it('recordHeartbeat updates timestamp', () => {
-    const before = Date.now();
     recordHeartbeat('agent-timing');
     // No direct way to read the map, but no error means success
   });

@@ -1,15 +1,8 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import {
-  Save,
-  Eye,
-  EyeOff,
-  CheckCircle,
-  XCircle,
-  Loader2,
-} from "lucide-react";
-import { apiFetch } from "../../lib/api";
+import { useState, useEffect } from 'react';
+import { Save, Eye, EyeOff, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { apiFetch } from '../../lib/api';
 
 /** Shape matches the actual API response (snake_case) */
 interface OllamaModel {
@@ -43,47 +36,47 @@ interface ApiConfig {
 
 const CLOUD_PROVIDERS = [
   {
-    label: "Anthropic (Claude)",
+    label: 'Anthropic (Claude)',
     models: [
-      { value: "claude-sonnet-4-20250514", label: "Claude Sonnet 4" },
-      { value: "claude-opus-4-20250514", label: "Claude Opus 4" },
-      { value: "claude-haiku-3-5-20241022", label: "Claude Haiku 3.5" },
+      { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4' },
+      { value: 'claude-opus-4-20250514', label: 'Claude Opus 4' },
+      { value: 'claude-haiku-3-5-20241022', label: 'Claude Haiku 3.5' },
     ],
   },
   {
-    label: "OpenAI",
+    label: 'OpenAI',
     models: [
-      { value: "gpt-4o", label: "GPT-4o" },
-      { value: "gpt-4o-mini", label: "GPT-4o Mini" },
-      { value: "o3-mini", label: "o3-mini" },
+      { value: 'gpt-4o', label: 'GPT-4o' },
+      { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
+      { value: 'o3-mini', label: 'o3-mini' },
     ],
   },
   {
-    label: "Google",
+    label: 'Google',
     models: [
-      { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
-      { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+      { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+      { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
     ],
   },
 ];
 
 export default function SettingsPage() {
   // AI config
-  const [aiApiKey, setAiApiKey] = useState("");
-  const [aiModel, setAiModel] = useState("claude-sonnet-4-20250514");
+  const [aiApiKey, setAiApiKey] = useState('');
+  const [aiModel, setAiModel] = useState('claude-sonnet-4-20250514');
   const [showKey, setShowKey] = useState(false);
 
   // Ollama
-  const [ollamaUrl, setOllamaUrl] = useState("http://localhost:11434");
+  const [ollamaUrl, setOllamaUrl] = useState('http://localhost:11434');
   const [ollamaAvailable, setOllamaAvailable] = useState<boolean | null>(null);
   const [ollamaModels, setOllamaModels] = useState<OllamaModel[]>([]);
   const [ollamaChecking, setOllamaChecking] = useState(false);
 
   // Notification config
-  const [slackWebhook, setSlackWebhook] = useState("");
-  const [discordWebhook, setDiscordWebhook] = useState("");
-  const [telegramToken, setTelegramToken] = useState("");
-  const [telegramChatId, setTelegramChatId] = useState("");
+  const [slackWebhook, setSlackWebhook] = useState('');
+  const [discordWebhook, setDiscordWebhook] = useState('');
+  const [telegramToken, setTelegramToken] = useState('');
+  const [telegramChatId, setTelegramChatId] = useState('');
   const [systemNotifications, setSystemNotifications] = useState(true);
 
   // Agent config
@@ -95,7 +88,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{
-    type: "success" | "error";
+    type: 'success' | 'error';
     message: string;
   } | null>(null);
 
@@ -103,21 +96,22 @@ export default function SettingsPage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await apiFetch("/api/config");
+        const res = await apiFetch('/api/config');
         if (res.ok) {
           const data = (await res.json()) as ApiConfig | { config?: ApiConfig };
-          const cfg: ApiConfig = 'config' in data && data.config ? data.config : data as ApiConfig;
+          const cfg: ApiConfig =
+            'config' in data && data.config ? data.config : (data as ApiConfig);
 
           // AI
-          setAiApiKey(cfg.ai?.api_key ?? "");
-          setAiModel(cfg.ai?.model ?? "claude-sonnet-4-20250514");
-          setOllamaUrl(cfg.ai?.ollama_url ?? "http://localhost:11434");
+          setAiApiKey(cfg.ai?.api_key ?? '');
+          setAiModel(cfg.ai?.model ?? 'claude-sonnet-4-20250514');
+          setOllamaUrl(cfg.ai?.ollama_url ?? 'http://localhost:11434');
 
           // Notifications
-          setSlackWebhook(cfg.notification?.slack_webhook ?? "");
-          setDiscordWebhook(cfg.notification?.discord_webhook ?? "");
-          setTelegramToken(cfg.notification?.telegram_token ?? "");
-          setTelegramChatId(cfg.notification?.telegram_chat_id ?? "");
+          setSlackWebhook(cfg.notification?.slack_webhook ?? '');
+          setDiscordWebhook(cfg.notification?.discord_webhook ?? '');
+          setTelegramToken(cfg.notification?.telegram_token ?? '');
+          setTelegramChatId(cfg.notification?.telegram_chat_id ?? '');
           setSystemNotifications(cfg.notification?.system ?? true);
 
           // Agent
@@ -125,7 +119,7 @@ export default function SettingsPage() {
           setMemoryLimit(cfg.agent?.memory_limit_mb ?? 128);
           setMaxHealAttempts(cfg.agent?.max_heal_attempts ?? 3);
         }
-      } catch (_) {
+      } catch {
         // API not available
       } finally {
         setLoading(false);
@@ -138,13 +132,13 @@ export default function SettingsPage() {
   async function checkOllama() {
     setOllamaChecking(true);
     try {
-      const res = await apiFetch("/api/system/ollama");
+      const res = await apiFetch('/api/system/ollama');
       if (res.ok) {
         const data = (await res.json()) as { available?: boolean; models?: OllamaModel[] };
         setOllamaAvailable(data.available ?? false);
         setOllamaModels(data.models || []);
       }
-    } catch (_) {
+    } catch {
       setOllamaAvailable(false);
       setOllamaModels([]);
     } finally {
@@ -159,15 +153,26 @@ export default function SettingsPage() {
 
   const isOllamaModel = (() => {
     const prefixes = [
-      "llama", "mistral", "mixtral", "codellama", "qwen", "deepseek",
-      "gemma", "phi", "vicuna", "yi", "solar", "dolphin", "tinyllama",
+      'llama',
+      'mistral',
+      'mixtral',
+      'codellama',
+      'qwen',
+      'deepseek',
+      'gemma',
+      'phi',
+      'vicuna',
+      'yi',
+      'solar',
+      'dolphin',
+      'tinyllama',
     ];
     const lower = aiModel.toLowerCase();
-    return prefixes.some((p) => lower.startsWith(p)) || lower.startsWith("ollama:");
+    return prefixes.some((p) => lower.startsWith(p)) || lower.startsWith('ollama:');
   })();
 
   /** Show toast and auto-dismiss */
-  function showToast(type: "success" | "error", message: string) {
+  function showToast(type: 'success' | 'error', message: string) {
     setToast({ type, message });
     setTimeout(() => setToast(null), 4000);
   }
@@ -179,15 +184,27 @@ export default function SettingsPage() {
 
     // Detect provider from model name
     const detectProvider = (m: string) => {
-      if (m.startsWith("gpt-") || m.startsWith("o1") || m.startsWith("o3")) return "openai";
-      if (m.startsWith("gemini-")) return "google";
+      if (m.startsWith('gpt-') || m.startsWith('o1') || m.startsWith('o3')) return 'openai';
+      if (m.startsWith('gemini-')) return 'google';
       const lower = m.toLowerCase();
       const ollamaPrefixes = [
-        "llama", "mistral", "mixtral", "codellama", "qwen", "deepseek",
-        "gemma", "phi", "vicuna", "yi", "solar", "dolphin", "tinyllama",
+        'llama',
+        'mistral',
+        'mixtral',
+        'codellama',
+        'qwen',
+        'deepseek',
+        'gemma',
+        'phi',
+        'vicuna',
+        'yi',
+        'solar',
+        'dolphin',
+        'tinyllama',
       ];
-      if (ollamaPrefixes.some((p) => lower.startsWith(p)) || lower.startsWith("ollama:")) return "ollama";
-      return "anthropic";
+      if (ollamaPrefixes.some((p) => lower.startsWith(p)) || lower.startsWith('ollama:'))
+        return 'ollama';
+      return 'anthropic';
     };
 
     const config: ApiConfig = {
@@ -212,30 +229,26 @@ export default function SettingsPage() {
     };
 
     try {
-      const res = await apiFetch("/api/config", {
-        method: "PUT",
+      const res = await apiFetch('/api/config', {
+        method: 'PUT',
         body: JSON.stringify({ config }),
       });
 
       if (res.ok) {
-        showToast("success", "Settings saved successfully.");
+        showToast('success', 'Settings saved successfully.');
       } else {
         const data = (await res.json().catch(() => ({}))) as { message?: string };
-        showToast("error", data.message ?? `Failed to save (${res.status})`);
+        showToast('error', data.message ?? `Failed to save (${res.status})`);
       }
-    } catch (_) {
-      showToast("error", "Failed to save. API may be unavailable.");
+    } catch {
+      showToast('error', 'Failed to save. API may be unavailable.');
     } finally {
       setSaving(false);
     }
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64 text-gray-500">
-        Loading...
-      </div>
-    );
+    return <div className="flex items-center justify-center h-64 text-gray-500">Loading...</div>;
   }
 
   return (
@@ -246,12 +259,12 @@ export default function SettingsPage() {
       {toast && (
         <div
           className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm transition-all ${
-            toast.type === "success"
-              ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
-              : "bg-red-500/10 border border-red-500/20 text-red-400"
+            toast.type === 'success'
+              ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+              : 'bg-red-500/10 border border-red-500/20 text-red-400'
           }`}
         >
-          {toast.type === "success" ? (
+          {toast.type === 'success' ? (
             <CheckCircle className="w-4 h-4 shrink-0" />
           ) : (
             <XCircle className="w-4 h-4 shrink-0" />
@@ -267,12 +280,10 @@ export default function SettingsPage() {
 
           {!isOllamaModel && (
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">
-                API Key
-              </label>
+              <label className="text-sm text-gray-400 mb-1 block">API Key</label>
               <div className="relative">
                 <input
-                  type={showKey ? "text" : "password"}
+                  type={showKey ? 'text' : 'password'}
                   value={aiApiKey}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAiApiKey(e.target.value)}
                   placeholder="sk-ant-..."
@@ -283,11 +294,7 @@ export default function SettingsPage() {
                   onClick={() => setShowKey(!showKey)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
                 >
-                  {showKey ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
+                  {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
               <p className="text-xs text-gray-600 mt-1">
@@ -297,9 +304,7 @@ export default function SettingsPage() {
           )}
 
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">
-              AI Model
-            </label>
+            <label className="text-sm text-gray-400 mb-1 block">AI Model</label>
             <select
               value={aiModel}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAiModel(e.target.value)}
@@ -329,9 +334,7 @@ export default function SettingsPage() {
           {/* Ollama Section */}
           <div className="pt-2 border-t border-white/[0.06]">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-gray-400">
-                Local AI (Ollama)
-              </label>
+              <label className="text-sm text-gray-400">Local AI (Ollama)</label>
               <div className="flex items-center gap-2">
                 {ollamaChecking ? (
                   <Loader2 className="w-3 h-3 animate-spin text-gray-500" />
@@ -365,8 +368,8 @@ export default function SettingsPage() {
             />
             <p className="text-xs text-gray-600 mt-1">
               {isOllamaModel
-                ? "Using local AI — no API key or cloud costs required."
-                : "Install Ollama to run AI agents fully offline and free."}
+                ? 'Using local AI — no API key or cloud costs required.'
+                : 'Install Ollama to run AI agents fully offline and free.'}
             </p>
           </div>
         </div>
@@ -376,9 +379,7 @@ export default function SettingsPage() {
           <h2 className="text-lg font-medium">Notification Channels</h2>
 
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">
-              Slack Webhook URL
-            </label>
+            <label className="text-sm text-gray-400 mb-1 block">Slack Webhook URL</label>
             <input
               type="url"
               value={slackWebhook}
@@ -389,13 +390,13 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">
-              Discord Webhook URL
-            </label>
+            <label className="text-sm text-gray-400 mb-1 block">Discord Webhook URL</label>
             <input
               type="url"
               value={discordWebhook}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDiscordWebhook(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setDiscordWebhook(e.target.value)
+              }
               placeholder="https://discord.com/api/webhooks/..."
               className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
             />
@@ -403,25 +404,25 @@ export default function SettingsPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">
-                Telegram Bot Token
-              </label>
+              <label className="text-sm text-gray-400 mb-1 block">Telegram Bot Token</label>
               <input
                 type="password"
                 value={telegramToken}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTelegramToken(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setTelegramToken(e.target.value)
+                }
                 placeholder="123456:ABC..."
                 className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm font-mono focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
               />
             </div>
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">
-                Telegram Chat ID
-              </label>
+              <label className="text-sm text-gray-400 mb-1 block">Telegram Chat ID</label>
               <input
                 type="text"
                 value={telegramChatId}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTelegramChatId(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setTelegramChatId(e.target.value)
+                }
                 placeholder="-100123456789"
                 className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm font-mono focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
               />
@@ -432,14 +433,14 @@ export default function SettingsPage() {
             <input
               type="checkbox"
               checked={systemNotifications}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSystemNotifications(e.target.checked)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setSystemNotifications(e.target.checked)
+              }
               className="w-4 h-4 rounded border-white/20 bg-white/5 accent-emerald-500"
             />
             <div>
               <p className="text-sm">System Notifications</p>
-              <p className="text-xs text-gray-500">
-                Show desktop/OS notifications for alerts
-              </p>
+              <p className="text-xs text-gray-500">Show desktop/OS notifications for alerts</p>
             </div>
           </label>
         </div>
@@ -449,15 +450,15 @@ export default function SettingsPage() {
           <h2 className="text-lg font-medium">Agent Configuration</h2>
 
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">
-              Max Agents
-            </label>
+            <label className="text-sm text-gray-400 mb-1 block">Max Agents</label>
             <input
               type="number"
               min={1}
               max={100}
               value={maxAgents}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMaxAgents(Number(e.target.value))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setMaxAgents(Number(e.target.value))
+              }
               className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50"
             />
             <p className="text-xs text-gray-600 mt-1">
@@ -466,16 +467,16 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">
-              Memory Limit (MB)
-            </label>
+            <label className="text-sm text-gray-400 mb-1 block">Memory Limit (MB)</label>
             <input
               type="number"
               min={64}
               max={2048}
               step={64}
               value={memoryLimit}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMemoryLimit(Number(e.target.value))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setMemoryLimit(Number(e.target.value))
+              }
               className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50"
             />
             <p className="text-xs text-gray-600 mt-1">
@@ -484,20 +485,19 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">
-              Max Heal Attempts
-            </label>
+            <label className="text-sm text-gray-400 mb-1 block">Max Heal Attempts</label>
             <input
               type="number"
               min={0}
               max={10}
               value={maxHealAttempts}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMaxHealAttempts(Number(e.target.value))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setMaxHealAttempts(Number(e.target.value))
+              }
               className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50"
             />
             <p className="text-xs text-gray-600 mt-1">
-              Number of times to attempt auto-healing before stopping an errored
-              agent.
+              Number of times to attempt auto-healing before stopping an errored agent.
             </p>
           </div>
         </div>

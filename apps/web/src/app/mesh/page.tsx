@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useCallback } from "react";
-import { Network, Radio, ArrowRight, RefreshCw } from "lucide-react";
-import { Pagination } from "../../components/pagination";
-import { apiFetch } from "../../lib/api";
+import { useEffect, useState, useCallback } from 'react';
+import { Network, Radio, ArrowRight, RefreshCw } from 'lucide-react';
+import { Pagination } from '../../components/pagination';
+import { apiFetch } from '../../lib/api';
 
 interface MeshEvent {
   id: number;
@@ -25,7 +25,7 @@ export default function MeshPage() {
   const [events, setEvents] = useState<MeshEvent[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
-  const [topicFilter, setTopicFilter] = useState("");
+  const [topicFilter, setTopicFilter] = useState('');
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
 
@@ -34,20 +34,20 @@ export default function MeshPage() {
       const offset = (page - 1) * PAGE_LIMIT;
       const [evRes, subRes] = await Promise.allSettled([
         apiFetch(`/api/mesh/events?limit=${PAGE_LIMIT}&offset=${offset}`),
-        apiFetch("/api/mesh/subscriptions"),
+        apiFetch('/api/mesh/subscriptions'),
       ]);
 
-      if (evRes.status === "fulfilled" && evRes.value.ok) {
+      if (evRes.status === 'fulfilled' && evRes.value.ok) {
         const data = (await evRes.value.json()) as { events?: MeshEvent[] };
         const list = data.events ?? [];
         setEvents(list);
         setHasNextPage(list.length === PAGE_LIMIT);
       }
-      if (subRes.status === "fulfilled" && subRes.value.ok) {
+      if (subRes.status === 'fulfilled' && subRes.value.ok) {
         const data = (await subRes.value.json()) as { subscriptions?: Subscription[] };
         setSubscriptions(data.subscriptions ?? []);
       }
-    } catch (_) {
+    } catch {
       // API not available
     } finally {
       setLoading(false);
@@ -64,9 +64,7 @@ export default function MeshPage() {
   const topics = [...new Set(subscriptions.map((s) => s.topic))];
 
   // Filtered events
-  const filteredEvents = topicFilter
-    ? events.filter((e) => e.topic === topicFilter)
-    : events;
+  const filteredEvents = topicFilter ? events.filter((e) => e.topic === topicFilter) : events;
 
   if (loading) {
     return (
@@ -84,9 +82,7 @@ export default function MeshPage() {
             <Network className="w-6 h-6 text-emerald-400" />
             Agent Mesh
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Inter-agent pub/sub event bus
-          </p>
+          <p className="text-sm text-gray-500 mt-1">Inter-agent pub/sub event bus</p>
         </div>
         <button
           onClick={loadData}
@@ -122,18 +118,11 @@ export default function MeshPage() {
         </div>
         <div className="divide-y divide-white/[0.06]">
           {subscriptions.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-6">
-              No active subscriptions.
-            </p>
+            <p className="text-sm text-gray-500 text-center py-6">No active subscriptions.</p>
           ) : (
             subscriptions.map((sub, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 px-4 py-3 text-sm"
-              >
-                <span className="text-gray-400 font-mono">
-                  {sub.agent_name || sub.agent_id}
-                </span>
+              <div key={i} className="flex items-center gap-3 px-4 py-3 text-sm">
+                <span className="text-gray-400 font-mono">{sub.agent_name || sub.agent_id}</span>
                 <ArrowRight className="w-3 h-3 text-gray-600" />
                 <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-xs font-mono">
                   {sub.topic}
@@ -165,9 +154,7 @@ export default function MeshPage() {
         </div>
         <div className="max-h-[500px] overflow-y-auto">
           {filteredEvents.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-6">
-              No events yet.
-            </p>
+            <p className="text-sm text-gray-500 text-center py-6">No events yet.</p>
           ) : (
             <div className="divide-y divide-white/[0.04]">
               {filteredEvents.map((event) => (
@@ -180,14 +167,11 @@ export default function MeshPage() {
                       {event.topic}
                     </span>
                     <span className="text-gray-600">
-                      from{" "}
-                      <span className="text-gray-400">
-                        {event.publisher_id}
-                      </span>
+                      from <span className="text-gray-400">{event.publisher_id}</span>
                     </span>
                   </div>
                   <pre className="text-xs text-gray-400 font-mono truncate max-w-full">
-                    {typeof event.payload === "string"
+                    {typeof event.payload === 'string'
                       ? event.payload.slice(0, 200)
                       : JSON.stringify(event.payload).slice(0, 200)}
                   </pre>
@@ -205,7 +189,7 @@ export default function MeshPage() {
           totalPages={hasNextPage ? page + 1 : page}
           onPageChange={(p) => {
             setPage(p);
-            setTopicFilter("");
+            setTopicFilter('');
           }}
         />
       )}

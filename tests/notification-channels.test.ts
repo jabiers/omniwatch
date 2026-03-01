@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock config and logger
 vi.mock('@omniwatch/db', () => ({
@@ -19,7 +19,12 @@ vi.mock('@omniwatch/shared', async (importOriginal) => {
   return { ...actual, log: vi.fn() };
 });
 
-import { registerChannel, getConfiguredChannels, dispatchNotification, clearChannels } from '../apps/daemon/src/notification-channels/registry.js';
+import {
+  registerChannel,
+  getConfiguredChannels,
+  dispatchNotification,
+  clearChannels,
+} from '../apps/daemon/src/notification-channels/registry.js';
 import { WebhookChannel } from '../apps/daemon/src/notification-channels/webhook.js';
 import { SlackChannel } from '../apps/daemon/src/notification-channels/slack.js';
 import { DiscordChannel } from '../apps/daemon/src/notification-channels/discord.js';

@@ -20,7 +20,7 @@ vi.mock('@omniwatch/shared', async (importOriginal) => {
 });
 
 // Must import AFTER mocking
-const { loadConfig, saveConfig, getConfigValue, setConfigValue } = await import('@omniwatch/db');
+const { loadConfig, getConfigValue, setConfigValue } = await import('@omniwatch/db');
 
 beforeEach(() => {
   // Clean up and reset between tests
@@ -43,9 +43,12 @@ describe('loadConfig', () => {
 
   it('reads existing config file', () => {
     mkdirSync(testDir, { recursive: true });
-    writeFileSync(testConfigFile, JSON.stringify({
-      ai: { provider: 'openai', api_key: 'sk-test', model: 'gpt-4' },
-    }));
+    writeFileSync(
+      testConfigFile,
+      JSON.stringify({
+        ai: { provider: 'openai', api_key: 'sk-test', model: 'gpt-4' },
+      }),
+    );
 
     // Need a fresh import to bypass cache - just verify the file was created
     expect(existsSync(testConfigFile)).toBe(true);

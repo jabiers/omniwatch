@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 import {
   Search,
   Download,
@@ -12,8 +12,8 @@ import {
   Server,
   Share2,
   Database,
-} from "lucide-react";
-import { apiFetch } from "../../lib/api";
+} from 'lucide-react';
+import { apiFetch } from '../../lib/api';
 
 interface Recipe {
   id: string;
@@ -34,26 +34,26 @@ const categoryIcons: Record<string, typeof Globe> = {
 };
 
 const categoryColors: Record<string, string> = {
-  monitoring: "text-blue-400 bg-blue-500/10",
-  finance: "text-amber-400 bg-amber-500/10",
-  devops: "text-purple-400 bg-purple-500/10",
-  social: "text-pink-400 bg-pink-500/10",
-  data: "text-cyan-400 bg-cyan-500/10",
-  security: "text-red-400 bg-red-500/10",
+  monitoring: 'text-blue-400 bg-blue-500/10',
+  finance: 'text-amber-400 bg-amber-500/10',
+  devops: 'text-purple-400 bg-purple-500/10',
+  social: 'text-pink-400 bg-pink-500/10',
+  data: 'text-cyan-400 bg-cyan-500/10',
+  security: 'text-red-400 bg-red-500/10',
 };
 
 export default function RecipesPage() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("");
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('');
   const [installing, setInstalling] = useState<string | null>(null);
   const [installed, setInstalled] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const params = new URLSearchParams();
-    if (search) params.set("q", search);
-    if (category) params.set("category", category);
+    if (search) params.set('q', search);
+    if (category) params.set('category', category);
 
     apiFetch(`/api/recipes?${params}`)
       .then((r) => r.json())
@@ -65,11 +65,11 @@ export default function RecipesPage() {
   async function install(id: string) {
     setInstalling(id);
     try {
-      const res = await apiFetch(`/api/recipes/${id}/install`, { method: "POST" });
+      const res = await apiFetch(`/api/recipes/${id}/install`, { method: 'POST' });
       if (res.ok) {
         setInstalled((prev) => new Set([...prev, id]));
       }
-    } catch (_) {
+    } catch {
       // API error
     } finally {
       setInstalling(null);
@@ -77,13 +77,13 @@ export default function RecipesPage() {
   }
 
   const categories = [
-    { key: "", label: "All" },
-    { key: "monitoring", label: "Monitoring" },
-    { key: "finance", label: "Finance" },
-    { key: "devops", label: "DevOps" },
-    { key: "social", label: "Social" },
-    { key: "data", label: "Data" },
-    { key: "security", label: "Security" },
+    { key: '', label: 'All' },
+    { key: 'monitoring', label: 'Monitoring' },
+    { key: 'finance', label: 'Finance' },
+    { key: 'devops', label: 'DevOps' },
+    { key: 'social', label: 'Social' },
+    { key: 'data', label: 'Data' },
+    { key: 'security', label: 'Security' },
   ];
 
   return (
@@ -114,8 +114,8 @@ export default function RecipesPage() {
               onClick={() => setCategory(c.key)}
               className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                 category === c.key
-                  ? "bg-emerald-500/20 text-emerald-400"
-                  : "text-gray-500 hover:bg-white/[0.05]"
+                  ? 'bg-emerald-500/20 text-emerald-400'
+                  : 'text-gray-500 hover:bg-white/[0.05]'
               }`}
             >
               {c.label}
@@ -131,24 +131,21 @@ export default function RecipesPage() {
           Loading recipes...
         </div>
       ) : recipes.length === 0 ? (
-        <div className="text-center text-gray-500 py-16">
-          No recipes found.
-        </div>
+        <div className="text-center text-gray-500 py-16">No recipes found.</div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {recipes.map((recipe) => {
             const Icon = categoryIcons[recipe.category] || Globe;
-            const colorClass = categoryColors[recipe.category] || "text-gray-400 bg-white/[0.05]";
+            const colorClass = categoryColors[recipe.category] || 'text-gray-400 bg-white/[0.05]';
             const isInstalled = installed.has(recipe.id);
             const isInstalling = installing === recipe.id;
 
             return (
-              <div
-                key={recipe.id}
-                className="glass-card flex flex-col"
-              >
+              <div key={recipe.id} className="glass-card flex flex-col">
                 <div className="flex items-start gap-3 mb-3">
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${colorClass}`}>
+                  <div
+                    className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${colorClass}`}
+                  >
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
@@ -176,8 +173,8 @@ export default function RecipesPage() {
                     disabled={isInstalling || isInstalled}
                     className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg text-sm transition-colors ${
                       isInstalled
-                        ? "bg-emerald-500/10 text-emerald-400 cursor-default"
-                        : "bg-white/[0.05] hover:bg-emerald-500/20 hover:text-emerald-400 disabled:opacity-40"
+                        ? 'bg-emerald-500/10 text-emerald-400 cursor-default'
+                        : 'bg-white/[0.05] hover:bg-emerald-500/20 hover:text-emerald-400 disabled:opacity-40'
                     }`}
                   >
                     {isInstalling ? (

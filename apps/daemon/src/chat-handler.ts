@@ -36,7 +36,7 @@ export async function handleChat(
 
   // Load current agent code
   const codePath = join(AGENTS_DIR, agentId, 'index.js');
-  let currentCode = '';
+  let currentCode: string;
   try {
     currentCode = readFileSync(codePath, 'utf-8');
   } catch {
@@ -45,9 +45,9 @@ export async function handleChat(
 
   // Load recent logs for context
   const db = getDb();
-  const recentLogs = db.prepare(
-    'SELECT * FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT 10'
-  ).all(agentId) as AgentLog[];
+  const recentLogs = db
+    .prepare('SELECT * FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT 10')
+    .all(agentId) as AgentLog[];
 
   const ai = getAIProvider();
 
@@ -75,7 +75,10 @@ Respond with JSON only:
 { "message": "explanation", "modifiedCode": "full code if changed or null", "action": "apply|info" }`;
 
   const messages = [
-    ...conversationHistory.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+    ...conversationHistory.map((m) => ({
+      role: m.role as 'user' | 'assistant',
+      content: m.content,
+    })),
     { role: 'user' as const, content: userMessage },
   ];
 
