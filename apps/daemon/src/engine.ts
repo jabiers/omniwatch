@@ -1,6 +1,13 @@
 /** OmniWatch Daemon Engine — exports core handlers and initialization for API integration */
 import { mkdirSync } from 'node:fs';
-import { OMNI_HOME, AGENTS_DIR, LOGS_DIR, initLogger, log } from '@omniwatch/shared';
+import {
+  OMNI_HOME,
+  AGENTS_DIR,
+  LOGS_DIR,
+  initLogger,
+  log,
+  getErrorMessage,
+} from '@omniwatch/shared';
 import { getDb, loadConfig } from '@omniwatch/db';
 import { METRIC_ROLLUP_INTERVAL, ALERT_CHECK_INTERVAL } from '@omniwatch/shared';
 
@@ -31,6 +38,7 @@ export { handleSystemRPC } from './handlers/system.js';
 
 let rollupTimer: ReturnType<typeof setInterval> | null = null;
 let alertTimer: ReturnType<typeof setInterval> | null = null;
+let sessionCleanupTimer: ReturnType<typeof setInterval> | null = null;
 
 /** Initialize daemon engine in the current process */
 export async function initEngine(): Promise<void> {
@@ -66,10 +74,23 @@ export async function initEngine(): Promise<void> {
 
   // Start alert check cron (every 5 min)
   alertTimer = setInterval(() => {
-    checkAlertRules().catch((err) =>
-      log('warn', `Alert check failed: ${err instanceof Error ? err.message : String(err)}`),
-    );
+    checkAlertRules().catch((err) => log('warn', `Alert check failed: ${getErrorMessage(err)}`));
   }, ALERT_CHECK_INTERVAL);
+
+  // Cleanup expired OAuth sessions every hour
+  sessionCleanupTimer = setInterval(() => {
+    try {
+      const db = getDb();
+      const result = db
+        .prepare("DELETE FROM oauth_sessions WHERE expires_at <= datetime('now')")
+        .run();
+      if (result.changes > 0) {
+        log('info', `Cleaned up ${result.changes} expired OAuth sessions`);
+      }
+    } catch (err) {
+      log('warn', `Session cleanup failed: ${getErrorMessage(err)}`);
+    }
+  }, 3_600_000);
 
   log('info', 'Engine initialized');
 }
@@ -80,4 +101,5 @@ export function shutdownEngine(): void {
   stopHealthMonitor();
   if (rollupTimer) clearInterval(rollupTimer);
   if (alertTimer) clearInterval(alertTimer);
+  if (sessionCleanupTimer) clearInterval(sessionCleanupTimer);
 }

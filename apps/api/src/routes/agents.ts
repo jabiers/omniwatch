@@ -161,6 +161,48 @@ agentRoutes.post('/agents/:id/restart', requireRole('admin', 'operator'), async 
   }
 });
 
+/** Schema: POST /agents/bulk request body */
+const bulkActionSchema = z.object({
+  action: z.enum(['start', 'stop', 'restart', 'destroy']),
+  ids: z.array(z.string().min(1)).min(1).max(50),
+});
+
+/** POST /agents/bulk - perform bulk action on multiple agents (operator+) */
+agentRoutes.post(
+  '/agents/bulk',
+  requireRole('admin', 'operator'),
+  zValidator('json', bulkActionSchema),
+  async (c) => {
+    const { action, ids } = c.req.valid('json');
+    const results: { id: string; success: boolean; error?: string }[] = [];
+
+    for (const id of ids) {
+      try {
+        const handler =
+          action === 'start'
+            ? handleAgentRPC.start
+            : action === 'stop'
+              ? handleAgentRPC.stop
+              : action === 'restart'
+                ? handleAgentRPC.restart
+                : handleAgentRPC.destroy;
+        await handler({ id });
+        results.push({ id, success: true });
+        if (action === 'destroy') {
+          broadcast('agent:destroyed', { id });
+        } else {
+          const status = action === 'stop' ? 'stopped' : 'running';
+          broadcast('agent:status', { id, status });
+        }
+      } catch (err) {
+        results.push({ id, success: false, error: getErrorMessage(err) });
+      }
+    }
+
+    return c.json({ results });
+  },
+);
+
 /** GET /agents/:id/logs - get agent logs with optional filters */
 agentRoutes.get('/agents/:id/logs', zValidator('query', agentLogsQuerySchema), (c) => {
   const db = getDb();

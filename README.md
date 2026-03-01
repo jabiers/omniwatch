@@ -168,6 +168,7 @@ curl -H "Authorization: Bearer <token>" http://localhost:3456/api/agents
 | POST | `/api/agents/:id/start` | operator+ | Start agent |
 | POST | `/api/agents/:id/stop` | operator+ | Stop agent |
 | POST | `/api/agents/:id/restart` | operator+ | Restart agent |
+| POST | `/api/agents/bulk` | operator+ | Bulk start/stop/restart/destroy |
 | GET | `/api/agents/:id/logs` | viewer+ | Agent logs |
 | GET | `/api/agents/:id/metrics` | viewer+ | Agent metrics |
 | GET | `/api/agents/:id/snapshots` | viewer+ | Time travel snapshots |

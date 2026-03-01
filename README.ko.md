@@ -168,6 +168,7 @@ curl -H "Authorization: Bearer <token>" http://localhost:3456/api/agents
 | POST | `/api/agents/:id/start` | operator+ | 에이전트 시작 |
 | POST | `/api/agents/:id/stop` | operator+ | 에이전트 중지 |
 | POST | `/api/agents/:id/restart` | operator+ | 에이전트 재시작 |
+| POST | `/api/agents/bulk` | operator+ | 일괄 시작/중지/재시작/삭제 |
 | GET | `/api/agents/:id/logs` | viewer+ | 에이전트 로그 |
 | GET | `/api/agents/:id/metrics` | viewer+ | 에이전트 메트릭 |
 | GET | `/api/agents/:id/snapshots` | viewer+ | Time Travel 스냅샷 |
