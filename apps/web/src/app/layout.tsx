@@ -90,7 +90,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
         if (res.ok) {
           const data = await res.json();
           const list = Array.isArray(data) ? data : (data.notifications ?? []);
-          setNotifCount(list.filter((n: any) => !n.read).length);
+          setNotifCount(list.length);
         }
       } catch {
         /* ignore fetch errors */

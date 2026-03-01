@@ -409,12 +409,26 @@ export default function AnalyticsPage() {
   /*  Custom recharts tooltip                                          */
   /* ---------------------------------------------------------------- */
 
-  function CustomTooltip({ active, payload, label }: any) {
+  interface TooltipPayloadEntry {
+    dataKey: string;
+    value: number;
+    color: string;
+  }
+
+  function CustomTooltip({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean;
+    payload?: TooltipPayloadEntry[];
+    label?: string;
+  }) {
     if (!active || !payload?.length) return null;
     return (
       <div className="rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 shadow-lg">
         <p className="text-xs text-gray-400 mb-1">{label}</p>
-        {payload.map((entry: any) => (
+        {payload.map((entry) => (
           <p key={entry.dataKey} className="text-xs font-mono" style={{ color: entry.color }}>
             {entry.dataKey}: {entry.value}
           </p>

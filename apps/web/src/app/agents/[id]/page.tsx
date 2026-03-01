@@ -112,7 +112,17 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   } | null>(null);
 
   // Metrics history for chart
-  const [metricsHistory, setMetricsHistory] = useState<any[]>([]);
+  interface MetricHistoryEntry {
+    period_start?: string;
+    created_at?: string;
+    timestamp?: string;
+    avg_value?: number;
+    sum_value?: number;
+    value?: number;
+    count?: number;
+    sample_count?: number;
+  }
+  const [metricsHistory, setMetricsHistory] = useState<MetricHistoryEntry[]>([]);
 
   // v0.5: Snapshots & spawn chain state
   const [snapshots, setSnapshots] = useState<SnapshotMeta[]>([]);
@@ -171,7 +181,9 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     try {
       const res = await apiFetch(`/api/analytics/metrics?agentId=${id}&period=hourly&limit=20`);
       if (res.ok) {
-        const data = (await res.json()) as { metrics?: any[] } | any[];
+        const data = (await res.json()) as
+          | { metrics?: MetricHistoryEntry[] }
+          | MetricHistoryEntry[];
         const raw = Array.isArray(data) ? data : (data.metrics ?? []);
         setMetricsHistory(raw);
       }
@@ -376,8 +388,10 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
 
   const metricsChartData = useMemo(() => {
     if (!metricsHistory || !Array.isArray(metricsHistory) || metricsHistory.length === 0) return [];
-    return metricsHistory.slice(-20).map((m: any) => ({
-      time: new Date(m.period_start || m.created_at || m.timestamp).toLocaleTimeString(),
+    return metricsHistory.slice(-20).map((m) => ({
+      time: new Date(
+        m.period_start ?? m.created_at ?? m.timestamp ?? Date.now(),
+      ).toLocaleTimeString(),
       value: m.avg_value ?? m.sum_value ?? m.value ?? 0,
       count: m.count ?? m.sample_count ?? 0,
     }));
