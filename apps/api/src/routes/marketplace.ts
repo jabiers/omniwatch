@@ -43,6 +43,11 @@ interface MarketplaceRecipe {
   updated_at: string;
 }
 
+/** Escape special LIKE pattern characters to prevent SQL LIKE injection */
+function escapeLike(s: string): string {
+  return s.replace(/[%_\\]/g, '\\$&');
+}
+
 export const marketplaceRoutes = new Hono();
 
 /** GET /marketplace — List recipes with optional filtering and sorting */
@@ -59,9 +64,9 @@ marketplaceRoutes.get('/marketplace', zValidator('query', listQuerySchema), (c) 
   }
 
   if (search) {
-    query += ' AND (name LIKE ? OR description LIKE ? OR tags LIKE ?)';
-    const pattern = `%${search}%`;
-    params.push(pattern, pattern, pattern);
+    query += " AND (name LIKE '%' || ? || '%' ESCAPE '\\' OR description LIKE '%' || ? || '%' ESCAPE '\\' OR tags LIKE '%' || ? || '%' ESCAPE '\\')";
+    const sanitized = escapeLike(search);
+    params.push(sanitized, sanitized, sanitized);
   }
 
   // Sort order

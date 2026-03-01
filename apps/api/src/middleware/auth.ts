@@ -3,6 +3,7 @@ import { createMiddleware } from 'hono/factory';
 import { getDb } from '@omniwatch/db';
 import { hashApiKey } from '@omniwatch/shared';
 import type { AuthContext, UserRole } from '@omniwatch/shared';
+import { hashToken } from '../routes/oauth.js';
 
 // Extend Hono context with auth info
 declare module 'hono' {
@@ -12,7 +13,7 @@ declare module 'hono' {
 }
 
 /** Paths that don't require authentication */
-const PUBLIC_PATHS = ['/health', '/api/system/status', '/auth'];
+const PUBLIC_PATHS = ['/health', '/api/system/status', '/auth', '/api/docs'];
 
 /** Auth middleware — extracts API key from X-API-Key header */
 export const authMiddleware = createMiddleware(async (c, next) => {
@@ -31,13 +32,14 @@ export const authMiddleware = createMiddleware(async (c, next) => {
   // Try Bearer token from Authorization header (OAuth session)
   if (!apiKey && authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice(7);
+    const tokenHash = hashToken(token);
     const db = getDb();
     const session = db.prepare(`
       SELECT u.id, u.tenant_id, u.role
       FROM oauth_sessions s
       JOIN users u ON u.id = s.user_id
       WHERE s.token = ? AND s.expires_at > datetime('now')
-    `).get(token) as { id: string; tenant_id: string; role: UserRole } | null;
+    `).get(tokenHash) as { id: string; tenant_id: string; role: UserRole } | null;
 
     if (session) {
       c.set('auth', { userId: session.id, tenantId: session.tenant_id, role: session.role });

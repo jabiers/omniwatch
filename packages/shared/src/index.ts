@@ -99,3 +99,6 @@ export { BUILT_IN_RECIPES, listRecipes, getRecipe, searchRecipes } from './recip
 
 // Auth utilities
 export { generateApiKey, hashApiKey, isValidApiKeyFormat } from './auth.js';
+
+// Environment configuration
+export { getEnvConfig, validateEnv } from './env.js';

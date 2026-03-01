@@ -1,7 +1,9 @@
 /** OAuth routes — session-based auth with API key login + GitHub/Google OAuth */
 import { Hono } from 'hono';
+import { getCookie, setCookie, deleteCookie } from 'hono/cookie';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
+import { createHash } from 'node:crypto';
 import { getDb } from '@omniwatch/db';
 import { hashApiKey } from '@omniwatch/shared';
 import type { UserRole } from '@omniwatch/shared';
@@ -15,14 +17,20 @@ function expiresAt(ms: number): string {
   return new Date(Date.now() + ms).toISOString();
 }
 
-/** Create a session for a user, returns the raw token */
+/** Hash a session token with SHA-256 for storage (never store raw tokens) */
+export function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+/** Create a session for a user, returns the raw token (stored as hash) */
 function createSession(userId: string): string {
   const db = getDb();
   const id = nanoid(12);
   const token = nanoid(48);
+  const tokenHash = hashToken(token);
   db.prepare(
     'INSERT INTO oauth_sessions (id, user_id, token, expires_at) VALUES (?, ?, ?, ?)'
-  ).run(id, userId, token, expiresAt(SESSION_TTL_MS));
+  ).run(id, userId, tokenHash, expiresAt(SESSION_TTL_MS));
   return token;
 }
 
@@ -87,7 +95,7 @@ oauthRoutes.post('/auth/logout', async (c) => {
 
   const token = authHeader.slice(7);
   const db = getDb();
-  db.prepare('DELETE FROM oauth_sessions WHERE token = ?').run(token);
+  db.prepare('DELETE FROM oauth_sessions WHERE token = ?').run(hashToken(token));
   return c.json({ ok: true });
 });
 
@@ -107,7 +115,7 @@ oauthRoutes.get('/auth/me', async (c) => {
     FROM oauth_sessions s
     JOIN users u ON u.id = s.user_id
     WHERE s.token = ? AND s.expires_at > datetime('now')
-  `).get(token) as {
+  `).get(hashToken(token)) as {
     id: string; tenant_id: string; email: string; role: UserRole;
     display_name: string | null; avatar_url: string | null; provider: string;
     expires_at: string;
@@ -138,7 +146,15 @@ oauthRoutes.get('/auth/github', (c) => {
 
   const redirectUri = process.env.GITHUB_REDIRECT_URI ?? `${new URL(c.req.url).origin}/auth/github/callback`;
   const scope = 'read:user user:email';
-  const state = nanoid(16);
+  const state = nanoid(32);
+
+  // Set CSRF state cookie for validation in callback
+  setCookie(c, 'oauth_state', state, {
+    httpOnly: true,
+    sameSite: 'Lax',
+    path: '/',
+    maxAge: 600,
+  });
 
   const url = new URL('https://github.com/login/oauth/authorize');
   url.searchParams.set('client_id', clientId);
@@ -154,6 +170,14 @@ oauthRoutes.get('/auth/github/callback', async (c) => {
   const clientSecret = process.env.GITHUB_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     return c.json({ error: 'GitHub OAuth is not configured' }, 501);
+  }
+
+  // CSRF state validation
+  const cookieState = getCookie(c, 'oauth_state');
+  const queryState = c.req.query('state');
+  deleteCookie(c, 'oauth_state', { path: '/' });
+  if (!cookieState || !queryState || cookieState !== queryState) {
+    return c.json({ error: 'CSRF validation failed' }, 403);
   }
 
   const code = c.req.query('code');
@@ -224,7 +248,15 @@ oauthRoutes.get('/auth/google', (c) => {
 
   const redirectUri = process.env.GOOGLE_REDIRECT_URI ?? `${new URL(c.req.url).origin}/auth/google/callback`;
   const scope = 'openid email profile';
-  const state = nanoid(16);
+  const state = nanoid(32);
+
+  // Set CSRF state cookie for validation in callback
+  setCookie(c, 'oauth_state', state, {
+    httpOnly: true,
+    sameSite: 'Lax',
+    path: '/',
+    maxAge: 600,
+  });
 
   const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
   url.searchParams.set('client_id', clientId);
@@ -242,6 +274,14 @@ oauthRoutes.get('/auth/google/callback', async (c) => {
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     return c.json({ error: 'Google OAuth is not configured' }, 501);
+  }
+
+  // CSRF state validation
+  const cookieState = getCookie(c, 'oauth_state');
+  const queryState = c.req.query('state');
+  deleteCookie(c, 'oauth_state', { path: '/' });
+  if (!cookieState || !queryState || cookieState !== queryState) {
+    return c.json({ error: 'CSRF validation failed' }, 403);
   }
 
   const code = c.req.query('code');
