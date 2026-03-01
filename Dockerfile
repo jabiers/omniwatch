@@ -9,7 +9,7 @@ COPY . .
 RUN pnpm install --frozen-lockfile
 RUN npx turbo build
 
-FROM base AS production
+FROM base AS web
 RUN apk add --no-cache libstdc++
 WORKDIR /app
 # Copy Next.js standalone output (includes server + all dependencies)
