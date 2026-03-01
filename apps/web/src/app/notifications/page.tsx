@@ -76,7 +76,7 @@ export default function NotificationsPage() {
 
   // WebSocket for real-time notification updates
   const wsUrl = useMemo(() => {
-    if (typeof window === 'undefined') return 'ws://localhost:3456/ws';
+    if (typeof window === 'undefined') return 'ws://localhost:3457/ws';
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsHost = process.env.NEXT_PUBLIC_WS_HOST || window.location.host;
     return `${protocol}//${wsHost}/ws`;

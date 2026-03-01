@@ -31,21 +31,30 @@ docker compose up -d
 git clone https://github.com/jabiers/omniwatch.git
 cd omniwatch
 pnpm install
-npx turbo build
-npx turbo dev
+pnpm build
 
-# Set your AI key
-omni config set ai.api_key sk-ant-xxxxx
+# Start everything (API + Dashboard + Daemon watch mode)
+pnpm dev
+# Dashboard at http://localhost:3457 (API is proxied automatically)
 
-# Start the daemon (creates admin API key on first boot)
-omni daemon start
+# In another terminal — start the daemon
+node apps/daemon/dist/index.js
 
-# Or create an API key manually
-omni auth create-key --role admin
+# Create an API key to log in to the dashboard
+node apps/cli/dist/index.js auth create-key --role admin
+# Save the printed key — it won't be shown again
+
+# Set your AI provider key
+node apps/cli/dist/index.js config set ai.api_key sk-ant-xxxxx
 
 # Create your first agent
-omni watch "Check Hacker News every hour for AI-related posts"
+node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related posts"
 ```
+
+> **Tip:** To use the `omni` shorthand, link the CLI globally:
+> ```bash
+> cd apps/cli && pnpm link --global
+> ```
 
 ## Features
 

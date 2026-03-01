@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Activity, KeyRound, Loader2, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../../lib/auth-store';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3456';
+// API requests are proxied via Next.js rewrites (see next.config.ts)
+const API_BASE = '';
 
 export default function LoginPage() {
   const router = useRouter();

@@ -9,6 +9,8 @@ const analyzer = withBundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 });
 
+const API_URL = process.env.API_URL || 'http://localhost:3456';
+
 const nextConfig: NextConfig = {
   // Standalone output for Docker deployment
   output: 'standalone',
@@ -19,6 +21,14 @@ const nextConfig: NextConfig = {
   // Environment variables exposed to the browser
   env: {
     NEXT_PUBLIC_APP_VERSION: rootPkg.version,
+  },
+  // Proxy API requests to the API server so dashboard works on a single port
+  async rewrites() {
+    return [
+      { source: '/api/:path*', destination: `${API_URL}/api/:path*` },
+      { source: '/health', destination: `${API_URL}/health` },
+      { source: '/ws', destination: `${API_URL}/ws` },
+    ];
   },
 };
 
