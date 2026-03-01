@@ -14,8 +14,19 @@ vi.mock('@omniwatch/db', () => ({
     }),
   }),
   loadConfig: () => ({
-    ai: { ollama_url: 'http://localhost:11434' },
+    ai: { model: 'claude-sonnet-4-6', api_key: '', ollama_url: 'http://localhost:11434' },
+    notification: {
+      slack_webhook: '',
+      discord_webhook: '',
+      webhook_url: '',
+      telegram_token: '',
+      telegram_chat_id: '',
+      system: true,
+      channels: {},
+    },
+    agent: { max_count: 20, memory_limit_mb: 128, max_heal_attempts: 3 },
   }),
+  saveConfig: vi.fn(),
 }));
 
 vi.mock('@omniwatch/shared', async (importOriginal) => {
@@ -474,5 +485,108 @@ describe('POST /api/agents validation', () => {
     });
     // Should not fail validation — either 201 (success) or 502 (engine error)
     expect([201, 502]).toContain(res.status);
+  });
+});
+
+// ─── Chat Routes Validation (v2.4) ─────────────────────────────────
+
+describe('POST /api/agents/:id/chat', () => {
+  it('should reject when message is missing', async () => {
+    const res = await app.request('/api/agents/agent-1/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('should reject empty message', async () => {
+    const res = await app.request('/api/agents/agent-1/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: '' }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('should accept valid chat message', async () => {
+    const res = await app.request('/api/agents/agent-1/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Increase check interval to 5 minutes' }),
+    });
+    // 502 = engine mock rejects, but validation passed
+    expect(res.status).toBe(502);
+  });
+});
+
+describe('POST /api/agents/preview', () => {
+  it('should reject when prompt is missing', async () => {
+    const res = await app.request('/api/agents/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('should accept valid preview request', async () => {
+    const res = await app.request('/api/agents/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: 'Monitor CPU usage' }),
+    });
+    expect(res.status).toBe(502);
+  });
+});
+
+describe('POST /api/agents/:id/apply', () => {
+  it('should reject when code is missing', async () => {
+    const res = await app.request('/api/agents/agent-1/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('should accept valid code', async () => {
+    const res = await app.request('/api/agents/agent-1/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: 'export default (sdk) => { sdk.log.info("hello"); };' }),
+    });
+    expect(res.status).toBe(502);
+  });
+});
+
+// ─── Config Route Validation (v2.4) ────────────────────────────────
+
+describe('PUT /api/config', () => {
+  it('should reject when config key is missing', async () => {
+    const res = await app.request('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('should accept valid config update', async () => {
+    const res = await app.request('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config: { ai: { model: 'claude-sonnet-4-6' } } }),
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it('should accept agent settings update', async () => {
+    const res = await app.request('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config: { agent: { max_count: 50 } } }),
+    });
+    expect(res.status).toBe(200);
   });
 });

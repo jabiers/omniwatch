@@ -66,7 +66,9 @@ export async function initEngine(): Promise<void> {
 
   // Start alert check cron (every 5 min)
   alertTimer = setInterval(() => {
-    checkAlertRules().catch(() => {});
+    checkAlertRules().catch((err) =>
+      log('warn', `Alert check failed: ${err instanceof Error ? err.message : String(err)}`),
+    );
   }, ALERT_CHECK_INTERVAL);
 
   log('info', 'Engine initialized');

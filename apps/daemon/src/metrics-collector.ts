@@ -10,8 +10,8 @@ export function recordMetric(agentId: string, metricName: string, value: number)
       'INSERT INTO metric_rollups (agent_id, metric_name, period, min_value, max_value, avg_value, count, period_start) ' +
         "VALUES (?, ?, 'raw', ?, ?, ?, 1, datetime('now'))",
     ).run(agentId, metricName, value, value, value);
-  } catch {
-    // Silently ignore metric recording failures
+  } catch (err) {
+    log('debug', `Metric recording failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
@@ -110,7 +110,8 @@ export function performDailyRollup(): number {
       .run();
 
     return result.changes;
-  } catch {
+  } catch (err) {
+    log('warn', `Daily rollup failed: ${err instanceof Error ? err.message : String(err)}`);
     return 0;
   }
 }

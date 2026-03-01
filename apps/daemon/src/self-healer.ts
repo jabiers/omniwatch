@@ -36,8 +36,11 @@ export async function attemptHeal(agentId: string): Promise<void> {
   // v0.5: Auto-capture snapshot before healing
   try {
     captureSnapshot(agentId, 'pre-heal');
-  } catch {
-    /* ignore */
+  } catch (err) {
+    log(
+      'debug',
+      `Pre-heal snapshot failed for ${agentId}: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 
   const agent = getAgent(agentId);
@@ -53,7 +56,12 @@ export async function attemptHeal(agentId: string): Promise<void> {
         title: 'Self-Healing Exhausted',
         severity: 'critical',
       },
-    ).catch(() => {});
+    ).catch((err) =>
+      log(
+        'warn',
+        `Notification failed for ${agentId}: ${err instanceof Error ? err.message : String(err)}`,
+      ),
+    );
     return;
   }
 
@@ -104,8 +112,11 @@ export async function attemptHeal(agentId: string): Promise<void> {
           if (!pkg.dependencies[dep]) pkg.dependencies[dep] = 'latest';
         }
         writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
-      } catch {
-        /* ignore */
+      } catch (err) {
+        log(
+          'debug',
+          `Failed to update package.json for ${agentId}: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
 
       await installDependencies(agentId);
@@ -160,8 +171,11 @@ export async function attemptHeal(agentId: string): Promise<void> {
           }
         }
         writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
-      } catch {
-        /* ignore */
+      } catch (err) {
+        log(
+          'debug',
+          `Failed to update package.json deps for ${agentId}: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
       await installDependencies(agentId);
     }
