@@ -108,7 +108,9 @@ marketplaceRoutes.get('/marketplace/:id', (c) => {
   const db = getDb();
 
   const row = db
-    .prepare('SELECT * FROM marketplace_recipes WHERE id = ? AND published = 1')
+    .prepare(
+      'SELECT id, name, description, prompt, category, author, version, downloads, rating, tags, config, published, created_at, updated_at FROM marketplace_recipes WHERE id = ? AND published = 1',
+    )
     .get(id) as MarketplaceRecipe | null;
 
   if (!row) {
@@ -154,7 +156,9 @@ marketplaceRoutes.post(
     );
 
     const recipe = db
-      .prepare('SELECT * FROM marketplace_recipes WHERE id = ?')
+      .prepare(
+        'SELECT id, name, description, prompt, category, author, version, downloads, rating, tags, config, published, created_at, updated_at FROM marketplace_recipes WHERE id = ?',
+      )
       .get(id) as MarketplaceRecipe;
 
     return c.json(
@@ -177,7 +181,9 @@ marketplaceRoutes.post('/marketplace/:id/install', requireRole('admin', 'operato
   const db = getDb();
 
   const row = db
-    .prepare('SELECT * FROM marketplace_recipes WHERE id = ? AND published = 1')
+    .prepare(
+      'SELECT id, name, description, prompt, category, author, version, downloads, rating, tags, config, published, created_at, updated_at FROM marketplace_recipes WHERE id = ? AND published = 1',
+    )
     .get(id) as MarketplaceRecipe | null;
 
   if (!row) {

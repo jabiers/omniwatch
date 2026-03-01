@@ -48,7 +48,11 @@ function createMcpServer(): McpServer {
     { agent_id: z.string().describe('The agent ID') },
     async ({ agent_id }) => {
       const db = getDb();
-      const agent = db.prepare('SELECT * FROM agents WHERE id = ?').get(agent_id);
+      const agent = db
+        .prepare(
+          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE id = ?',
+        )
+        .get(agent_id);
       if (!agent) {
         return {
           content: [{ type: 'text' as const, text: `Agent '${agent_id}' not found` }],
@@ -222,7 +226,11 @@ function createMcpServer(): McpServer {
     async (uri) => {
       const agentId = uri.pathname.split('/')[0] || '';
       const db = getDb();
-      const agent = db.prepare('SELECT * FROM agents WHERE id = ?').get(agentId);
+      const agent = db
+        .prepare(
+          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE id = ?',
+        )
+        .get(agentId);
       if (!agent) {
         return {
           contents: [

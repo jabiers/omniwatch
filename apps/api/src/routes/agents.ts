@@ -78,7 +78,11 @@ agentRoutes.get('/agents/:id', (c) => {
   const auth = c.get('auth');
   const { id } = c.req.param();
 
-  const agent = db.prepare('SELECT * FROM agents WHERE id = ?').get(id) as Agent | undefined;
+  const agent = db
+    .prepare(
+      'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE id = ?',
+    )
+    .get(id) as Agent | undefined;
   if (!agent) {
     return c.json({ error: `Agent '${id}' not found` }, 404);
   }
@@ -242,12 +246,14 @@ agentRoutes.get('/agents/:id/logs', zValidator('query', agentLogsQuerySchema), (
   if (level) {
     logs = db
       .prepare(
-        'SELECT * FROM agent_logs WHERE agent_id = ? AND level = ? ORDER BY created_at DESC LIMIT ?',
+        'SELECT id, agent_id, level, message, created_at FROM agent_logs WHERE agent_id = ? AND level = ? ORDER BY created_at DESC LIMIT ?',
       )
       .all(id, level, limit) as AgentLog[];
   } else {
     logs = db
-      .prepare('SELECT * FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT ?')
+      .prepare(
+        'SELECT id, agent_id, level, message, created_at FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT ?',
+      )
       .all(id, limit) as AgentLog[];
   }
 
@@ -264,7 +270,11 @@ agentRoutes.get('/agents/:id/metrics', (c) => {
     return c.json({ error: `Agent '${id}' not found` }, 404);
   }
 
-  const metrics = db.prepare('SELECT * FROM agent_metrics WHERE agent_id = ?').get(id);
+  const metrics = db
+    .prepare(
+      'SELECT agent_id, run_count, success_count, error_count, avg_duration_ms, last_duration_ms FROM agent_metrics WHERE agent_id = ?',
+    )
+    .get(id);
   if (!metrics) {
     return c.json({
       metrics: {
