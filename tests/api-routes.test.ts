@@ -829,3 +829,180 @@ describe('Snapshot API routes', () => {
     expect(body).toHaveProperty('children');
   });
 });
+
+// ─── Recipes Routes ──────────────────────────────────────────────────
+
+describe('GET /api/recipes', () => {
+  it('should return 200 with recipes array', async () => {
+    const res = await app.request('/api/recipes');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { recipes: unknown[] };
+    expect(body).toHaveProperty('recipes');
+  });
+
+  it('should accept search query parameter', async () => {
+    const res = await app.request('/api/recipes?q=cpu');
+    expect(res.status).toBe(200);
+  });
+
+  it('should accept category filter', async () => {
+    const res = await app.request('/api/recipes?category=monitoring');
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('GET /api/recipes/:id', () => {
+  it('should return 404 for non-existent recipe', async () => {
+    const res = await app.request('/api/recipes/nonexistent');
+    expect(res.status).toBe(404);
+  });
+});
+
+// ─── Usage Routes ────────────────────────────────────────────────────
+
+describe('GET /api/usage', () => {
+  it('should return 200 with usage data', async () => {
+    mockGet.mockReturnValueOnce({
+      total_cost: 0,
+      total_input_tokens: 0,
+      total_output_tokens: 0,
+      total_requests: 0,
+    });
+    mockAll.mockReturnValueOnce([]); // byModel
+    mockAll.mockReturnValueOnce([]); // byAgent
+    mockAll.mockReturnValueOnce([]); // daily
+
+    const res = await app.request('/api/usage');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { total_cost: number; daily: unknown[] };
+    expect(body).toHaveProperty('total_cost');
+    expect(body).toHaveProperty('daily');
+  });
+
+  it('should accept days query parameter', async () => {
+    mockGet.mockReturnValueOnce({
+      total_cost: 0,
+      total_input_tokens: 0,
+      total_output_tokens: 0,
+      total_requests: 0,
+    });
+    mockAll.mockReturnValueOnce([]);
+    mockAll.mockReturnValueOnce([]);
+    mockAll.mockReturnValueOnce([]);
+
+    const res = await app.request('/api/usage?days=7');
+    expect(res.status).toBe(200);
+  });
+
+  it('should reject invalid days parameter', async () => {
+    const res = await app.request('/api/usage?days=0');
+    expect(res.status).toBe(400);
+  });
+
+  it('should reject days exceeding max', async () => {
+    const res = await app.request('/api/usage?days=999');
+    expect(res.status).toBe(400);
+  });
+});
+
+// ─── Tenants Routes ──────────────────────────────────────────────────
+
+describe('GET /api/tenants', () => {
+  it('should return 200 with tenants array', async () => {
+    const tenants = [{ id: 'default', name: 'Default', plan: 'free', max_agents: 10 }];
+    mockAll.mockReturnValueOnce(tenants);
+
+    const res = await app.request('/api/tenants');
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual(tenants);
+  });
+});
+
+describe('POST /api/tenants', () => {
+  it('should reject when name is missing', async () => {
+    const res = await app.request('/api/tenants', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('should create tenant with valid data', async () => {
+    const newTenant = { id: 'mock-nanoid-12', name: 'Acme', plan: 'pro', max_agents: 50 };
+    mockGet.mockReturnValueOnce(newTenant);
+
+    const res = await app.request('/api/tenants', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Acme', plan: 'pro', max_agents: 50 }),
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body).toHaveProperty('name', 'Acme');
+  });
+});
+
+// ─── Marketplace Detail ──────────────────────────────────────────────
+
+describe('GET /api/marketplace/:id', () => {
+  it('should return 404 for non-existent recipe', async () => {
+    mockGet.mockReturnValueOnce(null);
+
+    const res = await app.request('/api/marketplace/nonexistent');
+    expect(res.status).toBe(404);
+  });
+
+  it('should return recipe when found', async () => {
+    const recipe = {
+      id: 'r1',
+      name: 'CPU Monitor',
+      description: 'Watch CPU',
+      prompt: 'monitor cpu',
+      category: 'monitoring',
+      author: 'admin',
+      version: '1.0.0',
+      downloads: 5,
+      rating: 4.0,
+      tags: '["cpu"]',
+      config: '{}',
+      published: 1,
+      created_at: '2026-01-01',
+      updated_at: '2026-01-01',
+    };
+    mockGet.mockReturnValueOnce(recipe);
+
+    const res = await app.request('/api/marketplace/r1');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { recipe: { name: string; tags: string[] } };
+    expect(body.recipe.name).toBe('CPU Monitor');
+    expect(body.recipe.tags).toEqual(['cpu']);
+  });
+});
+
+// ─── Auth Login ──────────────────────────────────────────────────────
+
+describe('POST /auth/login', () => {
+  it('should reject when apiKey is missing', async () => {
+    const res = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('should return 401 for invalid API key', async () => {
+    mockGet.mockReturnValueOnce(null);
+
+    const res = await app.request('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey: 'omni_invalid' }),
+    });
+    expect(res.status).toBe(401);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toContain('Invalid');
+  });
+});
