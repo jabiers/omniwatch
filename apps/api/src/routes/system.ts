@@ -6,16 +6,47 @@ import { isDaemonRunning, getDaemonPid } from '../lib/rpc-bridge.js';
 
 export const systemRoutes = new Hono();
 
+/** GET /system/health/detailed - detailed health check with DB and memory info */
+systemRoutes.get('/system/health/detailed', (c) => {
+  let dbOk = false;
+  try {
+    const db = getDb();
+    db.prepare('SELECT 1').get();
+    dbOk = true;
+  } catch {
+    // DB not available
+  }
+  const mem = process.memoryUsage();
+  return c.json({
+    status: dbOk ? 'healthy' : 'degraded',
+    timestamp: new Date().toISOString(),
+    uptime: Math.round(process.uptime()),
+    version: '1.2.0',
+    checks: {
+      database: { status: dbOk ? 'up' : 'down' },
+      memory: {
+        rss_mb: Math.round(mem.rss / 1024 / 1024),
+        heap_used_mb: Math.round(mem.heapUsed / 1024 / 1024),
+        heap_total_mb: Math.round(mem.heapTotal / 1024 / 1024),
+      },
+    },
+  });
+});
+
 /** GET /system/status - system overview stats */
 systemRoutes.get('/system/status', (c) => {
   const db = getDb();
 
   const agentCount = (
-    db.prepare("SELECT COUNT(*) as count FROM agents WHERE status != 'destroyed'").get() as { count: number }
+    db.prepare("SELECT COUNT(*) as count FROM agents WHERE status != 'destroyed'").get() as {
+      count: number;
+    }
   ).count;
 
   const runningCount = (
-    db.prepare("SELECT COUNT(*) as count FROM agents WHERE status = 'running'").get() as { count: number }
+    db.prepare("SELECT COUNT(*) as count FROM agents WHERE status = 'running'").get() as {
+      count: number;
+    }
   ).count;
 
   const daemonPid = getDaemonPid();
@@ -62,7 +93,7 @@ systemRoutes.get('/system/ollama', async (c) => {
       return c.json({ available: false, error: `Ollama returned ${res.status}`, models: [] });
     }
 
-    const data = await res.json() as { models?: OllamaModel[] };
+    const data = (await res.json()) as { models?: OllamaModel[] };
     const models = (data.models || []).map((m: OllamaModel) => ({
       name: m.name,
       size: m.size,

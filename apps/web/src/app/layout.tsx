@@ -98,7 +98,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <nav aria-label="Main navigation" className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
             const Icon = item.icon;
@@ -149,13 +149,14 @@ function AppShell({ children }: { children: React.ReactNode }) {
           <button
             className="lg:hidden text-gray-400 hover:text-white"
             onClick={() => setSidebarOpen(true)}
+            aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            v0.7.0
+            {process.env.NEXT_PUBLIC_APP_VERSION || 'dev'}
           </div>
         </header>
 
