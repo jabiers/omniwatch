@@ -14,13 +14,14 @@ import { chatCommand } from './commands/chat.js';
 import { doCommand } from './commands/do.js';
 import { autoCommand } from './commands/auto.js';
 import { authCommand } from './commands/auth.js';
+import { APP_VERSION } from '@omniwatch/shared';
 
 const program = new Command();
 
 program
   .name('omni')
   .description('OmniWatch - AI-native autonomous agent management CLI')
-  .version('0.4.0');
+  .version(APP_VERSION);
 
 program.addCommand(watchCommand);
 program.addCommand(listCommand);

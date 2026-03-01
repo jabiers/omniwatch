@@ -112,7 +112,7 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
 |-------|------|
 | **CLI** (`omni`) | Lightweight terminal client. 15 commands + Ink TUI. |
 | **Daemon** (`omnid`) | Background service. Agent lifecycle, health, AI, sandbox, queue, metrics. |
-| **API** (`apps/api`) | Hono REST API (62+ endpoints) + WebSocket + MCP. |
+| **API** (`apps/api`) | Hono REST API (65+ endpoints) + WebSocket + MCP. |
 | **Web** (`apps/web`) | Next.js 15 Glass Console. 14 pages with auth, charts, admin. |
 | **Agent** | Sandboxed Node.js process with SDK (`omni.fetch`, `omni.notify`, `omni.store`). |
 
@@ -139,7 +139,7 @@ The Glass Console dashboard (port 3457) provides full control over the platform.
 
 ## API
 
-- **REST API**: 62+ endpoints with Zod validation and RBAC authorization
+- **REST API**: 65+ endpoints with Zod validation and RBAC authorization
 - **WebSocket**: Real-time agent status updates with heartbeat ping/pong
 - **MCP Server**: 7 tools and 3 resources for AI integration (Streamable HTTP)
 - **OpenAPI**: Swagger UI at `/api/docs` with full endpoint documentation
@@ -232,7 +232,7 @@ npx turbo build
 # Dev mode (watch)
 npx turbo dev
 
-# Run all tests (380+ tests, 41 files)
+# Run all tests (376+ tests, 40 files)
 npx vitest run
 
 # Type check
@@ -281,7 +281,7 @@ omniwatch/
 |   +-- shared/                 # Types, constants, errors, IPC, auth
 |   +-- db/                     # SQLite schema + versioned migrations
 |       +-- src/migrations/     # v001-v005
-+-- tests/                      # 41 files, 380+ tests
++-- tests/                      # 40 files, 376+ tests
 +-- bin/omni.mjs                # CLI entry point
 +-- Dockerfile                  # Production container
 +-- docker-compose.yml          # Docker Compose config

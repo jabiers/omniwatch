@@ -120,11 +120,11 @@ export interface Stat {
 
 export const STATS: Stat[] = [
   { value: 376, suffix: '+', label: 'Tests Passing' },
-  { value: 62, suffix: '+', label: 'API Endpoints' },
+  { value: 65, suffix: '+', label: 'API Endpoints' },
   { value: 18, suffix: '', label: 'Database Tables' },
   { value: 14, suffix: '', label: 'Dashboard Pages' },
   { value: 15, suffix: '', label: 'CLI Commands' },
-  { value: 16, suffix: '', label: 'Releases' },
+  { value: 15, suffix: '', label: 'Releases' },
 ];
 
 export interface TechCategory {

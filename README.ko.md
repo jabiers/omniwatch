@@ -112,7 +112,7 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
 |-------|------|
 | **CLI** (`omni`) | 경량 터미널 클라이언트. 15개 명령어 + Ink TUI. |
 | **Daemon** (`omnid`) | 백그라운드 서비스. 에이전트 라이프사이클, 헬스 체크, AI, 샌드박스, 큐, 메트릭. |
-| **API** (`apps/api`) | Hono REST API (62개 이상 엔드포인트) + WebSocket + MCP. |
+| **API** (`apps/api`) | Hono REST API (65개 이상 엔드포인트) + WebSocket + MCP. |
 | **Web** (`apps/web`) | Next.js 15 Glass Console. 인증, 차트, 관리자 기능을 갖춘 14개 페이지. |
 | **Agent** | SDK를 갖춘 샌드박스 Node.js 프로세스 (`omni.fetch`, `omni.notify`, `omni.store`). |
 
@@ -139,7 +139,7 @@ Glass Console 대시보드 (포트 3457)는 플랫폼에 대한 전체 제어를
 
 ## API
 
-- **REST API**: Zod 유효성 검증 및 RBAC 인가가 적용된 62개 이상의 엔드포인트
+- **REST API**: Zod 유효성 검증 및 RBAC 인가가 적용된 65개 이상의 엔드포인트
 - **WebSocket**: 하트비트 ping/pong이 포함된 실시간 에이전트 상태 업데이트
 - **MCP Server**: AI 통합을 위한 7개 도구 및 3개 리소스 (Streamable HTTP)
 - **OpenAPI**: `/api/docs`에서 전체 엔드포인트 문서를 포함한 Swagger UI
@@ -232,7 +232,7 @@ npx turbo build
 # 개발 모드 (watch)
 npx turbo dev
 
-# 전체 테스트 실행 (380개 이상 테스트, 41개 파일)
+# 전체 테스트 실행 (376개 이상 테스트, 40개 파일)
 npx vitest run
 
 # 타입 체크
@@ -281,7 +281,7 @@ omniwatch/
 |   +-- shared/                 # 타입, 상수, 에러, IPC, 인증
 |   +-- db/                     # SQLite 스키마 + 버전별 마이그레이션
 |       +-- src/migrations/     # v001-v005
-+-- tests/                      # 41개 파일, 380개 이상 테스트
++-- tests/                      # 40개 파일, 376개 이상 테스트
 +-- bin/omni.mjs                # CLI 진입점
 +-- Dockerfile                  # 프로덕션 컨테이너
 +-- docker-compose.yml          # Docker Compose 설정
