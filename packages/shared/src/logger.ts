@@ -11,7 +11,8 @@ const LEVEL_PRIORITY: Record<LogLevel, number> = {
   error: 3,
 };
 
-let minLevel: LogLevel = 'info';
+const envLevel = process.env.LOG_LEVEL as LogLevel | undefined;
+let minLevel: LogLevel = envLevel && LEVEL_PRIORITY[envLevel] !== undefined ? envLevel : 'info';
 let logFile: string | null = null;
 
 export function initLogger(options?: { level?: LogLevel; file?: string }): void {
