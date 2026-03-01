@@ -50,7 +50,7 @@ function createMcpServer(): McpServer {
       const db = getDb();
       const agent = db
         .prepare(
-          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE id = ?',
+          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run_at, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE id = ?',
         )
         .get(agent_id);
       if (!agent) {
@@ -228,7 +228,7 @@ function createMcpServer(): McpServer {
       const db = getDb();
       const agent = db
         .prepare(
-          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE id = ?',
+          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run_at, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE id = ?',
         )
         .get(agentId);
       if (!agent) {

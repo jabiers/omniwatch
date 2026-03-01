@@ -102,7 +102,7 @@ export function createAgentRecord(
 
 /** Explicit columns for agent queries */
 const AGENT_COLUMNS =
-  'id, name, type, status, prompt, description, code_hash, config, sandbox_level, schedule, last_run, error_count, heal_count, parent_id, spawn_depth, tenant_id, created_at, updated_at';
+  'id, name, type, status, prompt, description, code_hash, config, sandbox_level, schedule, last_run_at, error_count, heal_count, parent_id, spawn_depth, tenant_id, created_at, updated_at';
 
 export function getAgent(id: string): Agent | null {
   const db = getDb();

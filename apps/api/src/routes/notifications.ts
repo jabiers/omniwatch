@@ -38,7 +38,7 @@ notificationRoutes.get('/notifications', zValidator('query', listNotificationsSc
   }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-  const sql = `SELECT n.id, n.agent_id, n.type, n.title, n.message, n.severity, n.created_at FROM notifications n JOIN agents a ON n.agent_id = a.id ${where} ORDER BY n.created_at DESC LIMIT ?`;
+  const sql = `SELECT n.id, n.agent_id, n.channel, n.title, n.message, n.severity, n.created_at FROM notifications n JOIN agents a ON n.agent_id = a.id ${where} ORDER BY n.created_at DESC LIMIT ?`;
   params.push(limit);
 
   const notifications = db.prepare(sql).all(...params) as Notification[];

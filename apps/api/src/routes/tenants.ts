@@ -34,9 +34,7 @@ export const tenantRoutes = new Hono();
 tenantRoutes.get('/tenants', requireRole('admin'), (c) => {
   const db = getDb();
   const tenants = db
-    .prepare(
-      'SELECT id, name, plan, max_agents, created_at, updated_at FROM tenants ORDER BY created_at DESC',
-    )
+    .prepare('SELECT id, name, plan, max_agents, created_at FROM tenants ORDER BY created_at DESC')
     .all() as Tenant[];
   return c.json(tenants);
 });
@@ -60,9 +58,7 @@ tenantRoutes.post(
       );
 
       const tenant = db
-        .prepare(
-          'SELECT id, name, plan, max_agents, created_at, updated_at FROM tenants WHERE id = ?',
-        )
+        .prepare('SELECT id, name, plan, max_agents, created_at FROM tenants WHERE id = ?')
         .get(id) as Tenant;
       return c.json({ tenant }, 201);
     } catch (err) {
@@ -83,9 +79,7 @@ tenantRoutes.put(
       const db = getDb();
 
       const existing = db
-        .prepare(
-          'SELECT id, name, plan, max_agents, created_at, updated_at FROM tenants WHERE id = ?',
-        )
+        .prepare('SELECT id, name, plan, max_agents, created_at FROM tenants WHERE id = ?')
         .get(tenantId) as Tenant | undefined;
       if (!existing) return c.json({ error: 'Tenant not found' }, 404);
 
@@ -111,9 +105,7 @@ tenantRoutes.put(
       db.prepare(`UPDATE tenants SET ${updates.join(', ')} WHERE id = ?`).run(...values);
 
       const tenant = db
-        .prepare(
-          'SELECT id, name, plan, max_agents, created_at, updated_at FROM tenants WHERE id = ?',
-        )
+        .prepare('SELECT id, name, plan, max_agents, created_at FROM tenants WHERE id = ?')
         .get(tenantId) as Tenant;
       return c.json(tenant);
     } catch (err) {

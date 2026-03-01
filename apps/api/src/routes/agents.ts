@@ -42,13 +42,13 @@ agentRoutes.get('/agents', zValidator('query', listAgentsQuerySchema), (c) => {
     if (status) {
       agents = db
         .prepare(
-          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE status = ? ORDER BY created_at DESC',
+          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run_at, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE status = ? ORDER BY created_at DESC',
         )
         .all(status) as Agent[];
     } else {
       agents = db
         .prepare(
-          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE status != ? ORDER BY created_at DESC',
+          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run_at, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE status != ? ORDER BY created_at DESC',
         )
         .all('destroyed') as Agent[];
     }
@@ -57,13 +57,13 @@ agentRoutes.get('/agents', zValidator('query', listAgentsQuerySchema), (c) => {
     if (status) {
       agents = db
         .prepare(
-          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC',
+          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run_at, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC',
         )
         .all(tenantId, status) as Agent[];
     } else {
       agents = db
         .prepare(
-          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE tenant_id = ? AND status != ? ORDER BY created_at DESC',
+          'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run_at, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE tenant_id = ? AND status != ? ORDER BY created_at DESC',
         )
         .all(tenantId, 'destroyed') as Agent[];
     }
@@ -80,7 +80,7 @@ agentRoutes.get('/agents/:id', (c) => {
 
   const agent = db
     .prepare(
-      'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE id = ?',
+      'SELECT id, name, type, status, prompt, sandbox_level, schedule, last_run_at, error_count, heal_count, parent_id, tenant_id, created_at, updated_at FROM agents WHERE id = ?',
     )
     .get(id) as Agent | undefined;
   if (!agent) {

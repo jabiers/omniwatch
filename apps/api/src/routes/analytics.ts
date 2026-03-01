@@ -103,7 +103,15 @@ analyticsRoutes.post(
     try {
       const auth = c.get('auth');
       const body = c.req.valid('json');
-      const rule = handleAnalyticsRPC.createAlert({ ...body, tenantId: auth.tenantId });
+      const rule = handleAnalyticsRPC.createAlert({
+        metricName: body.metric_name,
+        operator: body.operator,
+        threshold: body.threshold,
+        windowMinutes: body.window_minutes,
+        notifyChannels: body.notify_channels,
+        enabled: body.enabled,
+        tenantId: auth.tenantId,
+      });
       return c.json({ rule }, 201);
     } catch (err) {
       return c.json({ error: getErrorMessage(err) }, 500);
