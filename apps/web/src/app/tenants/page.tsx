@@ -267,6 +267,7 @@ export default function TenantsPage() {
           <span>{error}</span>
           <button
             onClick={() => setError(null)}
+            aria-label="Dismiss error"
             className="ml-3 hover:text-red-300 transition-colors"
           >
             <X className="w-4 h-4" />
@@ -299,16 +300,27 @@ export default function TenantsPage() {
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full" aria-label="Tenant list">
               <thead>
                 <tr className="border-b border-white/[0.08]">
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Name</th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">ID</th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Plan</th>
-                  <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">
+                  <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                    Name
+                  </th>
+                  <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                    ID
+                  </th>
+                  <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                    Plan
+                  </th>
+                  <th
+                    scope="col"
+                    className="text-right text-xs font-medium text-gray-500 px-4 py-3"
+                  >
                     Max Agents
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Created</th>
+                  <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                    Created
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -396,14 +408,25 @@ export default function TenantsPage() {
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full" aria-label="User list">
               <thead>
                 <tr className="border-b border-white/[0.08]">
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Email</th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Role</th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">User ID</th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Created</th>
-                  <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">
+                  <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                    Email
+                  </th>
+                  <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                    Role
+                  </th>
+                  <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                    User ID
+                  </th>
+                  <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                    Created
+                  </th>
+                  <th
+                    scope="col"
+                    className="text-right text-xs font-medium text-gray-500 px-4 py-3"
+                  >
                     Actions
                   </th>
                 </tr>
@@ -451,6 +474,7 @@ export default function TenantsPage() {
                         ) : (
                           <button
                             onClick={() => setConfirmDeleteUser(user.id)}
+                            aria-label="Delete user"
                             className="p-1.5 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
                             title="Delete user"
                           >
@@ -484,6 +508,7 @@ export default function TenantsPage() {
               </h3>
               <button
                 onClick={() => setShowCreateTenant(false)}
+                aria-label="Close"
                 className="text-gray-500 hover:text-gray-300 transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -492,8 +517,11 @@ export default function TenantsPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">Tenant Name</label>
+                <label htmlFor="tenant-name" className="text-sm text-gray-400 mb-1 block">
+                  Tenant Name
+                </label>
                 <input
+                  id="tenant-name"
                   type="text"
                   value={tenantForm.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -506,8 +534,11 @@ export default function TenantsPage() {
               </div>
 
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">Plan</label>
+                <label htmlFor="tenant-plan" className="text-sm text-gray-400 mb-1 block">
+                  Plan
+                </label>
                 <select
+                  id="tenant-plan"
                   value={tenantForm.plan}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                     setTenantForm((f) => ({ ...f, plan: e.target.value }))
@@ -521,8 +552,11 @@ export default function TenantsPage() {
               </div>
 
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">Max Agents</label>
+                <label htmlFor="tenant-max-agents" className="text-sm text-gray-400 mb-1 block">
+                  Max Agents
+                </label>
                 <input
+                  id="tenant-max-agents"
                   type="number"
                   min={1}
                   max={1000}
@@ -576,6 +610,7 @@ export default function TenantsPage() {
               </h3>
               <button
                 onClick={() => setShowCreateUser(false)}
+                aria-label="Close"
                 className="text-gray-500 hover:text-gray-300 transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -584,8 +619,11 @@ export default function TenantsPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">Tenant</label>
+                <label htmlFor="user-tenant" className="text-sm text-gray-400 mb-1 block">
+                  Tenant
+                </label>
                 <select
+                  id="user-tenant"
                   value={userForm.tenant_id}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                     setUserForm((f) => ({ ...f, tenant_id: e.target.value }))
@@ -602,8 +640,11 @@ export default function TenantsPage() {
               </div>
 
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">Email</label>
+                <label htmlFor="user-email" className="text-sm text-gray-400 mb-1 block">
+                  Email
+                </label>
                 <input
+                  id="user-email"
                   type="email"
                   value={userForm.email}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -615,8 +656,11 @@ export default function TenantsPage() {
               </div>
 
               <div>
-                <label className="text-sm text-gray-400 mb-1 block">Role</label>
+                <label htmlFor="user-role" className="text-sm text-gray-400 mb-1 block">
+                  Role
+                </label>
                 <select
+                  id="user-role"
                   value={userForm.role}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                     setUserForm((f) => ({
@@ -685,6 +729,7 @@ export default function TenantsPage() {
               </code>
               <button
                 onClick={copyApiKey}
+                aria-label="Copy API key to clipboard"
                 className="shrink-0 p-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] transition-colors"
                 title="Copy to clipboard"
               >

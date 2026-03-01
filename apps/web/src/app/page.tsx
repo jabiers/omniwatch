@@ -243,6 +243,7 @@ export default function DashboardPage() {
                       <button
                         onClick={() => sendAction(agent.id, 'start')}
                         disabled={actionLoading === `${agent.id}-start`}
+                        aria-label={`Start agent ${agent.name}`}
                         className="p-1 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 disabled:opacity-30 transition-colors"
                         title="Start"
                       >
@@ -253,6 +254,7 @@ export default function DashboardPage() {
                       <button
                         onClick={() => sendAction(agent.id, 'stop')}
                         disabled={actionLoading === `${agent.id}-stop`}
+                        aria-label={`Stop agent ${agent.name}`}
                         className="p-1 rounded bg-white/[0.05] text-gray-400 hover:bg-white/[0.1] disabled:opacity-30 transition-colors"
                         title="Stop"
                       >

@@ -159,8 +159,11 @@ export default function NotificationsPage() {
         {/* Agent filter */}
         {agentNames.length > 0 && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">Agent:</span>
+            <label htmlFor="notif-agent-filter" className="text-xs text-gray-500">
+              Agent:
+            </label>
             <select
+              id="notif-agent-filter"
               value={filterAgent}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                 setFilterAgent(e.target.value);
@@ -181,8 +184,11 @@ export default function NotificationsPage() {
         {/* Date range filter */}
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4 text-gray-500" />
-          <span className="text-xs text-gray-500">From:</span>
+          <label htmlFor="notif-date-from" className="text-xs text-gray-500">
+            From:
+          </label>
           <input
+            id="notif-date-from"
             type="date"
             value={dateFrom}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -191,8 +197,11 @@ export default function NotificationsPage() {
             }}
             className="px-2 py-1 rounded-md text-xs bg-white/[0.05] border border-white/[0.08] text-gray-300 focus:outline-none [color-scheme:dark]"
           />
-          <span className="text-xs text-gray-500">To:</span>
+          <label htmlFor="notif-date-to" className="text-xs text-gray-500">
+            To:
+          </label>
           <input
+            id="notif-date-to"
             type="date"
             value={dateTo}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -225,17 +234,30 @@ export default function NotificationsPage() {
 
       {/* Table */}
       <div className="glass-card !p-0 overflow-hidden">
-        <table className="w-full">
+        <table className="w-full" aria-label="Notification list">
           <thead>
             <tr className="border-b border-white/[0.08]">
-              <th className="text-left text-xs font-medium text-gray-500 px-6 py-3 w-10">
-                {/* Read indicator */}
+              <th
+                scope="col"
+                className="text-left text-xs font-medium text-gray-500 px-6 py-3 w-10"
+              >
+                <span className="sr-only">Read status</span>
               </th>
-              <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Severity</th>
-              <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Message</th>
-              <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Agent</th>
-              <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Timestamp</th>
-              <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">Actions</th>
+              <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                Severity
+              </th>
+              <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                Message
+              </th>
+              <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                Agent
+              </th>
+              <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                Timestamp
+              </th>
+              <th scope="col" className="text-right text-xs font-medium text-gray-500 px-4 py-3">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -293,6 +315,7 @@ export default function NotificationsPage() {
                       {!isRead && (
                         <button
                           onClick={() => markAsRead(n.id)}
+                          aria-label="Mark as read"
                           className="p-1 rounded text-gray-500 hover:text-gray-300 transition-colors"
                           title="Mark as read"
                         >

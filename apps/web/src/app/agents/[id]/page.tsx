@@ -421,6 +421,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             <button
               onClick={() => sendAction('start')}
               disabled={actionLoading === 'start' || agent.status === 'running'}
+              aria-label="Start agent"
               className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               title="Start"
             >
@@ -429,6 +430,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             <button
               onClick={() => sendAction('stop')}
               disabled={actionLoading === 'stop' || agent.status === 'stopped'}
+              aria-label="Stop agent"
               className="p-2 rounded-lg bg-white/[0.05] text-gray-400 hover:bg-white/[0.1] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               title="Stop"
             >
@@ -437,6 +439,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             <button
               onClick={() => sendAction('restart')}
               disabled={actionLoading === 'restart'}
+              aria-label="Restart agent"
               className="p-2 rounded-lg bg-white/[0.05] text-gray-400 hover:bg-white/[0.1] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               title="Restart"
             >
@@ -464,6 +467,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
               <button
                 onClick={() => setConfirmDestroy(true)}
                 disabled={!!actionLoading}
+                aria-label="Destroy agent"
                 className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 title="Destroy"
               >
@@ -721,7 +725,11 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             onSubmit={sendChat}
             className="flex items-center gap-2 px-4 py-3 border-t border-white/[0.08]"
           >
+            <label htmlFor="chat-input" className="sr-only">
+              Chat with agent
+            </label>
             <input
+              id="chat-input"
               type="text"
               value={chatInput}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setChatInput(e.target.value)}
@@ -732,6 +740,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
             <button
               type="submit"
               disabled={chatSending || !chatInput.trim()}
+              aria-label="Send message"
               className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <Send className="w-4 h-4" />

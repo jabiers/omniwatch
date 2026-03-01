@@ -260,7 +260,11 @@ export default function MarketplacePage() {
           {/* Search input */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <label htmlFor="marketplace-search" className="sr-only">
+              Search marketplace
+            </label>
             <input
+              id="marketplace-search"
               type="text"
               value={search}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -273,7 +277,11 @@ export default function MarketplacePage() {
           </div>
 
           {/* Sort dropdown */}
+          <label htmlFor="marketplace-sort" className="sr-only">
+            Sort recipes
+          </label>
           <select
+            id="marketplace-sort"
             value={sort}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
               setSort(e.target.value);
@@ -441,6 +449,7 @@ export default function MarketplacePage() {
               </h2>
               <button
                 onClick={closePublish}
+                aria-label="Close"
                 className="p-1.5 rounded-lg text-gray-500 hover:text-gray-300 hover:bg-white/[0.05] transition-colors"
               >
                 <X className="w-4 h-4" />
@@ -458,8 +467,11 @@ export default function MarketplacePage() {
 
               {/* Name */}
               <div>
-                <label className="block text-xs text-gray-400 mb-1.5">Recipe Name *</label>
+                <label htmlFor="publish-name" className="block text-xs text-gray-400 mb-1.5">
+                  Recipe Name *
+                </label>
                 <input
+                  id="publish-name"
                   type="text"
                   required
                   value={publishForm.name}
@@ -473,8 +485,11 @@ export default function MarketplacePage() {
 
               {/* Description */}
               <div>
-                <label className="block text-xs text-gray-400 mb-1.5">Description</label>
+                <label htmlFor="publish-description" className="block text-xs text-gray-400 mb-1.5">
+                  Description
+                </label>
                 <textarea
+                  id="publish-description"
                   value={publishForm.description}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                     setPublishForm({ ...publishForm, description: e.target.value })
@@ -487,8 +502,11 @@ export default function MarketplacePage() {
 
               {/* Prompt */}
               <div>
-                <label className="block text-xs text-gray-400 mb-1.5">Agent Prompt *</label>
+                <label htmlFor="publish-prompt" className="block text-xs text-gray-400 mb-1.5">
+                  Agent Prompt *
+                </label>
                 <textarea
+                  id="publish-prompt"
                   required
                   value={publishForm.prompt}
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -504,8 +522,11 @@ export default function MarketplacePage() {
               <div className="grid grid-cols-2 gap-3">
                 {/* Category */}
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1.5">Category</label>
+                  <label htmlFor="publish-category" className="block text-xs text-gray-400 mb-1.5">
+                    Category
+                  </label>
                   <select
+                    id="publish-category"
                     value={publishForm.category}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                       setPublishForm({ ...publishForm, category: e.target.value })
@@ -522,8 +543,11 @@ export default function MarketplacePage() {
 
                 {/* Tags */}
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1.5">Tags</label>
+                  <label htmlFor="publish-tags" className="block text-xs text-gray-400 mb-1.5">
+                    Tags
+                  </label>
                   <input
+                    id="publish-tags"
                     type="text"
                     value={publishForm.tags}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>

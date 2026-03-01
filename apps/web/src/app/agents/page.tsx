@@ -229,13 +229,14 @@ export default function AgentsPage() {
 
       {/* Table */}
       <div className="glass-card !p-0 overflow-hidden">
-        <table className="w-full">
+        <table className="w-full" aria-label="Agent list">
           <thead>
             <tr className="border-b border-white/[0.08]">
-              <th className="text-left px-4 py-3 w-10">
+              <th scope="col" className="text-left px-4 py-3 w-10">
                 <button
                   onClick={toggleSelectAll}
                   className="text-gray-500 hover:text-gray-300 transition-colors"
+                  aria-label={allSelected ? 'Deselect all agents' : 'Select all agents'}
                   title={allSelected ? 'Deselect all' : 'Select all'}
                 >
                   {allSelected ? (
@@ -245,11 +246,21 @@ export default function AgentsPage() {
                   )}
                 </button>
               </th>
-              <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Name</th>
-              <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Type</th>
-              <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Status</th>
-              <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Last Run</th>
-              <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">Actions</th>
+              <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                Name
+              </th>
+              <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                Type
+              </th>
+              <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                Status
+              </th>
+              <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                Last Run
+              </th>
+              <th scope="col" className="text-right text-xs font-medium text-gray-500 px-4 py-3">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -282,6 +293,7 @@ export default function AgentsPage() {
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => toggleSelect(agent.id)}
+                        aria-label={`Select agent ${agent.name}`}
                         className="w-4 h-4 rounded border-white/20 bg-white/5 accent-emerald-500 cursor-pointer"
                       />
                     </td>
@@ -315,6 +327,7 @@ export default function AgentsPage() {
                           disabled={
                             actionLoading === `${agent.id}-start` || agent.status === 'running'
                           }
+                          aria-label={`Start agent ${agent.name}`}
                           className="p-1.5 rounded bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                           title="Start"
                         >
@@ -325,6 +338,7 @@ export default function AgentsPage() {
                           disabled={
                             actionLoading === `${agent.id}-stop` || agent.status === 'stopped'
                           }
+                          aria-label={`Stop agent ${agent.name}`}
                           className="p-1.5 rounded bg-white/[0.05] text-gray-400 hover:bg-white/[0.1] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                           title="Stop"
                         >
@@ -333,6 +347,7 @@ export default function AgentsPage() {
                         <button
                           onClick={() => sendAction(agent.id, 'restart')}
                           disabled={!!actionLoading}
+                          aria-label={`Restart agent ${agent.name}`}
                           className="p-1.5 rounded bg-white/[0.05] text-gray-400 hover:bg-white/[0.1] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                           title="Restart"
                         >
@@ -360,6 +375,7 @@ export default function AgentsPage() {
                           <button
                             onClick={() => setConfirmDelete(agent.id)}
                             disabled={!!actionLoading}
+                            aria-label={`Destroy agent ${agent.name}`}
                             className="p-1.5 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                             title="Destroy"
                           >

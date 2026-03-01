@@ -413,6 +413,7 @@ export default function AnalyticsPage() {
           <span className="text-xs text-gray-600">{lastRefresh.toLocaleTimeString()}</span>
           <button
             onClick={loadAnalytics}
+            aria-label="Refresh analytics"
             className="p-2 rounded-lg bg-white/[0.05] text-gray-400 hover:bg-white/[0.1] transition-colors"
           >
             <RefreshCw className="w-4 h-4" />
@@ -422,8 +423,11 @@ export default function AnalyticsPage() {
 
       {/* Agent Selector */}
       <div className="flex items-center gap-3">
-        <label className="text-sm text-gray-400">Agent:</label>
+        <label htmlFor="analytics-agent" className="text-sm text-gray-400">
+          Agent:
+        </label>
         <select
+          id="analytics-agent"
           value={selectedAgent}
           onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
             setSelectedAgent(e.target.value);
@@ -447,7 +451,7 @@ export default function AnalyticsPage() {
       {error && (
         <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400 flex items-center justify-between">
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="ml-2">
+          <button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-2">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -607,19 +611,36 @@ export default function AnalyticsPage() {
           </p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full" aria-label="Anomaly detection results">
               <thead>
                 <tr className="border-b border-white/[0.08]">
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Agent</th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Metric</th>
-                  <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">
+                  <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                    Agent
+                  </th>
+                  <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                    Metric
+                  </th>
+                  <th
+                    scope="col"
+                    className="text-right text-xs font-medium text-gray-500 px-4 py-3"
+                  >
                     Current
                   </th>
-                  <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">Mean</th>
-                  <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">
+                  <th
+                    scope="col"
+                    className="text-right text-xs font-medium text-gray-500 px-4 py-3"
+                  >
+                    Mean
+                  </th>
+                  <th
+                    scope="col"
+                    className="text-right text-xs font-medium text-gray-500 px-4 py-3"
+                  >
                     Z-Score
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Std Dev</th>
+                  <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                    Std Dev
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -683,8 +704,11 @@ export default function AnalyticsPage() {
               <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                 {/* Metric Name */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Metric Name</label>
+                  <label htmlFor="alert-metric" className="block text-xs text-gray-500 mb-1">
+                    Metric Name
+                  </label>
                   <input
+                    id="alert-metric"
                     type="text"
                     required
                     value={alertForm.metric_name}
@@ -698,8 +722,11 @@ export default function AnalyticsPage() {
 
                 {/* Operator */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Operator</label>
+                  <label htmlFor="alert-operator" className="block text-xs text-gray-500 mb-1">
+                    Operator
+                  </label>
                   <select
+                    id="alert-operator"
                     value={alertForm.operator}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                       setAlertForm({ ...alertForm, operator: e.target.value })
@@ -716,8 +743,11 @@ export default function AnalyticsPage() {
 
                 {/* Threshold */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Threshold</label>
+                  <label htmlFor="alert-threshold" className="block text-xs text-gray-500 mb-1">
+                    Threshold
+                  </label>
                   <input
+                    id="alert-threshold"
                     type="number"
                     step="any"
                     required
@@ -734,8 +764,11 @@ export default function AnalyticsPage() {
 
                 {/* Window Minutes */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Window (min)</label>
+                  <label htmlFor="alert-window" className="block text-xs text-gray-500 mb-1">
+                    Window (min)
+                  </label>
                   <input
+                    id="alert-window"
                     type="number"
                     min={1}
                     required
@@ -752,8 +785,11 @@ export default function AnalyticsPage() {
 
                 {/* Notify Channels */}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Channels</label>
+                  <label htmlFor="alert-channels" className="block text-xs text-gray-500 mb-1">
+                    Channels
+                  </label>
                   <input
+                    id="alert-channels"
                     type="text"
                     required
                     value={alertForm.notify_channels}
@@ -802,23 +838,37 @@ export default function AnalyticsPage() {
           </p>
         ) : alertRules.length === 0 ? null : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full" aria-label="Alert rules">
               <thead>
                 <tr className="border-b border-white/[0.08]">
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">Metric</th>
-                  <th className="text-center text-xs font-medium text-gray-500 px-4 py-3">
+                  <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                    Metric
+                  </th>
+                  <th
+                    scope="col"
+                    className="text-center text-xs font-medium text-gray-500 px-4 py-3"
+                  >
                     Condition
                   </th>
-                  <th className="text-center text-xs font-medium text-gray-500 px-4 py-3">
+                  <th
+                    scope="col"
+                    className="text-center text-xs font-medium text-gray-500 px-4 py-3"
+                  >
                     Window
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                  <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
                     Channels
                   </th>
-                  <th className="text-center text-xs font-medium text-gray-500 px-4 py-3">
+                  <th
+                    scope="col"
+                    className="text-center text-xs font-medium text-gray-500 px-4 py-3"
+                  >
                     Status
                   </th>
-                  <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">
+                  <th
+                    scope="col"
+                    className="text-right text-xs font-medium text-gray-500 px-4 py-3"
+                  >
                     Actions
                   </th>
                 </tr>
@@ -878,6 +928,7 @@ export default function AnalyticsPage() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => openEditForm(rule)}
+                            aria-label="Edit rule"
                             className="p-1.5 rounded-lg text-gray-500 hover:text-gray-300 hover:bg-white/[0.05] transition-colors"
                             title="Edit rule"
                           >
@@ -886,6 +937,7 @@ export default function AnalyticsPage() {
                           <button
                             onClick={() => handleDeleteRule(rule.id)}
                             disabled={deletingId === rule.id}
+                            aria-label="Delete rule"
                             className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition-colors"
                             title="Delete rule"
                           >

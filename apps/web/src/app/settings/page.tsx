@@ -280,9 +280,12 @@ export default function SettingsPage() {
 
           {!isOllamaModel && (
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">API Key</label>
+              <label htmlFor="ai-api-key" className="text-sm text-gray-400 mb-1 block">
+                API Key
+              </label>
               <div className="relative">
                 <input
+                  id="ai-api-key"
                   type={showKey ? 'text' : 'password'}
                   value={aiApiKey}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAiApiKey(e.target.value)}
@@ -292,6 +295,7 @@ export default function SettingsPage() {
                 <button
                   type="button"
                   onClick={() => setShowKey(!showKey)}
+                  aria-label={showKey ? 'Hide API key' : 'Show API key'}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
                 >
                   {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -304,8 +308,11 @@ export default function SettingsPage() {
           )}
 
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">AI Model</label>
+            <label htmlFor="ai-model" className="text-sm text-gray-400 mb-1 block">
+              AI Model
+            </label>
             <select
+              id="ai-model"
               value={aiModel}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAiModel(e.target.value)}
               className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50"
@@ -334,7 +341,9 @@ export default function SettingsPage() {
           {/* Ollama Section */}
           <div className="pt-2 border-t border-white/[0.06]">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm text-gray-400">Local AI (Ollama)</label>
+              <label htmlFor="ollama-url" className="text-sm text-gray-400">
+                Local AI (Ollama)
+              </label>
               <div className="flex items-center gap-2">
                 {ollamaChecking ? (
                   <Loader2 className="w-3 h-3 animate-spin text-gray-500" />
@@ -353,6 +362,7 @@ export default function SettingsPage() {
                   type="button"
                   onClick={checkOllama}
                   disabled={ollamaChecking}
+                  aria-label="Detect Ollama server"
                   className="px-2 py-0.5 text-xs rounded bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.08] transition-colors disabled:opacity-40"
                 >
                   Detect
@@ -360,6 +370,7 @@ export default function SettingsPage() {
               </div>
             </div>
             <input
+              id="ollama-url"
               type="url"
               value={ollamaUrl}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOllamaUrl(e.target.value)}
@@ -379,8 +390,11 @@ export default function SettingsPage() {
           <h2 className="text-lg font-medium">Notification Channels</h2>
 
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">Slack Webhook URL</label>
+            <label htmlFor="slack-webhook" className="text-sm text-gray-400 mb-1 block">
+              Slack Webhook URL
+            </label>
             <input
+              id="slack-webhook"
               type="url"
               value={slackWebhook}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSlackWebhook(e.target.value)}
@@ -390,8 +404,11 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">Discord Webhook URL</label>
+            <label htmlFor="discord-webhook" className="text-sm text-gray-400 mb-1 block">
+              Discord Webhook URL
+            </label>
             <input
+              id="discord-webhook"
               type="url"
               value={discordWebhook}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -404,8 +421,11 @@ export default function SettingsPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">Telegram Bot Token</label>
+              <label htmlFor="telegram-token" className="text-sm text-gray-400 mb-1 block">
+                Telegram Bot Token
+              </label>
               <input
+                id="telegram-token"
                 type="password"
                 value={telegramToken}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -416,8 +436,11 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="text-sm text-gray-400 mb-1 block">Telegram Chat ID</label>
+              <label htmlFor="telegram-chat-id" className="text-sm text-gray-400 mb-1 block">
+                Telegram Chat ID
+              </label>
               <input
+                id="telegram-chat-id"
                 type="text"
                 value={telegramChatId}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -429,8 +452,12 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <label className="flex items-center gap-3 cursor-pointer pt-2">
+          <label
+            htmlFor="system-notifications"
+            className="flex items-center gap-3 cursor-pointer pt-2"
+          >
             <input
+              id="system-notifications"
               type="checkbox"
               checked={systemNotifications}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -450,8 +477,11 @@ export default function SettingsPage() {
           <h2 className="text-lg font-medium">Agent Configuration</h2>
 
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">Max Agents</label>
+            <label htmlFor="max-agents" className="text-sm text-gray-400 mb-1 block">
+              Max Agents
+            </label>
             <input
+              id="max-agents"
               type="number"
               min={1}
               max={100}
@@ -467,8 +497,11 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">Memory Limit (MB)</label>
+            <label htmlFor="memory-limit" className="text-sm text-gray-400 mb-1 block">
+              Memory Limit (MB)
+            </label>
             <input
+              id="memory-limit"
               type="number"
               min={64}
               max={2048}
@@ -485,8 +518,11 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="text-sm text-gray-400 mb-1 block">Max Heal Attempts</label>
+            <label htmlFor="max-heal-attempts" className="text-sm text-gray-400 mb-1 block">
+              Max Heal Attempts
+            </label>
             <input
+              id="max-heal-attempts"
               type="number"
               min={0}
               max={10}

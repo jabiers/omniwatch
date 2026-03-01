@@ -86,6 +86,7 @@ export default function MeshPage() {
         </div>
         <button
           onClick={loadData}
+          aria-label="Refresh mesh data"
           className="p-2 rounded-lg bg-white/[0.05] text-gray-400 hover:bg-white/[0.1] transition-colors"
         >
           <RefreshCw className="w-4 h-4" />
@@ -138,7 +139,11 @@ export default function MeshPage() {
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08]">
           <h2 className="text-sm font-medium">Event Stream</h2>
           <div className="flex items-center gap-2">
+            <label htmlFor="mesh-topic-filter" className="sr-only">
+              Filter by topic
+            </label>
             <select
+              id="mesh-topic-filter"
               value={topicFilter}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setTopicFilter(e.target.value)}
               className="px-2 py-1 rounded text-xs bg-white/[0.05] border border-white/[0.08] text-gray-400 focus:outline-none"

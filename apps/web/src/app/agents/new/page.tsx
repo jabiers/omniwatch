@@ -1,37 +1,30 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import {
-  ArrowLeft,
-  Sparkles,
-  Eye,
-  Loader2,
-  Code,
-  Rocket,
-} from "lucide-react";
-import { apiFetch } from "../../../lib/api";
-import { useToastStore } from "../../../lib/toast-store";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft, Sparkles, Eye, Loader2, Code, Rocket } from 'lucide-react';
+import { apiFetch } from '../../../lib/api';
+import { useToastStore } from '../../../lib/toast-store';
 
 const agentTypes = [
   {
-    value: "watcher",
-    label: "Watcher",
-    desc: "Monitors conditions and sends alerts",
-    icon: "👁",
+    value: 'watcher',
+    label: 'Watcher',
+    desc: 'Monitors conditions and sends alerts',
+    icon: '👁',
   },
   {
-    value: "doer",
-    label: "Doer",
-    desc: "Executes actions when triggered",
-    icon: "⚡",
+    value: 'doer',
+    label: 'Doer',
+    desc: 'Executes actions when triggered',
+    icon: '⚡',
   },
   {
-    value: "auto",
-    label: "Auto",
-    desc: "AI decides the best agent type",
-    icon: "🤖",
+    value: 'auto',
+    label: 'Auto',
+    desc: 'AI decides the best agent type',
+    icon: '🤖',
   },
 ];
 
@@ -44,37 +37,37 @@ interface PreviewResult {
 export default function NewAgentPage() {
   const router = useRouter();
   const { addToast } = useToastStore();
-  const [prompt, setPrompt] = useState("");
-  const [name, setName] = useState("");
-  const [type, setType] = useState("auto");
+  const [prompt, setPrompt] = useState('');
+  const [name, setName] = useState('');
+  const [type, setType] = useState('auto');
   const [once, setOnce] = useState(false);
-  const [schedule, setSchedule] = useState("");
+  const [schedule, setSchedule] = useState('');
 
   // Preview state
   const [previewing, setPreviewing] = useState(false);
   const [preview, setPreview] = useState<PreviewResult | null>(null);
-  const [previewError, setPreviewError] = useState("");
+  const [previewError, setPreviewError] = useState('');
 
   // Create state
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   /** Preview generated code before creating */
   async function handlePreview() {
     if (!prompt.trim()) return;
 
     setPreviewing(true);
-    setPreviewError("");
+    setPreviewError('');
     setPreview(null);
 
     try {
       const body: Record<string, unknown> = {
         prompt: prompt.trim(),
       };
-      if (type !== "auto") body.template = type;
+      if (type !== 'auto') body.template = type;
 
-      const res = await apiFetch("/api/agents/preview", {
-        method: "POST",
+      const res = await apiFetch('/api/agents/preview', {
+        method: 'POST',
         body: JSON.stringify(body),
       });
 
@@ -83,17 +76,21 @@ export default function NewAgentPage() {
         throw new Error(data.message ?? `Preview failed (${res.status})`);
       }
 
-      const data = (await res.json()) as { result?: { code?: string; generatedCode?: string; type?: string; name?: string }; code?: string; generatedCode?: string; type?: string; name?: string };
+      const data = (await res.json()) as {
+        result?: { code?: string; generatedCode?: string; type?: string; name?: string };
+        code?: string;
+        generatedCode?: string;
+        type?: string;
+        name?: string;
+      };
       const r = data.result ?? data;
       setPreview({
-        code: r.code ?? r.generatedCode ?? "",
+        code: r.code ?? r.generatedCode ?? '',
         type: r.type,
         name: r.name,
       });
     } catch (err) {
-      setPreviewError(
-        err instanceof Error ? err.message : "Failed to preview"
-      );
+      setPreviewError(err instanceof Error ? err.message : 'Failed to preview');
     } finally {
       setPreviewing(false);
     }
@@ -105,7 +102,7 @@ export default function NewAgentPage() {
     if (!prompt.trim()) return;
 
     setSubmitting(true);
-    setError("");
+    setError('');
 
     try {
       const body: Record<string, unknown> = {
@@ -116,8 +113,8 @@ export default function NewAgentPage() {
       if (once) body.once = true;
       if (schedule.trim()) body.schedule = schedule.trim();
 
-      const res = await apiFetch("/api/agents", {
-        method: "POST",
+      const res = await apiFetch('/api/agents', {
+        method: 'POST',
         body: JSON.stringify(body),
       });
 
@@ -127,10 +124,10 @@ export default function NewAgentPage() {
       }
 
       const data = (await res.json()) as { id?: string };
-      addToast("Agent created successfully", "success");
-      router.push(`/agents/${data.id ?? ""}`);
+      addToast('Agent created successfully', 'success');
+      router.push(`/agents/${data.id ?? ''}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create agent");
+      setError(err instanceof Error ? err.message : 'Failed to create agent');
     } finally {
       setSubmitting(false);
     }
@@ -148,9 +145,7 @@ export default function NewAgentPage() {
 
       <div>
         <h1 className="text-2xl font-semibold mb-1">Create Agent</h1>
-        <p className="text-sm text-gray-500">
-          Describe what you want in natural language.
-        </p>
+        <p className="text-sm text-gray-500">Describe what you want in natural language.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -158,9 +153,12 @@ export default function NewAgentPage() {
         <div className="glass-card !p-0">
           <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.08]">
             <Sparkles className="w-4 h-4 text-emerald-400" />
-            <span className="text-sm text-gray-400">Prompt</span>
+            <label htmlFor="agent-prompt" className="text-sm text-gray-400">
+              Prompt
+            </label>
           </div>
           <textarea
+            id="agent-prompt"
             value={prompt}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPrompt(e.target.value)}
             placeholder="쿠팡에서 에어팟 프로 25만원 이하면 알려줘"
@@ -170,10 +168,11 @@ export default function NewAgentPage() {
 
         {/* Agent Name (Optional) */}
         <div>
-          <label className="text-sm text-gray-400 mb-1 block">
+          <label htmlFor="agent-name" className="text-sm text-gray-400 mb-1 block">
             Name <span className="text-gray-600">(optional)</span>
           </label>
           <input
+            id="agent-name"
             type="text"
             value={name}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
@@ -184,19 +183,25 @@ export default function NewAgentPage() {
 
         {/* Agent Type */}
         <div>
-          <label className="text-sm text-gray-400 mb-2 block">
+          <span id="agent-type-label" className="text-sm text-gray-400 mb-2 block">
             Agent Type
-          </label>
-          <div className="grid grid-cols-3 gap-3">
+          </span>
+          <div
+            className="grid grid-cols-3 gap-3"
+            role="radiogroup"
+            aria-labelledby="agent-type-label"
+          >
             {agentTypes.map((t) => (
               <button
                 key={t.value}
                 type="button"
+                role="radio"
+                aria-checked={type === t.value}
                 onClick={() => setType(t.value)}
                 className={`glass-card !p-3 text-left transition-colors ${
                   type === t.value
-                    ? "!border-emerald-500/50 bg-emerald-500/5"
-                    : "hover:bg-white/[0.05]"
+                    ? '!border-emerald-500/50 bg-emerald-500/5'
+                    : 'hover:bg-white/[0.05]'
                 }`}
               >
                 <p className="text-sm font-medium mb-0.5">
@@ -213,8 +218,9 @@ export default function NewAgentPage() {
         <div className="glass-card space-y-4">
           <h3 className="text-sm font-medium text-gray-400">Options</h3>
 
-          <label className="flex items-center gap-3 cursor-pointer">
+          <label htmlFor="agent-once" className="flex items-center gap-3 cursor-pointer">
             <input
+              id="agent-once"
               type="checkbox"
               checked={once}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOnce(e.target.checked)}
@@ -222,15 +228,16 @@ export default function NewAgentPage() {
             />
             <div>
               <p className="text-sm">Run once (--once)</p>
-              <p className="text-xs text-gray-500">
-                Execute a single time and stop
-              </p>
+              <p className="text-xs text-gray-500">Execute a single time and stop</p>
             </div>
           </label>
 
           <div>
-            <label className="text-sm mb-1 block">Schedule (--schedule)</label>
+            <label htmlFor="agent-schedule" className="text-sm mb-1 block">
+              Schedule (--schedule)
+            </label>
             <input
+              id="agent-schedule"
               type="text"
               value={schedule}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSchedule(e.target.value)}
@@ -280,9 +287,7 @@ export default function NewAgentPage() {
                   </span>
                 )}
               </span>
-              {preview.name && (
-                <span className="text-xs text-gray-500">{preview.name}</span>
-              )}
+              {preview.name && <span className="text-xs text-gray-500">{preview.name}</span>}
             </div>
             <pre className="p-4 text-xs font-mono overflow-x-auto max-h-64 overflow-y-auto">
               <code className="text-gray-300">{preview.code}</code>

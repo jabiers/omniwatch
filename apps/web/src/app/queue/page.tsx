@@ -155,6 +155,7 @@ export default function QueuePage() {
         </div>
         <button
           onClick={loadData}
+          aria-label="Refresh queue data"
           className="p-2 rounded-lg bg-white/[0.05] text-gray-400 hover:bg-white/[0.1] transition-colors"
           title="Refresh"
         >
