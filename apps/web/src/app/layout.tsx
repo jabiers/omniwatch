@@ -25,6 +25,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import { apiFetch } from '../lib/api';
 import { AuthGuard } from '../components/auth-guard';
 import { ErrorBoundary } from '../components/error-boundary';
 import { ToastContainer } from '../components/toast';
@@ -79,6 +80,43 @@ function AppShell({ children }: { children: React.ReactNode }) {
   });
   const wsStatus = useWsStatus();
   const { theme, toggleTheme } = useTheme();
+  const [notifCount, setNotifCount] = useState(0);
+
+  // Fetch unread notification count
+  useEffect(() => {
+    async function fetchNotifCount() {
+      try {
+        const res = await apiFetch('/api/notifications?limit=50');
+        if (res.ok) {
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : (data.notifications ?? []);
+          setNotifCount(list.filter((n: any) => !n.read).length);
+        }
+      } catch {
+        /* ignore fetch errors */
+      }
+    }
+    fetchNotifCount();
+    const interval = setInterval(fetchNotifCount, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      // Ctrl+K or Cmd+K: navigate to agents
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        router.push('/agents');
+      }
+      // Escape: close mobile sidebar
+      if (e.key === 'Escape' && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [router, sidebarOpen]);
 
   function toggleCollapse() {
     const next = !collapsed;
@@ -140,6 +178,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
               >
                 <Icon className="w-4 h-4 shrink-0" />
                 {!collapsed && item.label}
+                {!collapsed && item.label === 'Notifications' && notifCount > 0 && (
+                  <span className="ml-auto px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-red-500 text-white min-w-[18px] text-center">
+                    {notifCount > 99 ? '99+' : notifCount}
+                  </span>
+                )}
               </Link>
             );
           })}
