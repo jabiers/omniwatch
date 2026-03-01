@@ -1,16 +1,22 @@
 import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
 import type { Notification } from '@omniwatch/shared';
+
+const listNotificationsSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(500).default(50),
+  severity: z.enum(['low', 'medium', 'high', 'critical']).optional(),
+  agent_id: z.string().optional(),
+});
 
 export const notificationRoutes = new Hono();
 
 /** GET /notifications - list notifications with optional filters */
-notificationRoutes.get('/notifications', (c) => {
+notificationRoutes.get('/notifications', zValidator('query', listNotificationsSchema), (c) => {
   const db = getDb();
   const auth = c.get('auth');
-  const limit = Math.min(parseInt(c.req.query('limit') || '50', 10), 500);
-  const severity = c.req.query('severity');
-  const agentId = c.req.query('agent_id');
+  const { limit, severity, agent_id: agentId } = c.req.valid('query');
 
   const conditions: string[] = [];
   const params: unknown[] = [];
@@ -32,7 +38,7 @@ notificationRoutes.get('/notifications', (c) => {
   }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-  const sql = `SELECT n.* FROM notifications n JOIN agents a ON n.agent_id = a.id ${where} ORDER BY n.created_at DESC LIMIT ?`;
+  const sql = `SELECT n.id, n.agent_id, n.type, n.title, n.message, n.severity, n.created_at FROM notifications n JOIN agents a ON n.agent_id = a.id ${where} ORDER BY n.created_at DESC LIMIT ?`;
   params.push(limit);
 
   const notifications = db.prepare(sql).all(...params) as Notification[];
