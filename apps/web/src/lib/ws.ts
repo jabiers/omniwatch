@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { setWsStatus } from './ws-store';
 
 interface UseWebSocketReturn {
   connected: boolean;
@@ -34,12 +35,14 @@ export function useWebSocket(url: string, onMessage: (data: unknown) => void): U
       ws.onopen = () => {
         if (!mountedRef.current) return;
         setConnected(true);
+        setWsStatus('connected');
         retryRef.current = 0; // Reset backoff on successful connect
       };
 
       ws.onclose = () => {
         if (!mountedRef.current) return;
         setConnected(false);
+        setWsStatus('reconnecting');
         wsRef.current = null;
 
         // Exponential backoff: 1s, 2s, 4s, 8s, 16s, 30s max
@@ -51,6 +54,7 @@ export function useWebSocket(url: string, onMessage: (data: unknown) => void): U
       ws.onerror = () => {
         if (!mountedRef.current) return;
         setConnected(false);
+        setWsStatus('reconnecting');
       };
 
       ws.onmessage = (event) => {
@@ -90,6 +94,7 @@ export function useWebSocket(url: string, onMessage: (data: unknown) => void): U
         wsRef.current.close();
         wsRef.current = null;
       }
+      setWsStatus('disconnected');
     };
   }, [connect]);
 

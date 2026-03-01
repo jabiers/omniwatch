@@ -25,6 +25,7 @@ import { AuthGuard } from '../components/auth-guard';
 import { ErrorBoundary } from '../components/error-boundary';
 import { ToastContainer } from '../components/toast';
 import { useAuthStore } from '../lib/auth-store';
+import { useWsStatus } from '../lib/ws-store';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -67,6 +68,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { clearAuth, role } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const wsStatus = useWsStatus();
 
   function handleLogout() {
     clearAuth();
@@ -135,8 +137,20 @@ function AppShell({ children }: { children: React.ReactNode }) {
           {/* Status */}
           <div className="px-5 py-3 border-t border-white/[0.08]">
             <div className="flex items-center gap-2 text-xs text-gray-500">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Daemon Connected
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  wsStatus === 'connected'
+                    ? 'bg-emerald-500 animate-pulse'
+                    : wsStatus === 'reconnecting'
+                      ? 'bg-yellow-500 animate-pulse'
+                      : 'bg-red-500'
+                }`}
+              />
+              {wsStatus === 'connected'
+                ? 'Connected'
+                : wsStatus === 'reconnecting'
+                  ? 'Reconnecting...'
+                  : 'Disconnected'}
             </div>
           </div>
         </div>
