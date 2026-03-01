@@ -50,9 +50,8 @@ vi.mock('nanoid', () => ({
 }));
 
 import { createApp } from '../apps/api/src/app.js';
-import type { Hono } from 'hono';
 
-let app: Hono;
+let app: ReturnType<typeof createApp>;
 
 beforeEach(() => {
   vi.clearAllMocks();

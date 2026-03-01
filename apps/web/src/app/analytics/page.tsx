@@ -265,7 +265,7 @@ export default function AnalyticsPage() {
 
   function openEditForm(rule: AlertRule) {
     setEditingRule(rule);
-    let channels = "log";
+    let channels: string;
     try {
       const parsed = JSON.parse(rule.notify_channels) as unknown;
       channels = Array.isArray(parsed) ? parsed.join(", ") : String(parsed);
@@ -904,7 +904,7 @@ export default function AnalyticsPage() {
               </thead>
               <tbody>
                 {alertRules.map((rule) => {
-                  let channels: string[] = [];
+                  let channels: string[];
                   try {
                     const parsed = JSON.parse(rule.notify_channels) as unknown;
                     channels = Array.isArray(parsed) ? parsed as string[] : [String(parsed)];

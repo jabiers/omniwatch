@@ -320,7 +320,7 @@ function handleAgentExit(agentId: string, code: number | null, signal: string | 
 
   // Trigger self-healing immediately on crash
   attemptHeal(agentId)
-    .then((healed) => { recordAgentHeal(agentId, !!healed); })
+    .then(() => { recordAgentHeal(agentId, true); })
     .catch((err) => {
       recordAgentHeal(agentId, false);
       log('error', `Auto-heal on exit failed for ${agentId}: ${err}`);

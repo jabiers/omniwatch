@@ -123,7 +123,7 @@ vi.mock('@omniwatch/db', () => ({
 }));
 
 // Mock agent-manager
-const mockGetAgent = vi.fn((id: string) => ({
+const mockGetAgent = vi.fn((id: string): { id: string; name: string; status: string; config: string; heal_count: number; error_count: number; last_error: null } | null => ({
   id,
   name: 'Test Agent',
   status: 'running',

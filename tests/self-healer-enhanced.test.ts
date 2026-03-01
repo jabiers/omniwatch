@@ -51,11 +51,12 @@ describe('Self-Healer Enhancement', () => {
     });
 
     it('should handle empty logs gracefully', () => {
+      const emptyLog = '';
       const enrichedError = [
         'Error: unknown',
         '',
         'Recent logs:',
-        '' || '(no logs)',
+        emptyLog || '(no logs)',
       ].join('\n');
 
       expect(enrichedError).toContain('(no logs)');
