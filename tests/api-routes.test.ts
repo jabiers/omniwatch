@@ -590,3 +590,90 @@ describe('PUT /api/config', () => {
     expect(res.status).toBe(200);
   });
 });
+
+// ─── Bulk Agent Actions ────────────────────────────────────────────────
+
+describe('POST /api/agents/bulk', () => {
+  it('should reject empty ids array', async () => {
+    const res = await app.request('/api/agents/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'start', ids: [] }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('should reject invalid action', async () => {
+    const res = await app.request('/api/agents/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'invalid', ids: ['agent-1'] }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('should return results for bulk start', async () => {
+    mockAgentStart.mockResolvedValueOnce({ id: 'agent-1', status: 'running' });
+
+    const res = await app.request('/api/agents/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'start', ids: ['agent-1'] }),
+    });
+    expect(res.status).toBe(200);
+
+    const body = (await res.json()) as { results: { id: string; success: boolean }[] };
+    expect(body.results).toHaveLength(1);
+    expect(body.results[0].id).toBe('agent-1');
+    expect(body.results[0].success).toBe(true);
+  });
+
+  it('should handle mixed success/failure in bulk stop', async () => {
+    mockAgentStop
+      .mockResolvedValueOnce({ id: 'a1', status: 'stopped' })
+      .mockRejectedValueOnce(new Error('Agent not found'));
+
+    const res = await app.request('/api/agents/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'stop', ids: ['a1', 'a2'] }),
+    });
+    expect(res.status).toBe(200);
+
+    const body = (await res.json()) as {
+      results: { id: string; success: boolean; error?: string }[];
+    };
+    expect(body.results).toHaveLength(2);
+    expect(body.results[0].success).toBe(true);
+    expect(body.results[1].success).toBe(false);
+    expect(body.results[1].error).toBe('Agent not found');
+  });
+});
+
+// ─── Queue Routes ──────────────────────────────────────────────────────
+
+describe('GET /api/queue/stats', () => {
+  it('should return queue statistics', async () => {
+    const res = await app.request('/api/queue/stats');
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body).toHaveProperty('pending');
+  });
+});
+
+describe('POST /api/queue/dead-letters/:id/retry', () => {
+  it('should reject invalid id', async () => {
+    const res = await app.request('/api/queue/dead-letters/abc/retry', {
+      method: 'POST',
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('should accept valid numeric id', async () => {
+    const res = await app.request('/api/queue/dead-letters/42/retry', {
+      method: 'POST',
+    });
+    expect(res.status).toBe(200);
+  });
+});

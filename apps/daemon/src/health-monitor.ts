@@ -82,57 +82,65 @@ function handleUnresponsiveAgent(agentId: string): void {
   });
 }
 
-// Detect zombie agents: process alive but repeatedly logging errors
+/** Zombie agent detection result from batch query */
+interface ZombieCandidate {
+  id: string;
+  name: string;
+  error_count: number;
+  heal_count: number;
+  recent_errors: number;
+  last_error_msg: string | null;
+}
+
+/** Detect zombie agents: process alive but repeatedly logging errors (batch query) */
 function checkZombieAgents(): void {
   const db = getDb();
-  const runningAgents = db
-    .prepare("SELECT * FROM agents WHERE status = 'running' LIMIT 100")
-    .all() as Agent[];
 
-  for (const agent of runningAgents) {
-    if (agent.heal_count >= MAX_HEAL_ATTEMPTS) continue;
+  // Single query: find running agents with recent error counts (eliminates N+1)
+  const candidates = db
+    .prepare(
+      `SELECT a.id, a.name, a.error_count, a.heal_count,
+              COUNT(l.id) AS recent_errors,
+              (SELECT message FROM agent_logs
+               WHERE agent_id = a.id AND level = 'error'
+               ORDER BY created_at DESC LIMIT 1) AS last_error_msg
+       FROM agents a
+       LEFT JOIN agent_logs l
+         ON l.agent_id = a.id
+         AND l.level = 'error'
+         AND l.created_at >= datetime('now', '-${ZOMBIE_CHECK_WINDOW} seconds')
+       WHERE a.status = 'running' AND a.heal_count < ?
+       GROUP BY a.id
+       HAVING recent_errors >= ?
+       LIMIT 100`,
+    )
+    .all(MAX_HEAL_ATTEMPTS, ZOMBIE_ERROR_THRESHOLD) as ZombieCandidate[];
 
-    const errorCount = db
-      .prepare(
-        `SELECT COUNT(*) as cnt FROM agent_logs
-       WHERE agent_id = ? AND level = 'error'
-       AND created_at >= datetime('now', '-${ZOMBIE_CHECK_WINDOW} seconds')`,
-      )
-      .get(agent.id) as { cnt: number };
+  for (const agent of candidates) {
+    log(
+      'warn',
+      `Zombie agent detected: ${agent.id} (${agent.name}) - ${agent.recent_errors} errors in ${ZOMBIE_CHECK_WINDOW}s`,
+    );
 
-    if (errorCount.cnt >= ZOMBIE_ERROR_THRESHOLD) {
-      // Get the most recent error message for context
-      const lastErr = db
-        .prepare(
-          "SELECT message FROM agent_logs WHERE agent_id = ? AND level = 'error' ORDER BY created_at DESC LIMIT 1",
-        )
-        .get(agent.id) as { message: string } | undefined;
+    updateAgent(agent.id, {
+      status: 'error',
+      last_error: `Zombie: repeated runtime errors (${agent.recent_errors}x in ${ZOMBIE_CHECK_WINDOW}s) - ${agent.last_error_msg || 'unknown'}`,
+      error_count: agent.error_count + agent.recent_errors,
+    } as Partial<Agent>);
 
-      log(
-        'warn',
-        `Zombie agent detected: ${agent.id} (${agent.name}) - ${errorCount.cnt} errors in ${ZOMBIE_CHECK_WINDOW}s`,
-      );
-
-      updateAgent(agent.id, {
-        status: 'error',
-        last_error: `Zombie: repeated runtime errors (${errorCount.cnt}x in ${ZOMBIE_CHECK_WINDOW}s) - ${lastErr?.message || 'unknown'}`,
-        error_count: agent.error_count + errorCount.cnt,
-      } as Partial<Agent>);
-
-      // Kill the zombie process
-      const processes = getRunningProcesses();
-      const child = processes.get(agent.id);
-      if (child) {
-        child.kill('SIGTERM');
-        processes.delete(agent.id);
-      }
-      heartbeats.delete(agent.id);
-
-      // Trigger self-healing with the error context
-      attemptHeal(agent.id).catch((err) => {
-        log('error', `Zombie heal failed for ${agent.id}: ${err}`);
-      });
+    // Kill the zombie process
+    const processes = getRunningProcesses();
+    const child = processes.get(agent.id);
+    if (child) {
+      child.kill('SIGTERM');
+      processes.delete(agent.id);
     }
+    heartbeats.delete(agent.id);
+
+    // Trigger self-healing with the error context
+    attemptHeal(agent.id).catch((err) => {
+      log('error', `Zombie heal failed for ${agent.id}: ${err}`);
+    });
   }
 }
 
