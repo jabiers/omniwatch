@@ -13,6 +13,7 @@ import { dashCommand } from './commands/dash.js';
 import { chatCommand } from './commands/chat.js';
 import { doCommand } from './commands/do.js';
 import { autoCommand } from './commands/auto.js';
+import { authCommand } from './commands/auth.js';
 
 const program = new Command();
 
@@ -35,5 +36,6 @@ program.addCommand(dashCommand);
 program.addCommand(chatCommand);
 program.addCommand(doCommand);
 program.addCommand(autoCommand);
+program.addCommand(authCommand);
 
 program.parse();
