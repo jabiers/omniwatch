@@ -4,6 +4,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
 import { handleSnapshotRPC } from '@omniwatch/daemon/engine';
+import { getErrorMessage } from '@omniwatch/shared';
 
 export const snapshotRoutes = new Hono();
 
@@ -59,8 +60,7 @@ snapshotRoutes.post('/agents/:id/snapshots', async (c) => {
     const result = await handleSnapshotRPC.capture({ agentId: id, label: body.label });
     return c.json(result, 201);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.json({ error: message }, 502);
+    return c.json({ error: getErrorMessage(err) }, 502);
   }
 });
 
@@ -82,8 +82,7 @@ snapshotRoutes.post('/agents/:id/snapshots/:seq/restore', async (c) => {
     });
     return c.json(result);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.json({ error: message }, 502);
+    return c.json({ error: getErrorMessage(err) }, 502);
   }
 });
 

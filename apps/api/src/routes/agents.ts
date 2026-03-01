@@ -3,6 +3,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
 import type { Agent, AgentLog } from '@omniwatch/shared';
+import { getErrorMessage } from '@omniwatch/shared';
 import { handleAgentRPC } from '@omniwatch/daemon/engine';
 import { requireRole } from '../middleware/auth.js';
 import { broadcast } from '../ws.js';
@@ -103,8 +104,7 @@ agentRoutes.post(
       broadcast('agent:created', { id: created.id, name: created.name });
       return c.json({ agent: result }, 201);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      return c.json({ error: message }, 502);
+      return c.json({ error: getErrorMessage(err) }, 502);
     }
   },
 );
@@ -118,8 +118,7 @@ agentRoutes.delete('/agents/:id', requireRole('admin', 'operator'), async (c) =>
     broadcast('agent:destroyed', { id });
     return c.json({ result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.json({ error: message }, 502);
+    return c.json({ error: getErrorMessage(err) }, 502);
   }
 });
 
@@ -132,8 +131,7 @@ agentRoutes.post('/agents/:id/start', requireRole('admin', 'operator'), async (c
     broadcast('agent:status', { id, status: 'running' });
     return c.json({ result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.json({ error: message }, 502);
+    return c.json({ error: getErrorMessage(err) }, 502);
   }
 });
 
@@ -146,8 +144,7 @@ agentRoutes.post('/agents/:id/stop', requireRole('admin', 'operator'), async (c)
     broadcast('agent:status', { id, status: 'stopped' });
     return c.json({ result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.json({ error: message }, 502);
+    return c.json({ error: getErrorMessage(err) }, 502);
   }
 });
 
@@ -160,8 +157,7 @@ agentRoutes.post('/agents/:id/restart', requireRole('admin', 'operator'), async 
     broadcast('agent:status', { id, status: 'running' });
     return c.json({ result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.json({ error: message }, 502);
+    return c.json({ error: getErrorMessage(err) }, 502);
   }
 });
 

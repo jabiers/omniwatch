@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { listRecipes, searchRecipes, getRecipe } from '@omniwatch/shared';
+import { listRecipes, searchRecipes, getRecipe, getErrorMessage } from '@omniwatch/shared';
 import { handleAgentRPC } from '@omniwatch/daemon/engine';
 
 export const recipeRoutes = new Hono();
@@ -42,7 +42,6 @@ recipeRoutes.post('/recipes/:id/install', async (c) => {
     });
     return c.json({ agent: result }, 201);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.json({ error: message }, 502);
+    return c.json({ error: getErrorMessage(err) }, 502);
   }
 });

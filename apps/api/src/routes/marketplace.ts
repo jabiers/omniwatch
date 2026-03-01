@@ -4,6 +4,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
 import { handleAgentRPC } from '@omniwatch/daemon/engine';
+import { safeJsonParse, getErrorMessage } from '@omniwatch/shared';
 import { requireRole } from '../middleware/auth.js';
 import { randomUUID } from 'node:crypto';
 
@@ -93,8 +94,8 @@ marketplaceRoutes.get('/marketplace', zValidator('query', listQuerySchema), (c) 
   // Parse JSON fields for response
   const recipes = rows.map((r) => ({
     ...r,
-    tags: JSON.parse(r.tags || '[]'),
-    config: JSON.parse(r.config || '{}'),
+    tags: safeJsonParse(r.tags, [] as string[]),
+    config: safeJsonParse(r.config, {} as Record<string, unknown>),
   }));
 
   return c.json({ recipes });
@@ -116,8 +117,8 @@ marketplaceRoutes.get('/marketplace/:id', (c) => {
   return c.json({
     recipe: {
       ...row,
-      tags: JSON.parse(row.tags || '[]'),
-      config: JSON.parse(row.config || '{}'),
+      tags: safeJsonParse(row.tags, [] as string[]),
+      config: safeJsonParse(row.config, {} as Record<string, unknown>),
     },
   });
 });
@@ -159,8 +160,8 @@ marketplaceRoutes.post(
       {
         recipe: {
           ...recipe,
-          tags: JSON.parse(recipe.tags || '[]'),
-          config: JSON.parse(recipe.config || '{}'),
+          tags: safeJsonParse(recipe.tags, [] as string[]),
+          config: safeJsonParse(recipe.config, {} as Record<string, unknown>),
         },
       },
       201,
@@ -183,7 +184,7 @@ marketplaceRoutes.post('/marketplace/:id/install', requireRole('admin', 'operato
   }
 
   try {
-    const config = JSON.parse(row.config || '{}');
+    const config = safeJsonParse(row.config, {} as Record<string, unknown>);
     const result = await handleAgentRPC.create({
       name: row.name,
       prompt: row.prompt,
@@ -199,8 +200,7 @@ marketplaceRoutes.post('/marketplace/:id/install', requireRole('admin', 'operato
 
     return c.json({ agent: result }, 201);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.json({ error: message }, 502);
+    return c.json({ error: getErrorMessage(err) }, 502);
   }
 });
 

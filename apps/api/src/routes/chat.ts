@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { handleChatRPC } from '@omniwatch/daemon/engine';
+import { getErrorMessage } from '@omniwatch/shared';
 
 const chatSchema = z.object({ message: z.string().min(1, 'message is required').max(5000) });
 const previewSchema = z.object({
@@ -21,8 +22,7 @@ chatRoutes.post('/agents/:id/chat', zValidator('json', chatSchema), async (c) =>
     const result = await handleChatRPC.chat({ id, message });
     return c.json({ result });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error';
-    return c.json({ error: msg }, 502);
+    return c.json({ error: getErrorMessage(err) }, 502);
   }
 });
 
@@ -34,8 +34,7 @@ chatRoutes.post('/agents/preview', zValidator('json', previewSchema), async (c) 
     const result = await handleChatRPC.preview({ prompt, template });
     return c.json({ result });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error';
-    return c.json({ error: msg }, 502);
+    return c.json({ error: getErrorMessage(err) }, 502);
   }
 });
 
@@ -48,7 +47,6 @@ chatRoutes.post('/agents/:id/apply', zValidator('json', applySchema), async (c) 
     const result = await handleChatRPC.apply({ id, code });
     return c.json({ result });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error';
-    return c.json({ error: msg }, 502);
+    return c.json({ error: getErrorMessage(err) }, 502);
   }
 });

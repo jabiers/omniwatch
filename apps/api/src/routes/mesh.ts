@@ -2,6 +2,7 @@
 import { Hono } from 'hono';
 import { getDb } from '@omniwatch/db';
 import { handleMeshRPC } from '@omniwatch/daemon/engine';
+import { getErrorMessage } from '@omniwatch/shared';
 
 export const meshRoutes = new Hono();
 
@@ -11,8 +12,7 @@ meshRoutes.get('/mesh/topology', async (c) => {
     const result = await handleMeshRPC.topology({});
     return c.json(result);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.json({ error: message }, 502);
+    return c.json({ error: getErrorMessage(err) }, 502);
   }
 });
 

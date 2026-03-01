@@ -59,7 +59,7 @@ export const authMiddleware = createMiddleware(async (c, next) => {
       c.set('auth', { userId: 'anonymous', tenantId: 'default', role: 'admin' as UserRole });
       return next();
     }
-    return c.json({ error: 'API key or Bearer token required.' }, 401);
+    return c.json({ error: 'API key or Bearer token required' }, 401);
   }
 
   // API key authentication
