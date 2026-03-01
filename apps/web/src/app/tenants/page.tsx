@@ -12,6 +12,8 @@ import {
   X,
   Copy,
   CheckCircle,
+  Pencil,
+  RefreshCw,
 } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
 
@@ -86,6 +88,13 @@ export default function TenantsPage() {
   // API key reveal modal
   const [revealedApiKey, setRevealedApiKey] = useState<string | null>(null);
   const [keyCopied, setKeyCopied] = useState(false);
+
+  // Edit tenant modal
+  const [editTenant, setEditTenant] = useState<Tenant | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', plan: 'free', max_agents: 10 });
+
+  // API key rotation
+  const [rotatingUser, setRotatingUser] = useState<string | null>(null);
 
   // Delete confirm
   const [confirmDeleteUser, setConfirmDeleteUser] = useState<string | null>(null);
@@ -312,14 +321,17 @@ export default function TenantsPage() {
                   <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
                     Plan
                   </th>
+                  <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                    Quota
+                  </th>
+                  <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
+                    Created
+                  </th>
                   <th
                     scope="col"
                     className="text-right text-xs font-medium text-gray-500 px-4 py-3"
                   >
-                    Max Agents
-                  </th>
-                  <th scope="col" className="text-left text-xs font-medium text-gray-500 px-4 py-3">
-                    Created
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -347,11 +359,41 @@ export default function TenantsPage() {
                           {tenant.plan}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-right text-gray-400 font-mono">
-                        {tenant.max_agents}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2 min-w-[120px]">
+                          <div className="flex-1 h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-emerald-500"
+                              style={{ width: '0%' }}
+                            />
+                          </div>
+                          <span className="text-xs text-gray-400 whitespace-nowrap font-mono">
+                            0 / {tenant.max_agents}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500">
                         {new Date(tenant.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditTenant(tenant);
+                              setEditForm({
+                                name: tenant.name,
+                                plan: tenant.plan || 'free',
+                                max_agents: tenant.max_agents || 10,
+                              });
+                            }}
+                            className="p-1.5 rounded hover:bg-white/[0.05] text-gray-400 hover:text-white transition-colors"
+                            aria-label="Edit tenant"
+                            title="Edit tenant"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -455,7 +497,40 @@ export default function TenantsPage() {
                       {new Date(user.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center justify-end">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={async () => {
+                            if (!confirm('Rotate API key? The old key will be invalidated.'))
+                              return;
+                            setRotatingUser(user.id);
+                            try {
+                              const res = await apiFetch(`/api/users/${user.id}/rotate-key`, {
+                                method: 'POST',
+                              });
+                              if (res.ok) {
+                                const data = (await res.json()) as {
+                                  api_key?: string;
+                                  apiKey?: string;
+                                };
+                                const newKey = data.api_key || data.apiKey || '';
+                                setRevealedApiKey(newKey);
+                                setKeyCopied(false);
+                              }
+                            } catch {
+                              setError('Failed to rotate API key.');
+                            } finally {
+                              setRotatingUser(null);
+                            }
+                          }}
+                          disabled={rotatingUser === user.id}
+                          aria-label="Rotate API key"
+                          className="p-1.5 rounded bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 disabled:opacity-40 transition-colors"
+                          title="Rotate API key"
+                        >
+                          <RefreshCw
+                            className={`w-3.5 h-3.5 ${rotatingUser === user.id ? 'animate-spin' : ''}`}
+                          />
+                        </button>
                         {confirmDeleteUser === user.id ? (
                           <div className="flex items-center gap-1">
                             <button
@@ -590,6 +665,115 @@ export default function TenantsPage() {
                   <Plus className="w-4 h-4" />
                 )}
                 Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/*  EDIT TENANT MODAL                                            */}
+      {/* ============================================================ */}
+      {editTenant && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setEditTenant(null)} />
+          <div className="relative z-10 w-full max-w-md mx-4 rounded-xl bg-gray-900 border border-gray-700 p-6 space-y-5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium flex items-center gap-2">
+                <Pencil className="w-5 h-5 text-emerald-400" />
+                Edit Tenant
+              </h3>
+              <button
+                onClick={() => setEditTenant(null)}
+                aria-label="Close"
+                className="text-gray-500 hover:text-gray-300 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="edit-name" className="text-sm text-gray-400 mb-1 block">
+                  Tenant Name
+                </label>
+                <input
+                  id="edit-name"
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setEditForm((f) => ({ ...f, name: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="edit-plan" className="text-sm text-gray-400 mb-1 block">
+                  Plan
+                </label>
+                <select
+                  id="edit-plan"
+                  value={editForm.plan}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                    setEditForm((f) => ({ ...f, plan: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50"
+                >
+                  <option value="free">Free</option>
+                  <option value="pro">Pro</option>
+                  <option value="enterprise">Enterprise</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="edit-max-agents" className="text-sm text-gray-400 mb-1 block">
+                  Max Agents
+                </label>
+                <input
+                  id="edit-max-agents"
+                  type="number"
+                  min={1}
+                  max={1000}
+                  value={editForm.max_agents}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setEditForm((f) => ({
+                      ...f,
+                      max_agents: Number(e.target.value),
+                    }))
+                  }
+                  className="w-full px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm focus:outline-none focus:border-emerald-500/50"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => setEditTenant(null)}
+                className="px-4 py-2 rounded-lg text-sm text-gray-400 bg-white/[0.05] hover:bg-white/[0.1] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await apiFetch(`/api/tenants/${editTenant.id}`, {
+                      method: 'PUT',
+                      body: JSON.stringify(editForm),
+                    });
+                    if (res.ok) {
+                      setEditTenant(null);
+                      await loadTenants();
+                    }
+                  } catch {
+                    setError('Failed to update tenant.');
+                  }
+                }}
+                disabled={!editForm.name.trim()}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <CheckCircle className="w-4 h-4" />
+                Save
               </button>
             </div>
           </div>
