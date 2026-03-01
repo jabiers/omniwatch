@@ -8,11 +8,21 @@
     "build": "turbo build",
     "dev": "turbo dev",
     "test": "turbo test",
-    "lint": "turbo lint",
+    "lint": "eslint .",
     "format": "prettier --write 'apps/**/*.{ts,tsx}' 'packages/**/*.ts'",
     "format:check": "prettier --check 'apps/**/*.{ts,tsx}' 'packages/**/*.ts'",
     "typecheck": "tsc --noEmit",
-    "clean": "turbo clean"
+    "clean": "turbo clean",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   },
   "keywords": [
     "cli",
@@ -41,16 +51,21 @@
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "@commitlint/cli": "^20.4.2",
+    "@commitlint/config-conventional": "^20.4.2",
     "@eslint/js": "^10.0.1",
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.10.0",
     "@typescript-eslint/eslint-plugin": "^8.56.1",
     "@typescript-eslint/parser": "^8.56.1",
+    "@vitest/coverage-v8": "^2.1.0",
     "acorn": "^8.16.0",
     "better-sqlite3": "^11.7.0",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "eslint": "^10.0.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.3.0",
     "nanoid": "^5.0.9",
     "ora": "^8.1.1",
     "prettier": "^3.8.1",
