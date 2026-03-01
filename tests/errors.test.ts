@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { OmniError, Errors } from '@omniwatch/shared';
+import { OmniError, Errors } from '@vigil/shared';
 
 describe('OmniError', () => {
   it('creates an error with code and message', () => {

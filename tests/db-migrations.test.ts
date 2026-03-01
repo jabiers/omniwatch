@@ -14,16 +14,18 @@ describe('Database Migrations', () => {
     it('should create _migrations table', () => {
       runMigrations(db);
 
-      const tables = db.prepare(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='_migrations'"
-      ).all();
+      const tables = db
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='_migrations'")
+        .all();
       expect(tables.length).toBe(1);
     });
 
     it('should record all 5 migrations in tracking table', () => {
       runMigrations(db);
 
-      const applied = db.prepare('SELECT version, name FROM _migrations ORDER BY version').all() as {
+      const applied = db
+        .prepare('SELECT version, name FROM _migrations ORDER BY version')
+        .all() as {
         version: number;
         name: string;
       }[];
@@ -38,7 +40,9 @@ describe('Database Migrations', () => {
     it('should record applied_at timestamp for each migration', () => {
       runMigrations(db);
 
-      const rows = db.prepare('SELECT applied_at FROM _migrations').all() as { applied_at: string }[];
+      const rows = db.prepare('SELECT applied_at FROM _migrations').all() as {
+        applied_at: string;
+      }[];
       for (const row of rows) {
         expect(row.applied_at).toBeTruthy();
         // Should be a valid datetime string
@@ -62,13 +66,18 @@ describe('Database Migrations', () => {
       runMigrations(db);
 
       // Insert test data
-      db.prepare("INSERT INTO agents (id, name, prompt, status) VALUES ('test-1', 'Test', 'do stuff', 'running')").run();
+      db.prepare(
+        "INSERT INTO agents (id, name, prompt, status) VALUES ('test-1', 'Test', 'do stuff', 'running')",
+      ).run();
 
       // Re-run migrations
       runMigrations(db);
 
       // Data should still exist
-      const agent = db.prepare("SELECT * FROM agents WHERE id = 'test-1'").get() as { id: string; name: string };
+      const agent = db.prepare("SELECT * FROM agents WHERE id = 'test-1'").get() as {
+        id: string;
+        name: string;
+      };
       expect(agent).toBeTruthy();
       expect(agent.name).toBe('Test');
     });
@@ -79,8 +88,8 @@ describe('Database Migrations', () => {
     it('should create agents table with expected columns', () => {
       runMigrations(db);
 
-      const cols = db.prepare("PRAGMA table_info(agents)").all() as { name: string }[];
-      const colNames = cols.map(c => c.name);
+      const cols = db.prepare('PRAGMA table_info(agents)').all() as { name: string }[];
+      const colNames = cols.map((c) => c.name);
 
       expect(colNames).toContain('id');
       expect(colNames).toContain('name');
@@ -100,8 +109,8 @@ describe('Database Migrations', () => {
     it('should create agent_logs table', () => {
       runMigrations(db);
 
-      const cols = db.prepare("PRAGMA table_info(agent_logs)").all() as { name: string }[];
-      const colNames = cols.map(c => c.name);
+      const cols = db.prepare('PRAGMA table_info(agent_logs)').all() as { name: string }[];
+      const colNames = cols.map((c) => c.name);
 
       expect(colNames).toContain('id');
       expect(colNames).toContain('agent_id');
@@ -113,10 +122,10 @@ describe('Database Migrations', () => {
     it('should create notifications, agent_metrics, agent_store, and ai_usage tables', () => {
       runMigrations(db);
 
-      const tables = db.prepare(
-        "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
-      ).all() as { name: string }[];
-      const tableNames = tables.map(t => t.name);
+      const tables = db
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+        .all() as { name: string }[];
+      const tableNames = tables.map((t) => t.name);
 
       expect(tableNames).toContain('notifications');
       expect(tableNames).toContain('agent_metrics');
@@ -128,10 +137,13 @@ describe('Database Migrations', () => {
       runMigrations(db);
 
       db.prepare(
-        "INSERT INTO agents (id, name, prompt, status) VALUES ('a1', 'Agent 1', 'monitor', 'creating')"
+        "INSERT INTO agents (id, name, prompt, status) VALUES ('a1', 'Agent 1', 'monitor', 'creating')",
       ).run();
 
-      const agent = db.prepare("SELECT * FROM agents WHERE id = 'a1'").get() as Record<string, unknown>;
+      const agent = db.prepare("SELECT * FROM agents WHERE id = 'a1'").get() as Record<
+        string,
+        unknown
+      >;
       expect(agent.name).toBe('Agent 1');
       expect(agent.status).toBe('creating');
       expect(agent.type).toBe('watcher'); // default
@@ -143,10 +155,10 @@ describe('Database Migrations', () => {
     it('should create mesh_events and mesh_subscriptions tables', () => {
       runMigrations(db);
 
-      const tables = db.prepare(
-        "SELECT name FROM sqlite_master WHERE type='table'"
-      ).all() as { name: string }[];
-      const names = tables.map(t => t.name);
+      const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as {
+        name: string;
+      }[];
+      const names = tables.map((t) => t.name);
 
       expect(names).toContain('mesh_events');
       expect(names).toContain('mesh_subscriptions');
@@ -155,8 +167,8 @@ describe('Database Migrations', () => {
     it('should create agent_snapshots table', () => {
       runMigrations(db);
 
-      const cols = db.prepare("PRAGMA table_info(agent_snapshots)").all() as { name: string }[];
-      const colNames = cols.map(c => c.name);
+      const cols = db.prepare('PRAGMA table_info(agent_snapshots)').all() as { name: string }[];
+      const colNames = cols.map((c) => c.name);
 
       expect(colNames).toContain('agent_id');
       expect(colNames).toContain('seq');
@@ -167,8 +179,8 @@ describe('Database Migrations', () => {
     it('should add parent_id and spawn_depth columns to agents', () => {
       runMigrations(db);
 
-      const cols = db.prepare("PRAGMA table_info(agents)").all() as { name: string }[];
-      const colNames = cols.map(c => c.name);
+      const cols = db.prepare('PRAGMA table_info(agents)').all() as { name: string }[];
+      const colNames = cols.map((c) => c.name);
 
       expect(colNames).toContain('parent_id');
       expect(colNames).toContain('spawn_depth');
@@ -180,8 +192,8 @@ describe('Database Migrations', () => {
     it('should add tenant_id and sandbox_level columns to agents', () => {
       runMigrations(db);
 
-      const cols = db.prepare("PRAGMA table_info(agents)").all() as { name: string }[];
-      const colNames = cols.map(c => c.name);
+      const cols = db.prepare('PRAGMA table_info(agents)').all() as { name: string }[];
+      const colNames = cols.map((c) => c.name);
 
       expect(colNames).toContain('tenant_id');
       expect(colNames).toContain('sandbox_level');
@@ -190,8 +202,8 @@ describe('Database Migrations', () => {
     it('should create security_events table', () => {
       runMigrations(db);
 
-      const cols = db.prepare("PRAGMA table_info(security_events)").all() as { name: string }[];
-      const colNames = cols.map(c => c.name);
+      const cols = db.prepare('PRAGMA table_info(security_events)').all() as { name: string }[];
+      const colNames = cols.map((c) => c.name);
 
       expect(colNames).toContain('agent_id');
       expect(colNames).toContain('event_type');
@@ -201,10 +213,10 @@ describe('Database Migrations', () => {
     it('should create message_queue and dead_letters tables', () => {
       runMigrations(db);
 
-      const tables = db.prepare(
-        "SELECT name FROM sqlite_master WHERE type='table'"
-      ).all() as { name: string }[];
-      const names = tables.map(t => t.name);
+      const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as {
+        name: string;
+      }[];
+      const names = tables.map((t) => t.name);
 
       expect(names).toContain('message_queue');
       expect(names).toContain('dead_letters');
@@ -213,10 +225,10 @@ describe('Database Migrations', () => {
     it('should create tenants and users tables', () => {
       runMigrations(db);
 
-      const tables = db.prepare(
-        "SELECT name FROM sqlite_master WHERE type='table'"
-      ).all() as { name: string }[];
-      const names = tables.map(t => t.name);
+      const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as {
+        name: string;
+      }[];
+      const names = tables.map((t) => t.name);
 
       expect(names).toContain('tenants');
       expect(names).toContain('users');
@@ -225,10 +237,10 @@ describe('Database Migrations', () => {
     it('should create metric_rollups and alert_rules tables', () => {
       runMigrations(db);
 
-      const tables = db.prepare(
-        "SELECT name FROM sqlite_master WHERE type='table'"
-      ).all() as { name: string }[];
-      const names = tables.map(t => t.name);
+      const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as {
+        name: string;
+      }[];
+      const names = tables.map((t) => t.name);
 
       expect(names).toContain('metric_rollups');
       expect(names).toContain('alert_rules');
@@ -237,7 +249,10 @@ describe('Database Migrations', () => {
     it('should insert default tenant', () => {
       runMigrations(db);
 
-      const tenant = db.prepare("SELECT * FROM tenants WHERE id = 'default'").get() as Record<string, unknown>;
+      const tenant = db.prepare("SELECT * FROM tenants WHERE id = 'default'").get() as Record<
+        string,
+        unknown
+      >;
       expect(tenant).toBeTruthy();
       expect(tenant.name).toBe('Default');
       expect(tenant.plan).toBe('free');
@@ -247,9 +262,12 @@ describe('Database Migrations', () => {
     it('should create default admin user', () => {
       runMigrations(db);
 
-      const user = db.prepare("SELECT * FROM users WHERE id = 'admin'").get() as Record<string, unknown>;
+      const user = db.prepare("SELECT * FROM users WHERE id = 'admin'").get() as Record<
+        string,
+        unknown
+      >;
       expect(user).toBeTruthy();
-      expect(user.email).toBe('admin@omniwatch.local');
+      expect(user.email).toBe('admin@vigil.local');
       expect(user.role).toBe('admin');
       expect(user.tenant_id).toBe('default');
     });
@@ -260,19 +278,34 @@ describe('Database Migrations', () => {
     it('should create all 18 expected tables', () => {
       runMigrations(db);
 
-      const tables = db.prepare(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != '_migrations'"
-      ).all() as { name: string }[];
+      const tables = db
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != '_migrations'",
+        )
+        .all() as { name: string }[];
 
       const expected = [
-        'agents', 'agent_logs', 'notifications', 'agent_metrics',
-        'agent_store', 'ai_usage', 'mesh_events', 'mesh_subscriptions',
-        'agent_snapshots', 'security_events', 'message_queue', 'dead_letters',
-        'tenants', 'users', 'metric_rollups', 'alert_rules',
-        'marketplace_recipes', 'oauth_sessions',
+        'agents',
+        'agent_logs',
+        'notifications',
+        'agent_metrics',
+        'agent_store',
+        'ai_usage',
+        'mesh_events',
+        'mesh_subscriptions',
+        'agent_snapshots',
+        'security_events',
+        'message_queue',
+        'dead_letters',
+        'tenants',
+        'users',
+        'metric_rollups',
+        'alert_rules',
+        'marketplace_recipes',
+        'oauth_sessions',
       ];
 
-      const tableNames = tables.map(t => t.name);
+      const tableNames = tables.map((t) => t.name);
       for (const name of expected) {
         expect(tableNames).toContain(name);
       }

@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { rpcCall } from '../ipc-client.js';
 import { ensureDaemon } from './daemon.js';
-import type { Agent } from '@omniwatch/shared';
+import type { Agent } from '@vigil/shared';
 
 export const startCommand = new Command('start')
   .description('Start a stopped agent')
@@ -10,7 +10,7 @@ export const startCommand = new Command('start')
   .action(async (id: string) => {
     try {
       await ensureDaemon();
-      const agent = await rpcCall('agent.start', { id }) as Agent;
+      const agent = (await rpcCall('agent.start', { id })) as Agent;
       console.log(chalk.green(`Agent ${chalk.cyan(agent.name)} started.`));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);

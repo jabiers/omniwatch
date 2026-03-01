@@ -7,7 +7,7 @@ import {
   encodeMessage,
   parseMessages,
   RPC_ERRORS,
-} from '@omniwatch/shared';
+} from '@vigil/shared';
 
 describe('createRequest', () => {
   it('creates a JSON-RPC 2.0 request', () => {

@@ -1,5 +1,5 @@
 {
-  "name": "@omniwatch/web",
+  "name": "@vigil/web",
   "version": "1.7.0",
   "private": true,
   "scripts": {
@@ -10,9 +10,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@omniwatch/api": "workspace:*",
-    "@omniwatch/db": "workspace:*",
-    "@omniwatch/shared": "workspace:*",
+    "@vigil/api": "workspace:*",
+    "@vigil/db": "workspace:*",
+    "@vigil/shared": "workspace:*",
     "hono": "^4.6.0",
     "lucide-react": "^0.468.0",
     "next": "^15.1.0",

@@ -1,9 +1,9 @@
-# OmniWatch v0.4 Gap Analysis (Revision 3)
+# Vigil v0.4 Gap Analysis (Revision 3)
 
 > **Analysis Type**: Gap Analysis (Design vs Implementation)
 > **Date**: 2026-02-27
-> **Design Doc**: [omniwatch-v0.4.design.md](../../02-design/features/omniwatch-v0.4.design.md)
-> **Plan Doc**: [omniwatch-v0.4.plan.md](../../01-plan/features/omniwatch-v0.4.plan.md)
+> **Design Doc**: [vigil-v0.4.design.md](../../02-design/features/vigil-v0.4.design.md)
+> **Plan Doc**: [vigil-v0.4.plan.md](../../01-plan/features/vigil-v0.4.plan.md)
 
 ## Revision History
 
@@ -101,7 +101,7 @@ Completely unimplemented. No plugin interfaces, loading, or manifest.
 
 ## FR-06: npm Publish — 35% (DEFERRED v0.5)
 
-`bin.omni` present. Missing: `bin.omnid`, `prepublishOnly`, `.npmignore`, root `private: true` blocks publish.
+`bin.omni` present. Missing: `bin.vigild`, `prepublishOnly`, `.npmignore`, root `private: true` blocks publish.
 
 ---
 

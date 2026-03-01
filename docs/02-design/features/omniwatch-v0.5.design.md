@@ -1,4 +1,4 @@
-# OmniWatch v0.5 Design — Agent Mesh + Spawn Chain + Time Travel + Omni MCP
+# Vigil v0.5 Design — Agent Mesh + Spawn Chain + Time Travel + Omni MCP
 
 ## 1. Architecture Overview
 

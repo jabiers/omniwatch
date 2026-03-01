@@ -1,13 +1,13 @@
-# OmniWatch MVP Design Document
+# Vigil MVP Design Document
 
 > **Summary**: CLI 기반 AI 에이전트 관리 플랫폼 - 3계층 아키텍처 상세 설계
 >
-> **Project**: OmniWatch
+> **Project**: Vigil
 > **Version**: 0.1.0
 > **Author**: Paul
 > **Date**: 2026-02-27
 > **Status**: Approved (v2 - CLI-first rewrite)
-> **Planning Doc**: [omniwatch-mvp.plan.md](../../01-plan/features/omniwatch-mvp.plan.md)
+> **Planning Doc**: [vigil-mvp.plan.md](../../01-plan/features/vigil-mvp.plan.md)
 
 ---
 
@@ -29,7 +29,7 @@
 └────────────────────┬───────────────────────────────┘
                      │ Unix Domain Socket (JSON-RPC 2.0)
 ┌────────────────────▼───────────────────────────────┐
-│  Daemon Layer (omnid)                               │
+│  Daemon Layer (vigild)                               │
 │  ┌────────────┐ ┌────────────┐ ┌────────────────┐  │
 │  │ RPC Server │ │ Agent Mgr  │ │ Code Generator │  │
 │  └────────────┘ └────────────┘ └────────────────┘  │
@@ -53,9 +53,9 @@
 ### 1.2 Process Lifecycle
 
 ```
-$ omni watch "..."
+$ vigil watch "..."
     │
-    ├─ 데몬 없으면 → omnid 자동 시작 (detached)
+    ├─ 데몬 없으면 → vigild 자동 시작 (detached)
     │
     ├─ Unix Socket으로 JSON-RPC 요청 전송
     │   { method: "agent.create", params: { prompt: "..." } }
@@ -74,7 +74,7 @@ $ omni watch "..."
 ## 2. Project Structure
 
 ```
-omniwatch/
+vigil/
 ├── package.json
 ├── tsconfig.json
 ├── tsup.config.ts
@@ -121,7 +121,7 @@ omniwatch/
 │   │
 │   ├── agent/                      # ═══ Agent Runtime ═══
 │   │   ├── runtime.ts              # 에이전트 프로세스 래퍼 (fork 대상)
-│   │   ├── sdk.ts                  # omni.* SDK
+│   │   ├── sdk.ts                  # vigil.* SDK
 │   │   └── templates/              # 코드 생성 시스템 프롬프트
 │   │       └── base-prompt.ts
 │   │
@@ -143,14 +143,14 @@ omniwatch/
 └── docs/
 ```
 
-### Runtime Data Directory (`~/.omniwatch/`)
+### Runtime Data Directory (`~/.vigil/`)
 
 ```
-~/.omniwatch/
+~/.vigil/
 ├── config.toml              # 전역 설정
-├── omniwatch.db             # SQLite 데이터베이스
-├── omnid.pid                # 데몬 PID
-├── omnid.sock               # Unix Domain Socket
+├── vigil.db             # SQLite 데이터베이스
+├── vigild.pid                # 데몬 PID
+├── vigild.sock               # Unix Domain Socket
 ├── agents/                  # 에이전트별 디렉토리
 │   ├── agent-a1b2c3d4/
 │   │   ├── index.js         # 생성된 에이전트 코드
@@ -211,7 +211,7 @@ CREATE TABLE notifications (
   created_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- 에이전트 KV 저장소 (omni.store용)
+-- 에이전트 KV 저장소 (vigil.store용)
 CREATE TABLE agent_store (
   agent_id    TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
   key         TEXT NOT NULL,
@@ -267,7 +267,7 @@ CREATE TABLE agent_store (
 ### 4.1 Socket Path
 
 ```
-~/.omniwatch/omnid.sock
+~/.vigil/vigild.sock
 ```
 
 ### 4.2 RPC Methods
@@ -332,7 +332,7 @@ interface RPCNotification {
 ### 5.2 Agent SDK API
 
 ```typescript
-interface OmniSDK {
+interface VigilSDK {
   // HTTP 요청
   fetch(url: string, options?: RequestInit): Promise<Response>;
 
@@ -366,22 +366,22 @@ export default async function agent(omni) {
 
   async function check() {
     try {
-      const response = await omni.fetch('https://...');
+      const response = await vigil.fetch('https://...');
       const data = parseResponse(response);
 
-      const lastValue = await omni.store.get('lastValue');
+      const lastValue = await vigil.store.get('lastValue');
 
       if (shouldNotify(data, lastValue)) {
-        await omni.notify(`조건 충족: ${data.value}`, {
+        await vigil.notify(`조건 충족: ${data.value}`, {
           title: 'Price Alert',
           severity: 'info'
         });
       }
 
-      await omni.store.set('lastValue', data.value);
-      omni.log.info(`Checked: ${data.value}`);
+      await vigil.store.set('lastValue', data.value);
+      vigil.log.info(`Checked: ${data.value}`);
     } catch (err) {
-      omni.log.error(`Check failed: ${err.message}`);
+      vigil.log.error(`Check failed: ${err.message}`);
       throw err; // 런타임이 포착하여 데몬에 보고
     }
   }
@@ -427,20 +427,20 @@ export default async function agent(omni) {
 ## 7. Key Code Generation Prompt
 
 ```
-You are an agent code generator for OmniWatch.
+You are an agent code generator for Vigil.
 Generate a self-contained Node.js monitoring script.
 
 ## Available SDK
-- omni.fetch(url, options?) - HTTP request
-- omni.notify(message, { title?, severity? }) - Send notification
-- omni.store.get/set/delete(key, value?) - Persistent KV storage
-- omni.log.info/warn/error(message, meta?) - Structured logging
+- vigil.fetch(url, options?) - HTTP request
+- vigil.notify(message, { title?, severity? }) - Send notification
+- vigil.store.get/set/delete(key, value?) - Persistent KV storage
+- vigil.log.info/warn/error(message, meta?) - Structured logging
 
 ## Rules
 1. Export a default async function that receives `omni` SDK
-2. Use omni.fetch() instead of raw axios/fetch for HTTP
-3. Use omni.store for state persistence between runs
-4. Use omni.notify() when conditions are met
+2. Use vigil.fetch() instead of raw axios/fetch for HTTP
+3. Use vigil.store for state persistence between runs
+4. Use vigil.notify() when conditions are met
 5. Handle errors with try/catch, let uncaught errors propagate to runtime
 6. Use setInterval for periodic checks
 7. Only use whitelisted packages: axios, cheerio, dayjs, lodash
@@ -477,7 +477,7 @@ Generate a self-contained Node.js monitoring script.
 | Unit | agent-manager, health-monitor | vitest |
 | Integration | CLI → Daemon IPC 왕복 | vitest |
 | Integration | 에이전트 생성 → 실행 → 로그 수집 | vitest |
-| E2E | `omni watch "..."` 전체 흐름 | vitest + child_process |
+| E2E | `vigil watch "..."` 전체 흐름 | vitest + child_process |
 
 ---
 

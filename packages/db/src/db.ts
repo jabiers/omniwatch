@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { DB_PATH } from '@omniwatch/shared';
+import { DB_PATH } from '@vigil/shared';
 import { runMigrations } from './migrations/index.js';
 
 let db: Database.Database | null = null;

@@ -1,4 +1,4 @@
-# OmniWatch v0.9 Design — Code Quality & Consistency
+# Vigil v0.9 Design — Code Quality & Consistency
 
 ## Group 1: TypeScript Strict Mode
 
@@ -85,7 +85,7 @@ broadcast('agent:status', { id, status: 'stopped' });
 
 ### 4-1. README 구조
 ```
-# OmniWatch
+# Vigil
 ## Quick Start (Docker)
 ## Features
 ## Architecture

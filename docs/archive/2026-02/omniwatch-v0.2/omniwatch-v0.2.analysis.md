@@ -1,8 +1,8 @@
-# OmniWatch v0.2 Gap Analysis Report
+# Vigil v0.2 Gap Analysis Report
 
-> **Feature**: omniwatch-v0.2
+> **Feature**: vigil-v0.2
 > **Date**: 2026-02-27
-> **Design Doc**: docs/02-design/features/omniwatch-v0.2.design.md
+> **Design Doc**: docs/02-design/features/vigil-v0.2.design.md
 > **Match Rate**: 97%
 > **Iteration**: 0 (initial check)
 
@@ -53,7 +53,7 @@
 
 | FR | Requirement | Status |
 |----|-------------|:------:|
-| FR-01 | `omni dash` TUI dashboard | Done |
+| FR-01 | `vigil dash` TUI dashboard | Done |
 | FR-02 | Real-time agent status table | Done |
 | FR-03 | Log viewer on agent selection | Done |
 | FR-04 | Keyboard shortcuts q/r/s/x/d | Done |
@@ -64,7 +64,7 @@
 | FR-09 | Config set for notification channels | Done |
 | FR-10 | Per-channel severity filtering | Done |
 | FR-11 | Notification plugin system | Done |
-| FR-12 | `omni chat <id>` interactive mode | Done |
+| FR-12 | `vigil chat <id>` interactive mode | Done |
 | FR-13 | Natural language agent modification | Done |
 | FR-14 | Natural language status/log query | Done |
 | FR-15 | Code apply + restart after confirm | Done |

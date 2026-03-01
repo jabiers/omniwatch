@@ -1,5 +1,5 @@
 import type { NotificationChannel, NotificationPayload } from './types.js';
-import { loadConfig } from '@omniwatch/db';
+import { loadConfig } from '@vigil/db';
 
 export class TelegramChannel implements NotificationChannel {
   name = 'telegram';
@@ -11,11 +11,16 @@ export class TelegramChannel implements NotificationChannel {
 
   async send(payload: NotificationPayload): Promise<void> {
     const config = loadConfig();
-    const icon = payload.severity === 'critical' ? '\u{1F534}'
-               : payload.severity === 'warning' ? '\u{1F7E1}' : '\u{1F7E2}';
+    const icon =
+      payload.severity === 'critical'
+        ? '\u{1F534}'
+        : payload.severity === 'warning'
+          ? '\u{1F7E1}'
+          : '\u{1F7E2}';
 
-    const text = `${icon} <b>${payload.title}</b>\n\n${payload.message}\n\n`
-               + `<i>Agent: ${payload.agentId}</i>`;
+    const text =
+      `${icon} <b>${payload.title}</b>\n\n${payload.message}\n\n` +
+      `<i>Agent: ${payload.agentId}</i>`;
 
     const response = await fetch(
       `https://api.telegram.org/bot${config.notification.telegram_token}/sendMessage`,

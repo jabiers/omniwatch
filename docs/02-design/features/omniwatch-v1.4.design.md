@@ -1,11 +1,11 @@
-# OmniWatch v1.4 Design - UX & Performance
+# Vigil v1.4 Design - UX & Performance
 
 ## Group 1: Theme System
 
 ### 1-1. Theme store
 Create `apps/web/src/lib/theme-store.ts`:
 - Uses `useSyncExternalStore` pattern (same as ws-store)
-- Reads initial theme from `localStorage.getItem('omniwatch-theme')` (default: 'dark')
+- Reads initial theme from `localStorage.getItem('vigil-theme')` (default: 'dark')
 - Exports `useTheme()` hook returning `{ theme, toggleTheme }`
 - On toggle: update localStorage + toggle `dark` class on `<html>`
 

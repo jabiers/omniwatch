@@ -1,5 +1,5 @@
 import type { NotificationChannel, NotificationPayload } from './types.js';
-import { loadConfig } from '@omniwatch/db';
+import { loadConfig } from '@vigil/db';
 
 export class DiscordChannel implements NotificationChannel {
   name = 'discord';
@@ -11,23 +11,29 @@ export class DiscordChannel implements NotificationChannel {
 
   async send(payload: NotificationPayload): Promise<void> {
     const config = loadConfig();
-    const color = payload.severity === 'critical' ? 0xFF0000
-                : payload.severity === 'warning' ? 0xFFA500 : 0x36A64F;
+    const color =
+      payload.severity === 'critical'
+        ? 0xff0000
+        : payload.severity === 'warning'
+          ? 0xffa500
+          : 0x36a64f;
 
     const response = await fetch(config.notification.discord_webhook, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        embeds: [{
-          title: payload.title,
-          description: payload.message,
-          color,
-          fields: [
-            { name: 'Agent', value: payload.agentId, inline: true },
-            { name: 'Severity', value: payload.severity, inline: true },
-          ],
-          timestamp: payload.timestamp,
-        }],
+        embeds: [
+          {
+            title: payload.title,
+            description: payload.message,
+            color,
+            fields: [
+              { name: 'Agent', value: payload.agentId, inline: true },
+              { name: 'Severity', value: payload.severity, inline: true },
+            ],
+            timestamp: payload.timestamp,
+          },
+        ],
       }),
     });
 

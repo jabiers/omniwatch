@@ -6,8 +6,8 @@
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "paths": {
-      "@omniwatch/shared": ["./packages/shared/src/index.ts"],
-      "@omniwatch/db": ["./packages/db/src/index.ts"]
+      "@vigil/shared": ["./packages/shared/src/index.ts"],
+      "@vigil/db": ["./packages/db/src/index.ts"]
     }
   },
   "include": [

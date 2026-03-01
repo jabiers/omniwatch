@@ -4,12 +4,12 @@ services:
       context: .
       target: api
     ports:
-      - "3456:3456"
+      - '3456:3456'
     volumes:
-      - omniwatch-data:/data
+      - vigil-data:/data
     environment:
       - NODE_ENV=production
-      - OMNI_DATA_DIR=/data
+      - VIGIL_DATA_DIR=/data
     restart: unless-stopped
 
   web:
@@ -17,7 +17,7 @@ services:
       context: .
       target: web
     ports:
-      - "3457:3000"
+      - '3457:3000'
     environment:
       - NODE_ENV=production
     depends_on:
@@ -25,4 +25,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  omniwatch-data:
+  vigil-data:

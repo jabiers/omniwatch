@@ -1,4 +1,4 @@
-# OmniWatch v1.3 Plan - Version Sync & Developer Experience
+# Vigil v1.3 Plan - Version Sync & Developer Experience
 
 ## Overview
 - **Version**: 1.3.0

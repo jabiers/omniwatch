@@ -1,8 +1,8 @@
-# OmniWatch v0.3 Plan - Production Hardening
+# Vigil v0.3 Plan - Production Hardening
 
 ## 1. Overview
 
-**Feature Name**: omniwatch-v0.3
+**Feature Name**: vigil-v0.3
 **Version**: 0.3.0
 **Goal**: Definition.md의 미구현 요구사항을 완성하고 프로덕션 수준의 안정성을 확보한다.
 **Priority**: High
@@ -13,7 +13,7 @@
 v0.2까지 기본 아키텍처(CLI→Daemon→Agent)와 핵심 기능(watch, TUI, chat, notifications)이 구현되었다.
 그러나 Definition.md에서 명시한 여러 요구사항이 미구현 또는 불완전 상태:
 
-- Agent Types: `omni do`, `omni auto` 미구현 (Definition §4)
+- Agent Types: `vigil do`, `vigil auto` 미구현 (Definition §4)
 - Resource Enforcement: MAX_AGENTS/memory limit 미적용 (Definition §3.B.4)
 - Code Validator: 무한루프/복잡도 탐지 부재 (Definition §3.A.2)
 - Self-Healing: AI 기반 근본 원인 분석 부재 (Definition §3.C.1)
@@ -22,14 +22,14 @@ v0.2까지 기본 아키텍처(CLI→Daemon→Agent)와 핵심 기능(watch, TUI
 
 ## 3. Feature Requirements
 
-### FR-01: Agent Type - Doer (`omni do`)
-- `omni do "<prompt>"` 명령으로 주기적/단발 작업 에이전트 생성
+### FR-01: Agent Type - Doer (`vigil do`)
+- `vigil do "<prompt>"` 명령으로 주기적/단발 작업 에이전트 생성
 - `--once` 플래그: 1회 실행 후 자동 종료
 - `--schedule "<cron>"` 플래그: cron 표현식 기반 반복 실행
 - 코드 생성 시 Doer 전용 시스템 프롬프트 사용
 
-### FR-02: Agent Type - Auto (`omni auto`)
-- `omni auto "<prompt>"` 명령으로 자율 판단 에이전트 생성
+### FR-02: Agent Type - Auto (`vigil auto`)
+- `vigil auto "<prompt>"` 명령으로 자율 판단 에이전트 생성
 - 자체 판단으로 알림/작업 실행
 - 에이전트 간 독립적 의사결정 루프
 - 코드 생성 시 Auto 전용 시스템 프롬프트 사용
@@ -61,9 +61,9 @@ v0.2까지 기본 아키텍처(CLI→Daemon→Agent)와 핵심 기능(watch, TUI
 - 억제된 알림 수 카운터
 
 ### FR-07: SDK Expansion
-- `omni.sleep(ms)`: Promise 기반 대기
-- `omni.retry(fn, opts)`: 재시도 래퍼 (maxRetries, delay, backoff)
-- `omni.timeout(fn, ms)`: 타임아웃 래퍼
+- `vigil.sleep(ms)`: Promise 기반 대기
+- `vigil.retry(fn, opts)`: 재시도 래퍼 (maxRetries, delay, backoff)
+- `vigil.timeout(fn, ms)`: 타임아웃 래퍼
 
 ### FR-08: Database Improvements
 - `agents` 테이블 인덱스: `status`, `created_at`
@@ -71,8 +71,8 @@ v0.2까지 기본 아키텍처(CLI→Daemon→Agent)와 핵심 기능(watch, TUI
 - `agent_metrics` 테이블 추가: run_count, success_count, avg_duration, last_duration
 
 ### FR-09: Agent Count Enforcement in CLI
-- `omni list` 에 running/total 카운트 표시
-- `omni status` 에 리소스 사용 현황 표시
+- `vigil list` 에 running/total 카운트 표시
+- `vigil status` 에 리소스 사용 현황 표시
 
 ### FR-10: Integration Tests
 - Daemon 시작/종료 E2E 테스트
@@ -128,7 +128,7 @@ v0.2까지 기본 아키텍처(CLI→Daemon→Agent)와 핵심 기능(watch, TUI
 
 ## 6. Success Criteria
 
-- [ ] `omni do` / `omni auto` 정상 동작
+- [ ] `vigil do` / `vigil auto` 정상 동작
 - [ ] MAX_AGENTS 초과 시 에러 반환
 - [ ] 무한루프 코드 검증 시 탐지
 - [ ] Self-healing 시 AI 컨텍스트 포함

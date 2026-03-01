@@ -76,7 +76,7 @@ export default function Hero() {
         <div className="glass-card inline-flex items-center gap-3 px-5 py-3 rounded-xl font-mono text-sm">
           <span className="text-emerald-400">$</span>
           <span className="text-gray-300">
-            omni watch &quot;Alert me when AirPods Pro drops below $250&quot;
+            vigil watch &quot;Alert me when AirPods Pro drops below $250&quot;
           </span>
         </div>
       </div>

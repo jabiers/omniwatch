@@ -35,7 +35,7 @@ export default function Navbar() {
                 <path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" />
               </svg>
             </div>
-            <span className="text-lg font-semibold tracking-tight text-white">OmniWatch</span>
+            <span className="text-lg font-semibold tracking-tight text-white">Vigil</span>
           </a>
 
           {/* Desktop nav links */}
@@ -54,7 +54,7 @@ export default function Navbar() {
           {/* GitHub button + mobile toggle */}
           <div className="flex items-center gap-3">
             <a
-              href="https://github.com/jabiers/omniwatch"
+              href="https://github.com/jabiers/vigil"
               target="_blank"
               rel="noopener noreferrer"
               className="hidden sm:inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
@@ -126,7 +126,7 @@ export default function Navbar() {
               </a>
             ))}
             <a
-              href="https://github.com/jabiers/omniwatch"
+              href="https://github.com/jabiers/vigil"
               target="_blank"
               rel="noopener noreferrer"
               className="block mt-3 text-center bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"

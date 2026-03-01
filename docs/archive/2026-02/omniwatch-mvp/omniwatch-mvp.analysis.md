@@ -1,7 +1,7 @@
-# Gap Analysis: omniwatch-mvp
+# Gap Analysis: vigil-mvp
 
 > **Date**: 2026-02-27
-> **Design Doc**: docs/02-design/features/omniwatch-mvp.design.md
+> **Design Doc**: docs/02-design/features/vigil-mvp.design.md
 > **Match Rate**: 90% (iteration 1: 78% → 90%)
 > **Status**: Pass
 
@@ -58,7 +58,7 @@
 | Design File | Status | Notes |
 |-------------|:------:|-------|
 | agent/runtime.ts | Implemented | SDK init, code load, heartbeat, signals |
-| agent/sdk.ts | Implemented | OmniSDK interface fully matches design |
+| agent/sdk.ts | Implemented | VigilSDK interface fully matches design |
 | agent/templates/base-prompt.ts | Missing | System prompt inlined in code-generator.ts |
 
 ### CLI Layer
@@ -85,7 +85,7 @@
 
 | # | Item | Impact | FR |
 |---|------|--------|-----|
-| 1 | TUI Dashboard (`omni dash`) + all Ink UI components | Medium | FR-07 |
+| 1 | TUI Dashboard (`vigil dash`) + all Ink UI components | Medium | FR-07 |
 | 2 | `agent.logs.stream` RPC method | Medium | FR-03 |
 | 3 | `--follow` flag for logs command | Medium | FR-03 |
 | 4 | Code preview + user confirm step | Low | FR-16 |

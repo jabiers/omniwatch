@@ -1,9 +1,9 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { AGENTS_DIR, MAX_HEAL_ATTEMPTS, log } from '@omniwatch/shared';
-import type { Agent, AgentLog } from '@omniwatch/shared';
-import { getDb } from '@omniwatch/db';
+import { AGENTS_DIR, MAX_HEAL_ATTEMPTS, log } from '@vigil/shared';
+import type { Agent, AgentLog } from '@vigil/shared';
+import { getDb } from '@vigil/db';
 import { getAgent, updateAgent, startAgent } from './agent-manager.js';
 import { captureSnapshot } from './time-travel.js';
 import { regenerateAgentCode } from './code-generator.js';

@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { rpcCall, rpcStream } from '../ipc-client.js';
 import { ensureDaemon } from './daemon.js';
-import type { AgentLog } from '@omniwatch/shared';
+import type { AgentLog } from '@vigil/shared';
 
 const LEVEL_COLORS: Record<string, (s: string) => string> = {
   debug: chalk.gray,
@@ -22,11 +22,11 @@ export const logsCommand = new Command('logs')
       await ensureDaemon();
 
       // Show recent logs first
-      const logs = await rpcCall('agent.logs', {
+      const logs = (await rpcCall('agent.logs', {
         id,
         limit: parseInt(options.limit, 10),
         level: options.level,
-      }) as AgentLog[];
+      })) as AgentLog[];
 
       if (logs.length === 0 && !options.follow) {
         console.log(chalk.dim('No logs found.'));
@@ -70,7 +70,9 @@ function printLogEntry(entry: AgentLog): void {
     try {
       const meta = JSON.parse(entry.metadata);
       console.log(chalk.dim(`         ${JSON.stringify(meta)}`));
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 }
 

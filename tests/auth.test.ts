@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateApiKey, hashApiKey, isValidApiKeyFormat, API_KEY_PREFIX } from '@omniwatch/shared';
+import { generateApiKey, hashApiKey, isValidApiKeyFormat, API_KEY_PREFIX } from '@vigil/shared';
 
 describe('Auth Utilities', () => {
   describe('generateApiKey', () => {
@@ -10,8 +10,8 @@ describe('Auth Utilities', () => {
 
     it('should generate a key with correct length', () => {
       const key = generateApiKey();
-      // omni_ (5) + 32 hex chars = 37
-      expect(key.length).toBe(37);
+      // vigil_ (6) + 32 hex chars = 38
+      expect(key.length).toBe(38);
     });
 
     it('should generate unique keys', () => {
@@ -29,7 +29,7 @@ describe('Auth Utilities', () => {
 
   describe('hashApiKey', () => {
     it('should return a SHA-256 hash (64 hex chars)', () => {
-      const hash = hashApiKey('omni_abc123');
+      const hash = hashApiKey('vigil_abc123');
       expect(hash.length).toBe(64);
       expect(/^[0-9a-f]+$/.test(hash)).toBe(true);
     });
@@ -40,8 +40,8 @@ describe('Auth Utilities', () => {
     });
 
     it('should produce different hashes for different keys', () => {
-      const hash1 = hashApiKey('omni_key1');
-      const hash2 = hashApiKey('omni_key2');
+      const hash1 = hashApiKey('vigil_key1');
+      const hash2 = hashApiKey('vigil_key2');
       expect(hash1).not.toBe(hash2);
     });
   });
@@ -61,11 +61,11 @@ describe('Auth Utilities', () => {
     });
 
     it('should reject keys with wrong length', () => {
-      expect(isValidApiKeyFormat('omni_short')).toBe(false);
+      expect(isValidApiKeyFormat('vigil_short')).toBe(false);
     });
 
     it('should reject keys with non-hex chars', () => {
-      expect(isValidApiKeyFormat('omni_' + 'g'.repeat(32))).toBe(false);
+      expect(isValidApiKeyFormat('vigil_' + 'g'.repeat(32))).toBe(false);
     });
   });
 });

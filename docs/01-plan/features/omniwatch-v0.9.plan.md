@@ -1,4 +1,4 @@
-# OmniWatch v0.9 Plan — Code Quality & Consistency
+# Vigil v0.9 Plan — Code Quality & Consistency
 
 ## Overview
 v0.8에서 프로덕션 인프라를 갖췄다면, v0.9는 **코드 품질 통일과 UX 일관성**에 집중.

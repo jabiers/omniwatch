@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text, useInput } from 'ink';
-import type { Agent } from '@omniwatch/shared';
+import type { Agent } from '@vigil/shared';
 
 interface AgentTableProps {
   agents: Agent[];
@@ -10,9 +10,9 @@ interface AgentTableProps {
 }
 
 const STATUS_ICON: Record<string, string> = {
-  running: '\u25CF',   // filled circle
-  stopped: '\u25CB',   // empty circle
-  error: '\u2715',     // cross
+  running: '\u25CF', // filled circle
+  stopped: '\u25CB', // empty circle
+  error: '\u2715', // cross
   creating: '\u25CB',
   ready: '\u25CB',
   healing: '\u25CF',
@@ -29,7 +29,12 @@ const STATUS_COLOR: Record<string, string> = {
   destroyed: 'gray',
 };
 
-export function AgentTable({ agents, selectedId, onSelect, onAction }: AgentTableProps): React.ReactElement {
+export function AgentTable({
+  agents,
+  selectedId,
+  onSelect,
+  onAction,
+}: AgentTableProps): React.ReactElement {
   useInput((input, key) => {
     const currentIdx = agents.findIndex((a) => a.id === selectedId);
 
@@ -47,7 +52,9 @@ export function AgentTable({ agents, selectedId, onSelect, onAction }: AgentTabl
   if (agents.length === 0) {
     return (
       <Box paddingX={1} paddingY={1}>
-        <Text dimColor>No agents. Run &quot;omni watch &quot;prompt&quot;&quot; to create one.</Text>
+        <Text dimColor>
+          No agents. Run &quot;vigil watch &quot;prompt&quot;&quot; to create one.
+        </Text>
       </Box>
     );
   }
@@ -55,10 +62,18 @@ export function AgentTable({ agents, selectedId, onSelect, onAction }: AgentTabl
   return (
     <Box flexDirection="column" paddingX={1}>
       <Box gap={2}>
-        <Text bold dimColor>{'  NAME'.padEnd(22)}</Text>
-        <Text bold dimColor>{'STATUS'.padEnd(10)}</Text>
-        <Text bold dimColor>{'PID'.padEnd(8)}</Text>
-        <Text bold dimColor>LAST RUN</Text>
+        <Text bold dimColor>
+          {'  NAME'.padEnd(22)}
+        </Text>
+        <Text bold dimColor>
+          {'STATUS'.padEnd(10)}
+        </Text>
+        <Text bold dimColor>
+          {'PID'.padEnd(8)}
+        </Text>
+        <Text bold dimColor>
+          LAST RUN
+        </Text>
       </Box>
       {agents.map((agent) => {
         const isSelected = agent.id === selectedId;

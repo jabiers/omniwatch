@@ -5,7 +5,7 @@ const mockRun = vi.fn().mockReturnValue({ changes: 0 });
 const mockAll = vi.fn().mockReturnValue([]);
 const mockGet = vi.fn();
 
-vi.mock('@omniwatch/db', () => ({
+vi.mock('@vigil/db', () => ({
   getDb: () => ({
     prepare: (_sql: string) => ({
       run: mockRun,
@@ -15,8 +15,8 @@ vi.mock('@omniwatch/db', () => ({
   }),
 }));
 
-vi.mock('@omniwatch/shared', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@omniwatch/shared')>();
+vi.mock('@vigil/shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@vigil/shared')>();
   return {
     ...actual,
     log: vi.fn(),

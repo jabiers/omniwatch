@@ -1,4 +1,4 @@
-# OmniWatch v1.5 Plan - Reusable Components & Dashboard Polish
+# Vigil v1.5 Plan - Reusable Components & Dashboard Polish
 
 ## Overview
 - **Version**: 1.5.0

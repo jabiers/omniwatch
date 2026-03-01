@@ -1,8 +1,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { AGENTS_DIR } from '@omniwatch/shared';
-import type { AgentLog } from '@omniwatch/shared';
-import { getDb } from '@omniwatch/db';
+import { AGENTS_DIR } from '@vigil/shared';
+import type { AgentLog } from '@vigil/shared';
+import { getDb } from '@vigil/db';
 import { getAgent } from './agent-manager.js';
 import { validateCode } from './code-validator.js';
 import { getAIProvider, setAIContext } from './ai-provider.js';
@@ -51,7 +51,7 @@ export async function handleChat(
 
   const ai = getAIProvider();
 
-  const systemPrompt = `You are an AI assistant helping modify an OmniWatch monitoring agent.
+  const systemPrompt = `You are an AI assistant helping modify a Vigil monitoring agent.
 
 Current agent: ${agent.name} (${agent.id})
 Status: ${agent.status}

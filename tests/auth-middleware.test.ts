@@ -11,7 +11,7 @@ const mockAll = vi.fn().mockReturnValue([]);
 // set up mocks in the EXACT order that DB calls occur:
 //   1. Auth middleware's DB call (if any — api key lookup or session lookup)
 //   2. Route handler's DB calls
-vi.mock('@omniwatch/db', () => ({
+vi.mock('@vigil/db', () => ({
   getDb: () => ({
     prepare: (_sql: string) => ({
       run: (...args: unknown[]) => mockRun(...args),
@@ -24,8 +24,8 @@ vi.mock('@omniwatch/db', () => ({
   }),
 }));
 
-vi.mock('@omniwatch/shared', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@omniwatch/shared')>();
+vi.mock('@vigil/shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@vigil/shared')>();
   return {
     ...actual,
     log: vi.fn(),
@@ -105,7 +105,7 @@ describe('Auth Middleware', () => {
       const res = await app.request('/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey: 'omni_invalid' }),
+        body: JSON.stringify({ apiKey: 'vigil_invalid' }),
       });
       expect(res.status).toBe(401);
       const body = await res.json();
@@ -167,7 +167,7 @@ describe('Auth Middleware', () => {
 
     it('should authenticate with valid API key and access agents list', async () => {
       const app = createApp();
-      const apiKey = 'omni_' + 'a'.repeat(32);
+      const apiKey = 'vigil_' + 'a'.repeat(32);
 
       // Call order:
       // 1. Auth middleware: db.prepare('SELECT u.id... WHERE u.api_key_hash = ?').get(keyHash)
@@ -191,7 +191,7 @@ describe('Auth Middleware', () => {
       mockGet.mockReturnValueOnce(null);
 
       const res = await app.request('/api/agents', {
-        headers: { 'X-API-Key': 'omni_invalid' },
+        headers: { 'X-API-Key': 'vigil_invalid' },
       });
       expect(res.status).toBe(401);
 
@@ -261,7 +261,7 @@ describe('Auth Middleware', () => {
 
     it('admin can access admin-only routes (DELETE /api/marketplace/:id)', async () => {
       const app = createApp();
-      const apiKey = 'omni_' + 'a'.repeat(32);
+      const apiKey = 'vigil_' + 'a'.repeat(32);
 
       // 1. Auth middleware: admin user lookup
       mockGet.mockReturnValueOnce({ id: 'admin-1', tenant_id: 'default', role: 'admin' });
@@ -278,7 +278,7 @@ describe('Auth Middleware', () => {
 
     it('viewer cannot access admin-only routes → 403', async () => {
       const app = createApp();
-      const apiKey = 'omni_' + 'b'.repeat(32);
+      const apiKey = 'vigil_' + 'b'.repeat(32);
 
       // 1. Auth middleware: viewer user lookup
       mockGet.mockReturnValueOnce({ id: 'viewer-1', tenant_id: 'default', role: 'viewer' });
@@ -296,7 +296,7 @@ describe('Auth Middleware', () => {
 
     it('operator cannot access admin-only routes → 403', async () => {
       const app = createApp();
-      const apiKey = 'omni_' + 'c'.repeat(32);
+      const apiKey = 'vigil_' + 'c'.repeat(32);
 
       // 1. Auth middleware: operator user lookup
       mockGet.mockReturnValueOnce({ id: 'op-1', tenant_id: 'default', role: 'operator' });
@@ -310,7 +310,7 @@ describe('Auth Middleware', () => {
 
     it('operator can access operator+ routes (POST /api/agents)', async () => {
       const app = createApp();
-      const apiKey = 'omni_' + 'd'.repeat(32);
+      const apiKey = 'vigil_' + 'd'.repeat(32);
 
       // 1. Auth middleware: operator user lookup
       mockGet.mockReturnValueOnce({ id: 'op-2', tenant_id: 'default', role: 'operator' });
@@ -334,7 +334,7 @@ describe('Auth Middleware', () => {
 
     it('viewer cannot access operator+ routes (POST /api/agents) → 403', async () => {
       const app = createApp();
-      const apiKey = 'omni_' + 'e'.repeat(32);
+      const apiKey = 'vigil_' + 'e'.repeat(32);
 
       // 1. Auth middleware: viewer user lookup
       mockGet.mockReturnValueOnce({ id: 'viewer-2', tenant_id: 'default', role: 'viewer' });
@@ -353,7 +353,7 @@ describe('Auth Middleware', () => {
 
     it('admin can access operator+ routes', async () => {
       const app = createApp();
-      const apiKey = 'omni_' + 'f'.repeat(32);
+      const apiKey = 'vigil_' + 'f'.repeat(32);
 
       // 1. Auth middleware: admin user lookup
       mockGet.mockReturnValueOnce({ id: 'admin-2', tenant_id: 'default', role: 'admin' });
@@ -397,7 +397,7 @@ describe('Auth Middleware', () => {
 
     it('non-admin user sees only their tenant agents', async () => {
       const app = createApp();
-      const apiKey = 'omni_' + '1'.repeat(32);
+      const apiKey = 'vigil_' + '1'.repeat(32);
 
       // 1. Auth middleware: operator in tenant-1
       mockGet.mockReturnValueOnce({ id: 'user-t1', tenant_id: 'tenant-1', role: 'operator' });
@@ -416,7 +416,7 @@ describe('Auth Middleware', () => {
 
     it('non-admin cannot access another tenant agent detail → 404', async () => {
       const app = createApp();
-      const apiKey = 'omni_' + '2'.repeat(32);
+      const apiKey = 'vigil_' + '2'.repeat(32);
 
       // 1. Auth middleware: operator in tenant-1
       mockGet.mockReturnValueOnce({ id: 'user-t1', tenant_id: 'tenant-1', role: 'operator' });

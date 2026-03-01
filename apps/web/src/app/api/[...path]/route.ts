@@ -1,5 +1,5 @@
 /** Catch-all API route — delegates to the Hono app */
-import { createApp } from '@omniwatch/api/app';
+import { createApp } from '@vigil/api/app';
 
 const app = createApp();
 

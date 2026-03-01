@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { rpcCall } from '../ipc-client.js';
 import { ensureDaemon } from './daemon.js';
-import type { Agent } from '@omniwatch/shared';
+import type { Agent } from '@vigil/shared';
 
 const STATUS_ICONS: Record<string, string> = {
   running: '●',
@@ -20,19 +20,25 @@ export const statusCommand = new Command('status')
     try {
       await ensureDaemon();
 
-      const agent = await rpcCall('agent.get', { id }) as Agent;
+      const agent = (await rpcCall('agent.get', { id })) as Agent;
 
       const icon = STATUS_ICONS[agent.status] || '?';
-      const statusColor = agent.status === 'running' ? chalk.green
-        : agent.status === 'error' ? chalk.red
-        : agent.status === 'healing' ? chalk.yellow
-        : chalk.dim;
+      const statusColor =
+        agent.status === 'running'
+          ? chalk.green
+          : agent.status === 'error'
+            ? chalk.red
+            : agent.status === 'healing'
+              ? chalk.yellow
+              : chalk.dim;
 
       console.log();
       console.log(`  ${statusColor(icon)} ${chalk.bold(agent.name)} ${chalk.dim(agent.id)}`);
       console.log();
       console.log(`  ${chalk.dim('Status:')}    ${statusColor(agent.status)}`);
-      console.log(`  ${chalk.dim('Prompt:')}    ${agent.prompt.slice(0, 80)}${agent.prompt.length > 80 ? '...' : ''}`);
+      console.log(
+        `  ${chalk.dim('Prompt:')}    ${agent.prompt.slice(0, 80)}${agent.prompt.length > 80 ? '...' : ''}`,
+      );
 
       if (agent.description) {
         console.log(`  ${chalk.dim('Desc:')}      ${agent.description}`);

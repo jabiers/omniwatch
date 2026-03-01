@@ -1,4 +1,4 @@
-# OmniWatch v1.6 Design - Analytics Enhancement & Agent Detail
+# Vigil v1.6 Design - Analytics Enhancement & Agent Detail
 
 ## Group 1: Analytics Enhancement
 

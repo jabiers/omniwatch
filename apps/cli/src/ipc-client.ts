@@ -9,7 +9,7 @@ import {
   Errors,
   type RPCResponse,
   type RPCNotification,
-} from '@omniwatch/shared';
+} from '@vigil/shared';
 
 export function isDaemonRunning(): boolean {
   if (!existsSync(PID_FILE)) return false;

@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { getDb } from '@omniwatch/db';
-import type { Agent, AgentLog } from '@omniwatch/shared';
+import { getDb } from '@vigil/db';
+import type { Agent, AgentLog } from '@vigil/shared';
 import { rpcCall } from '../lib/rpc-bridge.js';
 import { requireRole } from '../middleware/auth.js';
 import { broadcast } from '../ws.js';
@@ -16,7 +16,9 @@ const createAgentSchema = z.object({
 
 /** Schema: GET /agents query params */
 const listAgentsQuerySchema = z.object({
-  status: z.enum(['creating', 'ready', 'running', 'stopped', 'error', 'healing', 'destroyed']).optional(),
+  status: z
+    .enum(['creating', 'ready', 'running', 'stopped', 'error', 'healing', 'destroyed'])
+    .optional(),
   tenant: z.string().optional(),
 });
 
@@ -38,17 +40,27 @@ agentRoutes.get('/agents', zValidator('query', listAgentsQuerySchema), (c) => {
   if (auth.role === 'admin' && !tenant) {
     // Admin can see all agents
     if (status) {
-      agents = db.prepare('SELECT * FROM agents WHERE status = ? ORDER BY created_at DESC').all(status) as Agent[];
+      agents = db
+        .prepare('SELECT * FROM agents WHERE status = ? ORDER BY created_at DESC')
+        .all(status) as Agent[];
     } else {
-      agents = db.prepare("SELECT * FROM agents WHERE status != ? ORDER BY created_at DESC").all('destroyed') as Agent[];
+      agents = db
+        .prepare('SELECT * FROM agents WHERE status != ? ORDER BY created_at DESC')
+        .all('destroyed') as Agent[];
     }
   } else {
     // Non-admin: filter by tenant_id
     const tenantId = tenant || auth.tenantId;
     if (status) {
-      agents = db.prepare('SELECT * FROM agents WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC').all(tenantId, status) as Agent[];
+      agents = db
+        .prepare('SELECT * FROM agents WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC')
+        .all(tenantId, status) as Agent[];
     } else {
-      agents = db.prepare("SELECT * FROM agents WHERE tenant_id = ? AND status != ? ORDER BY created_at DESC").all(tenantId, 'destroyed') as Agent[];
+      agents = db
+        .prepare(
+          'SELECT * FROM agents WHERE tenant_id = ? AND status != ? ORDER BY created_at DESC',
+        )
+        .all(tenantId, 'destroyed') as Agent[];
     }
   }
 
@@ -75,25 +87,30 @@ agentRoutes.get('/agents/:id', (c) => {
 });
 
 /** POST /agents - create agent via daemon IPC (operator+) */
-agentRoutes.post('/agents', requireRole('admin', 'operator'), zValidator('json', createAgentSchema), async (c) => {
-  const body = c.req.valid('json');
+agentRoutes.post(
+  '/agents',
+  requireRole('admin', 'operator'),
+  zValidator('json', createAgentSchema),
+  async (c) => {
+    const body = c.req.valid('json');
 
-  const auth = c.get('auth');
-  try {
-    const result = await rpcCall('agent.create', {
-      name: body.name,
-      prompt: body.prompt,
-      type: body.type,
-      tenantId: auth.tenantId,
-    });
-    const created = result as { id?: string; name?: string };
-    broadcast('agent:created', { id: created.id, name: created.name });
-    return c.json({ agent: result }, 201);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.json({ error: message }, 502);
-  }
-});
+    const auth = c.get('auth');
+    try {
+      const result = await rpcCall('agent.create', {
+        name: body.name,
+        prompt: body.prompt,
+        type: body.type,
+        tenantId: auth.tenantId,
+      });
+      const created = result as { id?: string; name?: string };
+      broadcast('agent:created', { id: created.id, name: created.name });
+      return c.json({ agent: result }, 201);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      return c.json({ error: message }, 502);
+    }
+  },
+);
 
 /** DELETE /agents/:id - destroy agent via daemon IPC (operator+) */
 agentRoutes.delete('/agents/:id', requireRole('admin', 'operator'), async (c) => {
@@ -165,7 +182,9 @@ agentRoutes.get('/agents/:id/logs', zValidator('query', agentLogsQuerySchema), (
   let logs: AgentLog[];
   if (level) {
     logs = db
-      .prepare('SELECT * FROM agent_logs WHERE agent_id = ? AND level = ? ORDER BY created_at DESC LIMIT ?')
+      .prepare(
+        'SELECT * FROM agent_logs WHERE agent_id = ? AND level = ? ORDER BY created_at DESC LIMIT ?',
+      )
       .all(id, level, limit) as AgentLog[];
   } else {
     logs = db

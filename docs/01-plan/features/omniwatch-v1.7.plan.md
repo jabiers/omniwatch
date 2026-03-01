@@ -1,4 +1,4 @@
-# OmniWatch v1.7 Plan - Tenant Management & Marketplace UX
+# Vigil v1.7 Plan - Tenant Management & Marketplace UX
 
 ## Overview
 - **Version**: 1.7.0

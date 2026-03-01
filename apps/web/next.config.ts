@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
   // Native modules that must not be bundled
   serverExternalPackages: ['better-sqlite3'],
   // Transpile workspace packages
-  transpilePackages: ['@omniwatch/api', '@omniwatch/db', '@omniwatch/shared'],
+  transpilePackages: ['@vigil/api', '@vigil/db', '@vigil/shared'],
   // Environment variables exposed to the browser
   env: {
     NEXT_PUBLIC_APP_VERSION: rootPkg.version,

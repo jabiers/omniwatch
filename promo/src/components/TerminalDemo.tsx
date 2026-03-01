@@ -30,7 +30,7 @@ export default function TerminalDemo() {
             <span className="w-3 h-3 rounded-full bg-red-500/80" />
             <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
             <span className="w-3 h-3 rounded-full bg-green-500/80" />
-            <span className="ml-3 text-xs text-gray-500 font-mono">omniwatch</span>
+            <span className="ml-3 text-xs text-gray-500 font-mono">vigil</span>
           </div>
 
           {/* Terminal content */}

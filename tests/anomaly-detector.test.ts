@@ -5,7 +5,7 @@ const mockGet = vi.fn();
 const mockRun = vi.fn().mockReturnValue({ changes: 0, lastInsertRowid: 1 });
 const mockAll = vi.fn().mockReturnValue([]);
 
-vi.mock('@omniwatch/db', () => ({
+vi.mock('@vigil/db', () => ({
   getDb: () => ({
     prepare: (_sql: string) => ({
       run: mockRun,
@@ -15,8 +15,8 @@ vi.mock('@omniwatch/db', () => ({
   }),
 }));
 
-vi.mock('@omniwatch/shared', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@omniwatch/shared')>();
+vi.mock('@vigil/shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@vigil/shared')>();
   return {
     ...actual,
     log: vi.fn(),
@@ -36,7 +36,7 @@ import {
   updateAlertRule,
   deleteAlertRule,
 } from '../apps/daemon/src/anomaly-detector.js';
-import { ANOMALY_Z_THRESHOLD } from '@omniwatch/shared';
+import { ANOMALY_Z_THRESHOLD } from '@vigil/shared';
 
 describe('Anomaly Detector', () => {
   beforeEach(() => {

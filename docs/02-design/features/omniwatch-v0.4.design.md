@@ -1,9 +1,9 @@
-# OmniWatch v0.4 Design Document
+# Vigil v0.4 Design Document
 
 ## 1. Monorepo Structure
 
 ```
-omniwatch/
+vigil/
 ├── apps/
 │   ├── cli/                    # CLI client
 │   │   ├── src/
@@ -76,7 +76,7 @@ omniwatch/
 │       │   └── index.ts
 │       ├── package.json
 │       └── tsconfig.json
-├── bin/omni.mjs
+├── bin/vigil.mjs
 ├── turbo.json
 ├── pnpm-workspace.yaml
 ├── package.json
@@ -104,8 +104,8 @@ import { getDb } from '../shared/db.js';
 
 After:
 ```typescript
-import { SOCKET_PATH } from '@omniwatch/shared';
-import { getDb } from '@omniwatch/db';
+import { SOCKET_PATH } from '@vigil/shared';
+import { getDb } from '@vigil/db';
 ```
 
 ## 4. API Server Design (Hono)

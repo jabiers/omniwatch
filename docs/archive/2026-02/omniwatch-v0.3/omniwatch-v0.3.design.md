@@ -1,4 +1,4 @@
-# OmniWatch v0.3 Design Document
+# Vigil v0.3 Design Document
 
 ## 1. Component Diagram
 
@@ -33,7 +33,7 @@
 
 ## 2. Detailed Design per Feature
 
-### 2.1 FR-01: `omni do` Command
+### 2.1 FR-01: `vigil do` Command
 
 **File**: `src/cli/commands/do.ts`
 
@@ -55,7 +55,7 @@ program.command('do')
 - For `--schedule`: daemon scheduler manages cron-based execution
 - SDK additions documented in prompt
 
-### 2.2 FR-02: `omni auto` Command
+### 2.2 FR-02: `vigil auto` Command
 
 **File**: `src/cli/commands/auto.ts`
 
@@ -237,7 +237,7 @@ async timeout<T>(fn: () => Promise<T>, ms: number): Promise<T> {
 },
 ```
 
-**Types**: Update `OmniSDK` interface accordingly.
+**Types**: Update `VigilSDK` interface accordingly.
 
 ### 2.8 FR-08: Database Improvements
 
@@ -346,7 +346,7 @@ Step 10: Version bump + build verification
 
 ## 5. Backward Compatibility
 
-- `omni watch` 동작 변경 없음
+- `vigil watch` 동작 변경 없음
 - DB 마이그레이션은 `CREATE IF NOT EXISTS`로 안전
 - `agents.type` 기본값 `'watcher'`로 기존 데이터 호환
 - SDK 확장은 추가만 (기존 메서드 변경 없음)

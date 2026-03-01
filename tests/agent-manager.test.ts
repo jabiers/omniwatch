@@ -5,7 +5,7 @@ const mockGet = vi.fn();
 const mockRun = vi.fn();
 const mockAll = vi.fn().mockReturnValue([]);
 
-vi.mock('@omniwatch/db', () => ({
+vi.mock('@vigil/db', () => ({
   getDb: () => ({
     prepare: (_sql: string) => ({
       run: mockRun,
@@ -15,8 +15,8 @@ vi.mock('@omniwatch/db', () => ({
   }),
 }));
 
-vi.mock('@omniwatch/shared', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@omniwatch/shared')>();
+vi.mock('@vigil/shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@vigil/shared')>();
   return {
     ...actual,
     log: vi.fn(),
@@ -80,7 +80,7 @@ import {
   listAgents,
   updateAgent,
 } from '../apps/daemon/src/agent-manager.js';
-import { MAX_AGENTS, AGENTS_DIR } from '@omniwatch/shared';
+import { MAX_AGENTS, AGENTS_DIR } from '@vigil/shared';
 import { join } from 'node:path';
 
 describe('Agent Manager', () => {

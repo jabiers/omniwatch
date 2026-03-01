@@ -1,16 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock @omniwatch/shared
-vi.mock('@omniwatch/shared', () => ({
+// Mock @vigil/shared
+vi.mock('@vigil/shared', () => ({
   log: vi.fn(),
   MAX_SPAWN_DEPTH: 3,
   SPAWN_RATE_LIMIT: 5,
   MAX_AGENTS: 20,
 }));
 
-// Mock @omniwatch/db
+// Mock @vigil/db
 const mockAgentRows: Record<string, unknown> = {};
-vi.mock('@omniwatch/db', () => ({
+vi.mock('@vigil/db', () => ({
   getDb: () => ({
     prepare: (sql: string) => ({
       run: vi.fn(),
@@ -56,7 +56,8 @@ vi.mock('../apps/daemon/src/dependency-installer.js', () => ({
   installDependencies: vi.fn(),
 }));
 
-const { spawnChildAgent, getChildAgents, getSpawnChain } = await import('../apps/daemon/src/spawn-manager.js');
+const { spawnChildAgent, getChildAgents, getSpawnChain } =
+  await import('../apps/daemon/src/spawn-manager.js');
 
 describe('Spawn Manager', () => {
   beforeEach(() => {
@@ -65,15 +66,13 @@ describe('Spawn Manager', () => {
 
   describe('spawnChildAgent', () => {
     it('should throw if parent not found', async () => {
-      await expect(
-        spawnChildAgent('nonexistent', 'create an agent')
-      ).rejects.toThrow('not found');
+      await expect(spawnChildAgent('nonexistent', 'create an agent')).rejects.toThrow('not found');
     });
 
     it('should throw if max spawn depth exceeded', async () => {
-      await expect(
-        spawnChildAgent('deep-parent', 'create an agent')
-      ).rejects.toThrow('Max spawn depth');
+      await expect(spawnChildAgent('deep-parent', 'create an agent')).rejects.toThrow(
+        'Max spawn depth',
+      );
     });
 
     it('should create and start child agent', async () => {

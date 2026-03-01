@@ -1,6 +1,6 @@
-# OmniWatch v0.2 Completion Report
+# Vigil v0.2 Completion Report
 
-> **Feature**: omniwatch-v0.2 - MVP Extension with TUI Dashboard, Notification Plugins, and Interactive Chat
+> **Feature**: vigil-v0.2 - MVP Extension with TUI Dashboard, Notification Plugins, and Interactive Chat
 >
 > **Version**: 0.2.0
 > **Report Date**: 2026-02-27
@@ -11,11 +11,11 @@
 
 ## Executive Summary
 
-OmniWatch v0.2 successfully extends the MVP foundation with three major capability areas:
+Vigil v0.2 successfully extends the MVP foundation with three major capability areas:
 
-1. **TUI Dashboard** - Real-time agent monitoring via `omni dash` command with Ink-based React interface
+1. **TUI Dashboard** - Real-time agent monitoring via `vigil dash` command with Ink-based React interface
 2. **Notification Plugin System** - Extensible multi-channel alerting (Slack, Discord, Telegram) replacing inline logic
-3. **Interactive Chat Mode** - Natural language agent modification via `omni chat <id>` with AI-powered code generation
+3. **Interactive Chat Mode** - Natural language agent modification via `vigil chat <id>` with AI-powered code generation
 4. **Code Quality Improvements** - AST-based validation using acorn, replacing regex-based checks
 
 The feature was completed in a single PDCA cycle with 97% design match rate. All 18 functional requirements were implemented, with only minor deviations (ChatInterface.tsx replaced with readline, StatusBar partial feature set) that do not impact core functionality.
@@ -36,70 +36,70 @@ The feature was completed in a single PDCA cycle with 97% design match rate. All
 ### 1.1 New Source Files (16)
 
 **Notification Channel System (7 files)**
-- `/Users/paul/projects/omniwatch/src/daemon/notification-channels/types.ts` - Severity type, NotificationPayload, NotificationChannel interface
-- `/Users/paul/projects/omniwatch/src/daemon/notification-channels/registry.ts` - Channel registry with dispatch logic and severity filtering
-- `/Users/paul/projects/omniwatch/src/daemon/notification-channels/webhook.ts` - Generic webhook channel (extracted from notifier.ts)
-- `/Users/paul/projects/omniwatch/src/daemon/notification-channels/slack.ts` - Slack Incoming Webhook implementation
-- `/Users/paul/projects/omniwatch/src/daemon/notification-channels/discord.ts` - Discord Webhook with embed support
-- `/Users/paul/projects/omniwatch/src/daemon/notification-channels/telegram.ts` - Telegram Bot API implementation
-- `/Users/paul/projects/omniwatch/src/daemon/notification-channels/index.ts` - Channel index/export
+- `/Users/paul/projects/vigil/src/daemon/notification-channels/types.ts` - Severity type, NotificationPayload, NotificationChannel interface
+- `/Users/paul/projects/vigil/src/daemon/notification-channels/registry.ts` - Channel registry with dispatch logic and severity filtering
+- `/Users/paul/projects/vigil/src/daemon/notification-channels/webhook.ts` - Generic webhook channel (extracted from notifier.ts)
+- `/Users/paul/projects/vigil/src/daemon/notification-channels/slack.ts` - Slack Incoming Webhook implementation
+- `/Users/paul/projects/vigil/src/daemon/notification-channels/discord.ts` - Discord Webhook with embed support
+- `/Users/paul/projects/vigil/src/daemon/notification-channels/telegram.ts` - Telegram Bot API implementation
+- `/Users/paul/projects/vigil/src/daemon/notification-channels/index.ts` - Channel index/export
 
 **TUI Dashboard Components (4 files)**
-- `/Users/paul/projects/omniwatch/src/cli/ui/Dashboard.tsx` - Main Ink component with layout and polling
-- `/Users/paul/projects/omniwatch/src/cli/ui/AgentTable.tsx` - Agent list with keyboard navigation
-- `/Users/paul/projects/omniwatch/src/cli/ui/LogViewer.tsx` - Real-time log display with polling
-- `/Users/paul/projects/omniwatch/src/cli/ui/StatusBar.tsx` - System stats header (agent count, running count, error count)
+- `/Users/paul/projects/vigil/src/cli/ui/Dashboard.tsx` - Main Ink component with layout and polling
+- `/Users/paul/projects/vigil/src/cli/ui/AgentTable.tsx` - Agent list with keyboard navigation
+- `/Users/paul/projects/vigil/src/cli/ui/LogViewer.tsx` - Real-time log display with polling
+- `/Users/paul/projects/vigil/src/cli/ui/StatusBar.tsx` - System stats header (agent count, running count, error count)
 
 **Agent Templates (4 files)**
-- `/Users/paul/projects/omniwatch/src/agent/templates/base-prompt.ts` - BASE_SYSTEM_PROMPT and template interface
-- `/Users/paul/projects/omniwatch/src/agent/templates/web-monitor.ts` - Web monitoring template with cheerio
-- `/Users/paul/projects/omniwatch/src/agent/templates/api-checker.ts` - API health check template
-- `/Users/paul/projects/omniwatch/src/agent/templates/rss-watcher.ts` - RSS feed monitoring template
+- `/Users/paul/projects/vigil/src/agent/templates/base-prompt.ts` - BASE_SYSTEM_PROMPT and template interface
+- `/Users/paul/projects/vigil/src/agent/templates/web-monitor.ts` - Web monitoring template with cheerio
+- `/Users/paul/projects/vigil/src/agent/templates/api-checker.ts` - API health check template
+- `/Users/paul/projects/vigil/src/agent/templates/rss-watcher.ts` - RSS feed monitoring template
 
 **Chat System (1 file)**
-- `/Users/paul/projects/omniwatch/src/daemon/chat-handler.ts` - Chat interaction handler with AI integration
+- `/Users/paul/projects/vigil/src/daemon/chat-handler.ts` - Chat interaction handler with AI integration
 
 ### 1.2 Modified Files (~10)
 
 **Daemon Layer**
-- `/Users/paul/projects/omniwatch/src/daemon/index.ts` - Register new RPC handlers and notification channels
-- `/Users/paul/projects/omniwatch/src/daemon/rpc-server.ts` - Register agent.chat, agent.preview, agent.apply RPC methods
-- `/Users/paul/projects/omniwatch/src/daemon/code-validator.ts` - Migrate from regex to acorn AST parsing
-- `/Users/paul/projects/omniwatch/src/daemon/code-generator.ts` - Add template parameter, extract base prompt
-- `/Users/paul/projects/omniwatch/src/daemon/notifier.ts` - Refactor to use notification channel registry
-- `/Users/paul/projects/omniwatch/src/daemon/handlers/chat.ts` - NEW: Chat RPC handlers (chat, preview, apply)
+- `/Users/paul/projects/vigil/src/daemon/index.ts` - Register new RPC handlers and notification channels
+- `/Users/paul/projects/vigil/src/daemon/rpc-server.ts` - Register agent.chat, agent.preview, agent.apply RPC methods
+- `/Users/paul/projects/vigil/src/daemon/code-validator.ts` - Migrate from regex to acorn AST parsing
+- `/Users/paul/projects/vigil/src/daemon/code-generator.ts` - Add template parameter, extract base prompt
+- `/Users/paul/projects/vigil/src/daemon/notifier.ts` - Refactor to use notification channel registry
+- `/Users/paul/projects/vigil/src/daemon/handlers/chat.ts` - NEW: Chat RPC handlers (chat, preview, apply)
 
 **CLI Layer**
-- `/Users/paul/projects/omniwatch/src/cli/index.ts` - Register dash and chat commands
-- `/Users/paul/projects/omniwatch/src/cli/commands/watch.ts` - Add --preview and --template flags
-- `/Users/paul/projects/omniwatch/src/cli/commands/dash.ts` - NEW: TUI dashboard entry point
-- `/Users/paul/projects/omniwatch/src/cli/commands/chat.ts` - NEW: Interactive chat command with readline
+- `/Users/paul/projects/vigil/src/cli/index.ts` - Register dash and chat commands
+- `/Users/paul/projects/vigil/src/cli/commands/watch.ts` - Add --preview and --template flags
+- `/Users/paul/projects/vigil/src/cli/commands/dash.ts` - NEW: TUI dashboard entry point
+- `/Users/paul/projects/vigil/src/cli/commands/chat.ts` - NEW: Interactive chat command with readline
 
 **Configuration & Shared**
-- `/Users/paul/projects/omniwatch/src/shared/config.ts` - Extend OmniConfig with notification channels (slack_webhook, discord_webhook, telegram_token, telegram_chat_id, channels severity filters)
-- `/Users/paul/projects/omniwatch/src/shared/types.ts` - Add ChatMessage, ChatResponse, PreviewResult types
+- `/Users/paul/projects/vigil/src/shared/config.ts` - Extend OmniConfig with notification channels (slack_webhook, discord_webhook, telegram_token, telegram_chat_id, channels severity filters)
+- `/Users/paul/projects/vigil/src/shared/types.ts` - Add ChatMessage, ChatResponse, PreviewResult types
 
 **Build Configuration**
-- `/Users/paul/projects/omniwatch/tsup.config.ts` - Enable JSX support for Ink components (esbuildOptions.jsx = 'automatic')
+- `/Users/paul/projects/vigil/tsup.config.ts` - Enable JSX support for Ink components (esbuildOptions.jsx = 'automatic')
 
 ### 1.3 Test Files (11 Total, 3 New)
 
 **v0.2 New Test Files**
-- `/Users/paul/projects/omniwatch/tests/notification-channels.test.ts` - Tests for all 5 channel implementations, registry dispatch, severity filtering, clearChannels utility
-- `/Users/paul/projects/omniwatch/tests/chat-handler.test.ts` - Tests for handleChat, applyCodeChange, conversation history tracking, error handling
-- `/Users/paul/projects/omniwatch/tests/templates.test.ts` - Tests for BASE_SYSTEM_PROMPT, all 3 template structures
+- `/Users/paul/projects/vigil/tests/notification-channels.test.ts` - Tests for all 5 channel implementations, registry dispatch, severity filtering, clearChannels utility
+- `/Users/paul/projects/vigil/tests/chat-handler.test.ts` - Tests for handleChat, applyCodeChange, conversation history tracking, error handling
+- `/Users/paul/projects/vigil/tests/templates.test.ts` - Tests for BASE_SYSTEM_PROMPT, all 3 template structures
 
 **Existing Test Files (Updated)**
-- `/Users/paul/projects/omniwatch/tests/code-validator.test.ts` - Updated with acorn AST tests (syntax validation, forbidden import detection, eval/require/process.exit checks, default export validation)
-- `/Users/paul/projects/omniwatch/tests/config.test.ts` - Updated with new notification config fields
-- `/Users/paul/projects/omniwatch/tests/notifier.test.ts` - Updated with channel dispatch tests
+- `/Users/paul/projects/vigil/tests/code-validator.test.ts` - Updated with acorn AST tests (syntax validation, forbidden import detection, eval/require/process.exit checks, default export validation)
+- `/Users/paul/projects/vigil/tests/config.test.ts` - Updated with new notification config fields
+- `/Users/paul/projects/vigil/tests/notifier.test.ts` - Updated with channel dispatch tests
 
 **v0.1 Tests (Unchanged)**
-- `/Users/paul/projects/omniwatch/tests/errors.test.ts`
-- `/Users/paul/projects/omniwatch/tests/ipc-protocol.test.ts`
-- `/Users/paul/projects/omniwatch/tests/constants.test.ts`
-- `/Users/paul/projects/omniwatch/tests/scheduler.test.ts`
-- `/Users/paul/projects/omniwatch/tests/health-monitor.test.ts`
+- `/Users/paul/projects/vigil/tests/errors.test.ts`
+- `/Users/paul/projects/vigil/tests/ipc-protocol.test.ts`
+- `/Users/paul/projects/vigil/tests/constants.test.ts`
+- `/Users/paul/projects/vigil/tests/scheduler.test.ts`
+- `/Users/paul/projects/vigil/tests/health-monitor.test.ts`
 
 **Test Statistics:**
 - Total test files: 11
@@ -263,7 +263,7 @@ All 18 FRs from plan document completed:
 
 | ID | Requirement | Implementation | Status |
 |----|------------|-----------------|--------|
-| FR-01 | `omni dash` command enters Ink TUI dashboard | `/src/cli/commands/dash.ts` + Dashboard.tsx | ✅ DONE |
+| FR-01 | `vigil dash` command enters Ink TUI dashboard | `/src/cli/commands/dash.ts` + Dashboard.tsx | ✅ DONE |
 | FR-02 | Real-time agent status table (name, status, PID, last run) | AgentTable.tsx with 3s refresh polling | ✅ DONE |
 | FR-03 | Log viewer showing selected agent logs | LogViewer.tsx with 2s refresh | ✅ DONE |
 | FR-04 | Keyboard shortcuts (q, r, s, x, d) | useInput() in AgentTable.tsx | ✅ DONE |
@@ -286,7 +286,7 @@ All 18 FRs from plan document completed:
 
 | ID | Requirement | Implementation | Status |
 |----|------------|-----------------|--------|
-| FR-12 | `omni chat <id>` interactive mode | `/src/cli/commands/chat.ts` with readline interface | ✅ DONE |
+| FR-12 | `vigil chat <id>` interactive mode | `/src/cli/commands/chat.ts` with readline interface | ✅ DONE |
 | FR-13 | Natural language agent modification | chat-handler.ts with Anthropic API integration | ✅ DONE |
 | FR-14 | Natural language status/log queries | chat-handler.ts passes agent state + logs to LLM | ✅ DONE |
 | FR-15 | Code apply + auto restart on confirmation | agent.apply RPC with applyCodeChange() | ✅ DONE |
@@ -307,7 +307,7 @@ All 18 FRs from plan document completed:
 
 ### Match Rate: 97% (Initial Check)
 
-From `/Users/paul/projects/omniwatch/docs/03-analysis/features/omniwatch-v0.2.analysis.md`:
+From `/Users/paul/projects/vigil/docs/03-analysis/features/vigil-v0.2.analysis.md`:
 
 **Overall Scores:**
 - Component Match: 95%
@@ -579,7 +579,7 @@ From initial planning, the following items were deferred to v0.3+:
 - [ ] Complete StatusBar memory/uptime display (if feasible without major refactor)
 - [ ] Write integration test for watch --preview flow
 - [ ] Document template creation guide for users
-- [ ] Add template list in help: `omni watch --list-templates`
+- [ ] Add template list in help: `vigil watch --list-templates`
 
 ### Short-term (v0.3 Planning)
 
@@ -620,16 +620,16 @@ From initial planning, the following items were deferred to v0.3+:
 ## 11. Related Documents
 
 **PDCA Cycle Documents:**
-- Plan: [omniwatch-v0.2.plan.md](/Users/paul/projects/omniwatch/docs/01-plan/features/omniwatch-v0.2.plan.md)
-- Design: [omniwatch-v0.2.design.md](/Users/paul/projects/omniwatch/docs/02-design/features/omniwatch-v0.2.design.md)
-- Analysis: [omniwatch-v0.2.analysis.md](/Users/paul/projects/omniwatch/docs/03-analysis/features/omniwatch-v0.2.analysis.md)
+- Plan: [vigil-v0.2.plan.md](/Users/paul/projects/vigil/docs/01-plan/features/vigil-v0.2.plan.md)
+- Design: [vigil-v0.2.design.md](/Users/paul/projects/vigil/docs/02-design/features/vigil-v0.2.design.md)
+- Analysis: [vigil-v0.2.analysis.md](/Users/paul/projects/vigil/docs/03-analysis/features/vigil-v0.2.analysis.md)
 
 **Previous Version:**
-- MVP Report: [omniwatch-mvp.report.md](/Users/paul/projects/omniwatch/docs/archive/2026-02/omniwatch-mvp/omniwatch-mvp.report.md)
+- MVP Report: [vigil-mvp.report.md](/Users/paul/projects/vigil/docs/archive/2026-02/vigil-mvp/vigil-mvp.report.md)
 
 **Configuration & Reference:**
-- Package.json: `/Users/paul/projects/omniwatch/package.json`
-- PDCA Status: `/Users/paul/projects/omniwatch/.pdca-status.json`
+- Package.json: `/Users/paul/projects/vigil/package.json`
+- PDCA Status: `/Users/paul/projects/vigil/.pdca-status.json`
 
 ---
 
@@ -743,7 +743,7 @@ Overall Completion: 17/18 (94%) + 1 Partial = 97% Weighted Match
 
 ## Sign-Off
 
-**Feature**: omniwatch-v0.2
+**Feature**: vigil-v0.2
 **Status**: APPROVED FOR PRODUCTION
 **Match Rate**: 97%
 **Iterations**: 0

@@ -1,4 +1,4 @@
-# OmniWatch v1.2 Plan — Testing, Observability & Documentation
+# Vigil v1.2 Plan — Testing, Observability & Documentation
 
 ## Overview
 v1.2는 **테스트 기반 강화 + 관측성 개선 + 문서 완성**. 웹 앱 테스트 0개 문제 해결, 헬스체크 상세화, OpenAPI 완성, 접근성 기초.

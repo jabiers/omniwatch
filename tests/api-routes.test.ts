@@ -5,7 +5,7 @@ const mockGet = vi.fn();
 const mockRun = vi.fn();
 const mockAll = vi.fn().mockReturnValue([]);
 
-vi.mock('@omniwatch/db', () => ({
+vi.mock('@vigil/db', () => ({
   getDb: () => ({
     prepare: (_sql: string) => ({
       run: mockRun,
@@ -18,8 +18,8 @@ vi.mock('@omniwatch/db', () => ({
   }),
 }));
 
-vi.mock('@omniwatch/shared', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@omniwatch/shared')>();
+vi.mock('@vigil/shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@vigil/shared')>();
   return {
     ...actual,
     log: vi.fn(),
@@ -321,9 +321,7 @@ describe('GET /api/analytics/metrics', () => {
 
 describe('GET /api/notifications', () => {
   it('should return 200 with notifications array', async () => {
-    const notifications = [
-      { id: 1, agent_id: 'agent-1', severity: 'info', message: 'started' },
-    ];
+    const notifications = [{ id: 1, agent_id: 'agent-1', severity: 'info', message: 'started' }];
     mockAll.mockReturnValueOnce(notifications);
 
     const res = await app.request('/api/notifications');

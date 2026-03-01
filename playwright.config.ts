@@ -9,7 +9,7 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   webServer: {
-    command: 'npx turbo dev --filter=@omniwatch/web',
+    command: 'npx turbo dev --filter=@vigil/web',
     url: 'http://localhost:3457',
     timeout: 60000,
     reuseExistingServer: true,

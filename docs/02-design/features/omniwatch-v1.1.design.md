@@ -1,4 +1,4 @@
-# OmniWatch v1.1 Design — Quality & Security Hardening
+# Vigil v1.1 Design — Quality & Security Hardening
 
 ## 1. Overview
 
@@ -165,8 +165,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@omniwatch/shared': resolve(__dirname, 'packages/shared/src/index.ts'),
-      '@omniwatch/db': resolve(__dirname, 'packages/db/src/index.ts'),
+      '@vigil/shared': resolve(__dirname, 'packages/shared/src/index.ts'),
+      '@vigil/db': resolve(__dirname, 'packages/db/src/index.ts'),
     },
   },
 });
@@ -198,8 +198,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@omniwatch/shared': resolve(__dirname, 'packages/shared/src/index.ts'),
-      '@omniwatch/db': resolve(__dirname, 'packages/db/src/index.ts'),
+      '@vigil/shared': resolve(__dirname, 'packages/shared/src/index.ts'),
+      '@vigil/db': resolve(__dirname, 'packages/db/src/index.ts'),
     },
   },
 });
@@ -226,7 +226,7 @@ app.use('*', cors());  // wildcard — 모든 origin 허용
 변경 후:
 ```typescript
 import { cors } from 'hono/cors';
-import { getEnvConfig } from '@omniwatch/shared';
+import { getEnvConfig } from '@vigil/shared';
 
 app.use('*', cors({
   origin: (origin) => {
@@ -429,7 +429,7 @@ export function validateEnv(): void {
   }
 
   if (missingOptional.length > 0) {
-    console.warn(`[omniwatch] Missing optional env vars: ${missingOptional.join(', ')}`);
+    console.warn(`[vigil] Missing optional env vars: ${missingOptional.join(', ')}`);
   }
 }
 ```
@@ -523,10 +523,10 @@ jobs:
         run: pnpm test -- --coverage
 
       - name: Docker build test (API)
-        run: docker build --target api -t omniwatch-api:test .
+        run: docker build --target api -t vigil-api:test .
 
       - name: Docker build test (Web)
-        run: docker build --target web -t omniwatch-web:test .
+        run: docker build --target web -t vigil-web:test .
 ```
 
 ---

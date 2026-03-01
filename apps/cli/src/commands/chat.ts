@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import { createInterface } from 'node:readline';
 import { rpcCall } from '../ipc-client.js';
 import { ensureDaemon } from './daemon.js';
-import type { Agent } from '@omniwatch/shared';
+import type { Agent } from '@vigil/shared';
 
 export const chatCommand = new Command('chat')
   .description('Interactive chat mode with an agent')
@@ -13,7 +13,7 @@ export const chatCommand = new Command('chat')
       await ensureDaemon();
 
       // Verify agent exists
-      const agent = await rpcCall('agent.get', { id }) as Agent;
+      const agent = (await rpcCall('agent.get', { id })) as Agent;
       console.log();
       console.log(chalk.cyan(`  Chatting with: ${agent.name}`));
       console.log(chalk.dim('  Type "exit" to leave, "apply" to apply pending changes'));
@@ -56,7 +56,11 @@ export const chatCommand = new Command('chat')
         }
 
         try {
-          const response = await rpcCall('agent.chat', { id, message: input }, { timeout: 30_000 }) as {
+          const response = (await rpcCall(
+            'agent.chat',
+            { id, message: input },
+            { timeout: 30_000 },
+          )) as {
             message: string;
             modifiedCode?: string;
             action?: string;

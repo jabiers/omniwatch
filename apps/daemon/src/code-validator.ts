@@ -1,5 +1,5 @@
 import * as acorn from 'acorn';
-import { FORBIDDEN_APIS, log } from '@omniwatch/shared';
+import { FORBIDDEN_APIS, log } from '@vigil/shared';
 
 export interface ValidationResult {
   valid: boolean;
@@ -38,19 +38,23 @@ export function validateCode(code: string): ValidationResult {
         issues.push('require() is not allowed, use import');
       }
       // process.exit()
-      if (node.callee.type === 'MemberExpression'
-          && node.callee.object?.type === 'Identifier'
-          && node.callee.object.name === 'process'
-          && node.callee.property?.type === 'Identifier'
-          && node.callee.property.name === 'exit') {
+      if (
+        node.callee.type === 'MemberExpression' &&
+        node.callee.object?.type === 'Identifier' &&
+        node.callee.object.name === 'process' &&
+        node.callee.property?.type === 'Identifier' &&
+        node.callee.property.name === 'exit'
+      ) {
         issues.push('process.exit() is not allowed');
       }
     }
 
     // Check new Function()
-    if (node.type === 'NewExpression'
-        && node.callee.type === 'Identifier'
-        && node.callee.name === 'Function') {
+    if (
+      node.type === 'NewExpression' &&
+      node.callee.type === 'Identifier' &&
+      node.callee.name === 'Function'
+    ) {
       issues.push('new Function() is not allowed');
     }
 
@@ -67,11 +71,13 @@ export function validateCode(code: string): ValidationResult {
     }
 
     // Detect dynamic access to forbidden APIs: globalThis['eval']
-    if (node.type === 'MemberExpression'
-        && node.computed
-        && node.property?.type === 'Literal'
-        && typeof node.property.value === 'string'
-        && FORBIDDEN_APIS.includes(node.property.value)) {
+    if (
+      node.type === 'MemberExpression' &&
+      node.computed &&
+      node.property?.type === 'Literal' &&
+      typeof node.property.value === 'string' &&
+      FORBIDDEN_APIS.includes(node.property.value)
+    ) {
       issues.push(`Dynamic access to forbidden API: '${node.property.value}'`);
     }
 

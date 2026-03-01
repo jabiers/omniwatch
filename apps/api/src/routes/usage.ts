@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { getUsageSummary } from '@omniwatch/db';
+import { getUsageSummary } from '@vigil/db';
 
 export const usageRoutes = new Hono();
 

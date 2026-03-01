@@ -12,20 +12,20 @@ const STEPS: Step[] = [
   {
     number: 1,
     title: 'Install',
-    description: 'Install OmniWatch globally with npm',
-    code: 'npm install -g omniwatch',
+    description: 'Install Vigil globally with npm',
+    code: 'npm install -g vigil',
   },
   {
     number: 2,
     title: 'Start the Daemon',
     description: 'Launch the background daemon that manages all your agents',
-    code: 'omni daemon start',
+    code: 'vigil daemon start',
   },
   {
     number: 3,
     title: 'Create Your First Agent',
     description: 'Describe what you want in plain English — AI does the rest',
-    code: `$ omni watch "Monitor my portfolio API and alert me on anomalies"
+    code: `$ vigil watch "Monitor my portfolio API and alert me on anomalies"
 
 ✓ Analyzing prompt...
 ✓ Agent type: watcher (auto-detected)

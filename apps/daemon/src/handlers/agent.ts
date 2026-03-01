@@ -11,7 +11,7 @@ import {
 import { generateAgentCode } from '../code-generator.js';
 import { validateCode } from '../code-validator.js';
 import { installDependencies } from '../dependency-installer.js';
-import { Errors, log } from '@omniwatch/shared';
+import { Errors, log } from '@vigil/shared';
 
 export const handleAgentRPC = {
   async create(params: Record<string, unknown>, _client: Socket) {
@@ -33,13 +33,9 @@ export const handleAgentRPC = {
 
     // 3. Create agent record (user-provided name takes priority)
     const agentName = (params.name as string)?.trim() || generated.name;
-    const agent = createAgentRecord(
-      prompt,
-      agentName,
-      generated.description,
-      generated.code,
-      { dependencies: generated.dependencies },
-    );
+    const agent = createAgentRecord(prompt, agentName, generated.description, generated.code, {
+      dependencies: generated.dependencies,
+    });
 
     // 4. Install npm dependencies
     if (generated.dependencies.length > 0) {

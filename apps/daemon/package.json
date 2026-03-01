@@ -1,5 +1,5 @@
 {
-  "name": "@omniwatch/daemon",
+  "name": "@vigil/daemon",
   "version": "1.7.0",
   "private": true,
   "type": "module",
@@ -10,8 +10,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
-    "@omniwatch/db": "workspace:*",
-    "@omniwatch/shared": "workspace:*",
+    "@vigil/db": "workspace:*",
+    "@vigil/shared": "workspace:*",
     "acorn": "^8.16.0",
     "isolated-vm": "^6.0.2",
     "nanoid": "^5.0.9",

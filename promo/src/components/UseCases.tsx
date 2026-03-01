@@ -49,8 +49,8 @@ export default function UseCases() {
             What Will You Automate?
           </h2>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            From price alerts to infrastructure monitoring — if you can describe it, OmniWatch can
-            run it
+            From price alerts to infrastructure monitoring — if you can describe it, Vigil can run
+            it
           </p>
         </div>
 
@@ -66,7 +66,7 @@ export default function UseCases() {
               <p className="text-sm text-gray-400 leading-relaxed">{uc.description}</p>
               <div className="bg-black/30 rounded-lg p-3 mt-3">
                 <code className="text-xs font-mono">
-                  <span className="text-gray-500">$ omni watch </span>
+                  <span className="text-gray-500">$ vigil watch </span>
                   <span className="text-emerald-300">{uc.prompt}</span>
                 </code>
               </div>

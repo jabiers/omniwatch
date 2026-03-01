@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  OMNI_DATA_DIR: z.string().default(''),
+  VIGIL_DATA_DIR: z.string().default(''),
   PORT: z.coerce.number().default(3456),
   CORS_ORIGINS: z.string().default('http://localhost:3457'),
   OMNI_API_KEY: z.string().optional(),
@@ -51,6 +51,6 @@ export function validateEnv(): void {
   const optionalKeys = ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'OLLAMA_URL'] as const;
   const missing = optionalKeys.filter((k) => !_validated![k]);
   if (missing.length > 0) {
-    console.warn(`[omniwatch] Missing optional env vars: ${missing.join(', ')}`);
+    console.warn(`[vigil] Missing optional env vars: ${missing.join(', ')}`);
   }
 }

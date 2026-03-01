@@ -1,4 +1,4 @@
-# OmniWatch v0.3 Gap Analysis Report
+# Vigil v0.3 Gap Analysis Report
 
 **Date**: 2026-02-27
 **Iteration**: 1 (after fix)
@@ -8,8 +8,8 @@
 
 | Category | Score |
 |----------|:-----:|
-| FR-01: `omni do` command | 100% |
-| FR-02: `omni auto` command | 100% |
+| FR-01: `vigil do` command | 100% |
+| FR-02: `vigil auto` command | 100% |
 | FR-03: Resource enforcement | 100% |
 | FR-04: Code validator enhancement | 100% |
 | FR-05: Self-healing enhancement | 100% |

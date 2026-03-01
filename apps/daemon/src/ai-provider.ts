@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
-import { log } from '@omniwatch/shared';
-import { loadConfig, recordAIUsage, calculateCost } from '@omniwatch/db';
+import { log } from '@vigil/shared';
+import { loadConfig, recordAIUsage, calculateCost } from '@vigil/db';
 
 /** Context for tracking which agent/operation is using AI */
 let aiContext: { agentId?: string; operation: string } = { operation: 'unknown' };
@@ -59,7 +59,9 @@ class AnthropicProvider implements AIProvider {
         cost_usd: calculateCost(model, inputTokens, outputTokens),
         duration_ms: Date.now() - start,
       });
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     return content.text;
   }
@@ -107,7 +109,9 @@ class OpenAIProvider implements AIProvider {
         cost_usd: calculateCost(model, inputTokens, outputTokens),
         duration_ms: Date.now() - start,
       });
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     return choice.message.content;
   }
@@ -131,7 +135,10 @@ class OllamaProvider implements AIProvider {
       body: JSON.stringify({
         model,
         messages: [
-          { role: 'system', content: system + '\n\nIMPORTANT: Always respond with valid JSON only.' },
+          {
+            role: 'system',
+            content: system + '\n\nIMPORTANT: Always respond with valid JSON only.',
+          },
           ...messages,
         ],
         stream: false,
@@ -145,7 +152,7 @@ class OllamaProvider implements AIProvider {
       throw new Error(`Ollama request failed (${response.status}): ${errText}`);
     }
 
-    const data = await response.json() as {
+    const data = (await response.json()) as {
       message?: { content?: string };
       prompt_eval_count?: number;
       eval_count?: number;
@@ -169,7 +176,9 @@ class OllamaProvider implements AIProvider {
         cost_usd: 0, // Local = free
         duration_ms: Date.now() - start,
       });
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     return data.message.content;
   }
@@ -177,10 +186,28 @@ class OllamaProvider implements AIProvider {
 
 /** Known Ollama model prefixes */
 const OLLAMA_MODEL_PREFIXES = [
-  'llama', 'mistral', 'mixtral', 'codellama', 'qwen', 'deepseek',
-  'gemma', 'phi', 'vicuna', 'orca', 'neural-chat', 'starling',
-  'yi', 'solar', 'nous-hermes', 'dolphin', 'wizardlm', 'zephyr',
-  'tinyllama', 'starcoder', 'command-r', 'granite',
+  'llama',
+  'mistral',
+  'mixtral',
+  'codellama',
+  'qwen',
+  'deepseek',
+  'gemma',
+  'phi',
+  'vicuna',
+  'orca',
+  'neural-chat',
+  'starling',
+  'yi',
+  'solar',
+  'nous-hermes',
+  'dolphin',
+  'wizardlm',
+  'zephyr',
+  'tinyllama',
+  'starcoder',
+  'command-r',
+  'granite',
 ];
 
 /** Detect provider from model name */
@@ -190,7 +217,7 @@ function detectProvider(model: string): string {
   if (model.startsWith('gemini-')) return 'google';
   // Check if model matches any known Ollama model prefix
   const lower = model.toLowerCase();
-  if (OLLAMA_MODEL_PREFIXES.some(p => lower.startsWith(p))) return 'ollama';
+  if (OLLAMA_MODEL_PREFIXES.some((p) => lower.startsWith(p))) return 'ollama';
   // Explicit ollama: prefix for arbitrary models
   if (lower.startsWith('ollama:')) return 'ollama';
   return 'anthropic';
@@ -205,7 +232,9 @@ function resolveApiKey(provider: string): string {
   }
 
   // Default: Anthropic
-  return config.ai.api_key || process.env.ANTHROPIC_API_KEY || process.env.OMNI_ANTHROPIC_API_KEY || '';
+  return (
+    config.ai.api_key || process.env.ANTHROPIC_API_KEY || process.env.OMNI_ANTHROPIC_API_KEY || ''
+  );
 }
 
 let cachedProvider: { key: string; provider: AIProvider } | null = null;
@@ -235,8 +264,7 @@ export function getAIProvider(): AIProvider {
 
   if (!apiKey) {
     throw new Error(
-      `API key not configured for ${provider}. ` +
-      `Run: omni config set ai.api_key <your-key>`
+      `API key not configured for ${provider}. ` + `Run: vigil config set ai.api_key <your-key>`,
     );
   }
 

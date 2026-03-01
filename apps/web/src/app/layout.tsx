@@ -156,7 +156,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
           <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
             <Activity className="w-4 h-4 text-emerald-400" />
           </div>
-          {!collapsed && <span className="text-lg font-semibold tracking-tight">OmniWatch</span>}
+          {!collapsed && <span className="text-lg font-semibold tracking-tight">Vigil</span>}
         </div>
 
         {/* Navigation */}

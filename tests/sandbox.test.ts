@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock @omniwatch/db
+// Mock @vigil/db
 const mockRun = vi.fn();
 const mockAll = vi.fn().mockReturnValue([]);
-vi.mock('@omniwatch/db', () => ({
+vi.mock('@vigil/db', () => ({
   getDb: () => ({
     prepare: () => ({
       run: mockRun,
@@ -13,9 +13,9 @@ vi.mock('@omniwatch/db', () => ({
   }),
 }));
 
-// Mock @omniwatch/shared logger
-vi.mock('@omniwatch/shared', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@omniwatch/shared')>();
+// Mock @vigil/shared logger
+vi.mock('@vigil/shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@vigil/shared')>();
   return {
     ...actual,
     log: vi.fn(),
@@ -42,7 +42,7 @@ import {
   SANDBOX_MEMORY_STANDARD,
   SANDBOX_MEMORY_PERMISSIVE,
   AGENTS_DIR,
-} from '@omniwatch/shared';
+} from '@vigil/shared';
 import { join } from 'node:path';
 
 describe('Agent Sandbox', () => {

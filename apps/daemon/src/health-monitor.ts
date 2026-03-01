@@ -4,9 +4,9 @@ import {
   ZOMBIE_ERROR_THRESHOLD,
   ZOMBIE_CHECK_WINDOW,
   log,
-} from '@omniwatch/shared';
-import type { Agent } from '@omniwatch/shared';
-import { getDb } from '@omniwatch/db';
+} from '@vigil/shared';
+import type { Agent } from '@vigil/shared';
+import { getDb } from '@vigil/db';
 import { getRunningProcesses, getAgent, updateAgent } from './agent-manager.js';
 import { attemptHeal } from './self-healer.js';
 

@@ -1,6 +1,6 @@
 /** Mesh topology and events API routes */
 import { Hono } from 'hono';
-import { getDb } from '@omniwatch/db';
+import { getDb } from '@vigil/db';
 import { rpcCall } from '../lib/rpc-bridge.js';
 
 export const meshRoutes = new Hono();
@@ -24,13 +24,11 @@ meshRoutes.get('/mesh/events', (c) => {
 
   let events;
   if (topic) {
-    events = db.prepare(
-      'SELECT * FROM mesh_events WHERE topic = ? ORDER BY created_at DESC LIMIT ?'
-    ).all(topic, limit);
+    events = db
+      .prepare('SELECT * FROM mesh_events WHERE topic = ? ORDER BY created_at DESC LIMIT ?')
+      .all(topic, limit);
   } else {
-    events = db.prepare(
-      'SELECT * FROM mesh_events ORDER BY created_at DESC LIMIT ?'
-    ).all(limit);
+    events = db.prepare('SELECT * FROM mesh_events ORDER BY created_at DESC LIMIT ?').all(limit);
   }
 
   return c.json({ events });
@@ -39,13 +37,17 @@ meshRoutes.get('/mesh/events', (c) => {
 /** GET /mesh/subscriptions - get all active subscriptions */
 meshRoutes.get('/mesh/subscriptions', (c) => {
   const db = getDb();
-  const subs = db.prepare(`
+  const subs = db
+    .prepare(
+      `
     SELECT s.agent_id, s.topic, a.name as agent_name
     FROM mesh_subscriptions s
     JOIN agents a ON s.agent_id = a.id
     WHERE a.status != 'destroyed'
     ORDER BY s.topic
-  `).all();
+  `,
+    )
+    .all();
 
   return c.json({ subscriptions: subs });
 });

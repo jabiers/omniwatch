@@ -1,4 +1,4 @@
-# OmniWatch v0.4 Completion Report
+# Vigil v0.4 Completion Report
 
 ## Summary
 - **Version**: 0.4.0
@@ -18,7 +18,7 @@
 - `apps/web` — Next.js 15 Dashboard (.next/ output)
 
 ### Import Migration
-- All `../shared/*.js` relative imports → `@omniwatch/shared` / `@omniwatch/db`
+- All `../shared/*.js` relative imports → `@vigil/shared` / `@vigil/db`
 - 16 CLI files, 22 daemon files, 17 test files updated
 - Zero legacy imports remaining
 

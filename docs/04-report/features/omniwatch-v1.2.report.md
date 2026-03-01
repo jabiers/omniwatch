@@ -1,8 +1,8 @@
-# OmniWatch v1.2 Completion Report
+# Vigil v1.2 Completion Report
 
 > **Status**: Complete
 >
-> **Project**: OmniWatch
+> **Project**: Vigil
 > **Version**: 1.2.0
 > **Author**: Paul
 > **Completion Date**: 2026-03-01
@@ -16,7 +16,7 @@
 
 | Item | Content |
 |------|---------|
-| Feature | OmniWatch v1.2 — Testing, Observability & Documentation |
+| Feature | Vigil v1.2 — Testing, Observability & Documentation |
 | Start Date | 2026-02-15 |
 | End Date | 2026-03-01 |
 | Duration | 2 weeks |
@@ -40,9 +40,9 @@
 
 | Phase | Document | Status |
 |-------|----------|--------|
-| Plan | [omniwatch-v1.2.plan.md](../01-plan/features/omniwatch-v1.2.plan.md) | ✅ Finalized |
-| Design | [omniwatch-v1.2.design.md](../02-design/features/omniwatch-v1.2.design.md) | ✅ Finalized |
-| Check | [omniwatch-v1.2.analysis.md](../03-analysis/features/omniwatch-v1.2.analysis.md) | ✅ Complete |
+| Plan | [vigil-v1.2.plan.md](../01-plan/features/vigil-v1.2.plan.md) | ✅ Finalized |
+| Design | [vigil-v1.2.design.md](../02-design/features/vigil-v1.2.design.md) | ✅ Finalized |
+| Check | [vigil-v1.2.analysis.md](../03-analysis/features/vigil-v1.2.analysis.md) | ✅ Complete |
 | Act | Current document | 🔄 Complete |
 
 ---
@@ -232,6 +232,6 @@ Design Match: 93% (PASS - exceeds 90% requirement)
 
 ## Conclusion
 
-OmniWatch v1.2 successfully established the testing foundation, enhanced observability, and improved documentation and accessibility. With 93% design match rate and 24 new web tests integrated, the project is well-positioned for continued development. One task (page-level testing) was intentionally deferred due to Next.js App Router complexity, with clear recommendations for v1.3.
+Vigil v1.2 successfully established the testing foundation, enhanced observability, and improved documentation and accessibility. With 93% design match rate and 24 new web tests integrated, the project is well-positioned for continued development. One task (page-level testing) was intentionally deferred due to Next.js App Router complexity, with clear recommendations for v1.3.
 
 **Status**: ✅ **APPROVED FOR RELEASE**

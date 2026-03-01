@@ -1,4 +1,4 @@
-# OmniWatch v1.0 Plan — Stable Release
+# Vigil v1.0 Plan — Stable Release
 
 ## Overview
 v1.0은 **안정적인 첫 공식 릴리스**. 타입 오류 0개, 린트 설정, Docker 완전 지원, 릴리스 워크플로우.

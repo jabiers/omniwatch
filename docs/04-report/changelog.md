@@ -1,6 +1,6 @@
-# OmniWatch Changelog
+# Vigil Changelog
 
-All notable changes to OmniWatch are documented here. This file follows the [Keep a Changelog](https://keepachangelog.com/) format.
+All notable changes to Vigil are documented here. This file follows the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ---
 
@@ -135,7 +135,7 @@ All notable changes to OmniWatch are documented here. This file follows the [Kee
 
 ## Version Numbering
 
-OmniWatch uses Semantic Versioning (MAJOR.MINOR.PATCH):
+Vigil uses Semantic Versioning (MAJOR.MINOR.PATCH):
 - **MAJOR**: Breaking changes or major feature releases
 - **MINOR**: New features or significant enhancements
 - **PATCH**: Bug fixes and minor improvements

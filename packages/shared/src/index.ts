@@ -32,7 +32,7 @@ export type {
 
 // Constants
 export {
-  OMNI_HOME,
+  VIGIL_HOME,
   DB_PATH,
   SOCKET_PATH,
   PID_FILE,

@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
-import { getDb } from '@omniwatch/db';
-import type { Notification } from '@omniwatch/shared';
+import { getDb } from '@vigil/db';
+import type { Notification } from '@vigil/shared';
 
 export const notificationRoutes = new Hono();
 

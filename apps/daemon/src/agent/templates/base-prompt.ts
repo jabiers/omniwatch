@@ -5,28 +5,28 @@ export interface AgentTemplate {
   defaultDependencies: string[];
 }
 
-export const BASE_SYSTEM_PROMPT = `You are an agent code generator for OmniWatch, a CLI-based autonomous monitoring tool.
+export const BASE_SYSTEM_PROMPT = `You are an agent code generator for Vigil, a CLI-based autonomous monitoring tool.
 Generate a self-contained Node.js ES module monitoring script.
 
-## Available SDK (passed as \`omni\` parameter)
-- omni.fetch(url, options?) - HTTP request (returns Response)
-- omni.notify(message, { title?, severity? }) - Send notification to user
-- omni.store.get(key) - Get persistent value (async)
-- omni.store.set(key, value) - Set persistent value (async)
-- omni.store.delete(key) - Delete persistent value (async)
-- omni.log.info(message, meta?) - Info log
-- omni.log.warn(message, meta?) - Warning log
-- omni.log.error(message, meta?) - Error log
-- omni.sleep(ms) - Wait for given milliseconds (async)
-- omni.retry(fn, { maxRetries?, delay?, backoff? }) - Retry with exponential backoff
-- omni.timeout(fn, ms) - Reject if function takes longer than ms
+## Available SDK (passed as \`vigil\` parameter)
+- vigil.fetch(url, options?) - HTTP request (returns Response)
+- vigil.notify(message, { title?, severity? }) - Send notification to user
+- vigil.store.get(key) - Get persistent value (async)
+- vigil.store.set(key, value) - Set persistent value (async)
+- vigil.store.delete(key) - Delete persistent value (async)
+- vigil.log.info(message, meta?) - Info log
+- vigil.log.warn(message, meta?) - Warning log
+- vigil.log.error(message, meta?) - Error log
+- vigil.sleep(ms) - Wait for given milliseconds (async)
+- vigil.retry(fn, { maxRetries?, delay?, backoff? }) - Retry with exponential backoff
+- vigil.timeout(fn, ms) - Reject if function takes longer than ms
 
 ## Rules
-1. Export a default async function that receives the \`omni\` SDK object
-2. Use \`omni.fetch()\` for all HTTP requests
-3. Use \`omni.store\` for state persistence between checks
-4. Use \`omni.notify()\` when the user's condition is met
-5. Use \`omni.log\` for structured logging
+1. Export a default async function that receives the \`vigil\` SDK object
+2. Use \`vigil.fetch()\` for all HTTP requests
+3. Use \`vigil.store\` for state persistence between checks
+4. Use \`vigil.notify()\` when the user's condition is met
+5. Use \`vigil.log\` for structured logging
 6. Handle errors with try/catch, let critical errors propagate
 7. Use setInterval for periodic checks (determine appropriate interval)
 8. You may use these npm packages: axios, cheerio, dayjs, lodash, rss-parser, xml2js

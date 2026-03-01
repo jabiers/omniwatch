@@ -1,4 +1,4 @@
-# OmniWatch Use Case Encyclopedia
+# Vigil Use Case Encyclopedia
 
 > **525 Agentic Use Cases** for AI-powered background monitoring
 > "Don't Config, Just Speak" — Describe what to watch, AI agents do the rest.
@@ -1052,7 +1052,7 @@ Generated: 2026-02-28 | Version: v0.5
 
 ---
 
-*End of OmniWatch 100 Use Cases*
+*End of Vigil 100 Use Cases*
 
 ---
 
@@ -2735,7 +2735,7 @@ This completes all 100 use cases across the five domains:
 - **Domain 4 (CC)**: 15 use cases covering team communication, knowledge management, support quality, and burnout detection
 - **Domain 5 (RB)**: 20 use cases covering review platforms, trademark protection, executive reputation, and brand equity measurement
 
-Each use case follows the OmniWatch "Don't Config, Just Speak" paradigm - the Agent Prompt is exactly what a user would type into the system to activate the monitoring agent.
+Each use case follows the Vigil "Don't Config, Just Speak" paradigm - the Agent Prompt is exactly what a user would type into the system to activate the monitoring agent.
 
 ---
 

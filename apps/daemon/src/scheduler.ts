@@ -1,6 +1,6 @@
-import { log } from '@omniwatch/shared';
-import type { Agent } from '@omniwatch/shared';
-import { getDb } from '@omniwatch/db';
+import { log } from '@vigil/shared';
+import type { Agent } from '@vigil/shared';
+import { getDb } from '@vigil/db';
 import { startAgent } from './agent-manager.js';
 
 let interval: ReturnType<typeof setInterval> | null = null;

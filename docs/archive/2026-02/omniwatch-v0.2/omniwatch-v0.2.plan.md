@@ -1,13 +1,13 @@
-# OmniWatch v0.2 Planning Document
+# Vigil v0.2 Planning Document
 
 > **Summary**: MVP 이후 기능 확장 - TUI Dashboard, 알림 플러그인, 대화형 모드, 코드 품질 개선
 >
-> **Project**: OmniWatch
+> **Project**: Vigil
 > **Version**: 0.2.0
 > **Author**: Paul
 > **Date**: 2026-02-27
 > **Status**: Draft
-> **Previous**: [omniwatch-mvp (archived)](../../archive/2026-02/omniwatch-mvp/)
+> **Previous**: [vigil-mvp (archived)](../../archive/2026-02/vigil-mvp/)
 
 ---
 
@@ -19,7 +19,7 @@ v0.1 MVP에서 CLI 핵심 기능(에이전트 생성/관리/자가치유)이 완
 v0.2는 사용성과 알림 확장에 집중한다:
 - TUI 대시보드로 실시간 모니터링 경험 제공
 - Slack/Discord/Telegram 알림으로 외부 연동 확장
-- 대화형 모드(`omni chat`)로 에이전트와 자연어 상호작용
+- 대화형 모드(`vigil chat`)로 에이전트와 자연어 상호작용
 - AST 기반 코드 검증으로 보안 강화
 
 ### 1.2 Background
@@ -37,11 +37,11 @@ v0.2는 사용성과 알림 확장에 집중한다:
 
 | # | Feature | Category | Priority |
 |---|---------|----------|----------|
-| 1 | TUI Dashboard (`omni dash`) | UX | High |
+| 1 | TUI Dashboard (`vigil dash`) | UX | High |
 | 2 | Slack 알림 플러그인 | Notification | High |
 | 3 | Discord 알림 플러그인 | Notification | Medium |
 | 4 | Telegram 알림 플러그인 | Notification | Medium |
-| 5 | `omni chat <id>` 대화형 모드 | UX | High |
+| 5 | `vigil chat <id>` 대화형 모드 | UX | High |
 | 6 | AST 기반 코드 검증 (acorn) | Security | Medium |
 | 7 | 생성 코드 미리보기 + 사용자 확인 | UX | Medium |
 | 8 | 에이전트 템플릿 프리셋 | DX | Low |
@@ -63,7 +63,7 @@ v0.2는 사용성과 알림 확장에 집중한다:
 | ID | Requirement | Priority |
 |----|-------------|----------|
 | **A. TUI Dashboard** | | |
-| FR-01 | `omni dash` 명령으로 Ink 기반 TUI 대시보드 진입 | High |
+| FR-01 | `vigil dash` 명령으로 Ink 기반 TUI 대시보드 진입 | High |
 | FR-02 | 실시간 에이전트 상태 테이블 (이름, 상태, PID, 마지막 실행) | High |
 | FR-03 | 에이전트 선택 시 실시간 로그 뷰어 | High |
 | FR-04 | 키보드 단축키: q(종료), r(새로고침), s(start), x(stop), d(destroy) | Medium |
@@ -72,11 +72,11 @@ v0.2는 사용성과 알림 확장에 집중한다:
 | FR-06 | Slack Webhook 알림 발송 (Incoming Webhook URL) | High |
 | FR-07 | Discord Webhook 알림 발송 (embed 형식) | Medium |
 | FR-08 | Telegram Bot API 알림 발송 (chat_id + token) | Medium |
-| FR-09 | `omni config set notification.slack_webhook <url>` 로 설정 | High |
+| FR-09 | `vigil config set notification.slack_webhook <url>` 로 설정 | High |
 | FR-10 | 채널별 severity 필터링 (critical만, warning 이상 등) | Medium |
 | FR-11 | 알림 플러그인 시스템 (채널 추가 용이한 구조) | Medium |
 | **C. 대화형 모드** | | |
-| FR-12 | `omni chat <id>` 로 에이전트와 대화형 상호작용 | High |
+| FR-12 | `vigil chat <id>` 로 에이전트와 대화형 상호작용 | High |
 | FR-13 | 자연어로 에이전트 동작 수정 ("체크 주기를 5분으로 변경해줘") | High |
 | FR-14 | 에이전트 상태/로그 자연어 질의 ("마지막 에러가 뭐야?") | Medium |
 | FR-15 | 코드 수정 후 자동 재시작 (confirm 후) | High |
@@ -207,18 +207,18 @@ interface OmniConfig {
 | Slack/Discord API 변경 | Low | Webhook은 안정적 API, 변경 희박 |
 | chat 모드 AI 비용 | Medium | 짧은 컨텍스트, haiku 모델 사용 |
 | AST 파서 성능 | Low | acorn은 매우 빠름 (수 ms) |
-| TUI와 headless 서버 호환 | Medium | `omni dash`는 선택적, 핵심 CLI는 영향 없음 |
+| TUI와 headless 서버 호환 | Medium | `vigil dash`는 선택적, 핵심 CLI는 영향 없음 |
 
 ---
 
 ## 7. Success Criteria
 
-- [ ] `omni dash`로 실시간 TUI 대시보드 표시
+- [ ] `vigil dash`로 실시간 TUI 대시보드 표시
 - [ ] Slack/Discord/Telegram 중 1개 이상에 실제 알림 발송
-- [ ] `omni chat <id>`로 에이전트 동작 자연어 수정
+- [ ] `vigil chat <id>`로 에이전트 동작 자연어 수정
 - [ ] AST 기반 코드 검증이 regex보다 정확한 케이스 확인
 - [ ] v0.1 기존 기능 100% 호환 (regression 없음)
-- [ ] `omni watch "..." --preview`로 코드 미리보기 후 확인
+- [ ] `vigil watch "..." --preview`로 코드 미리보기 후 확인
 
 ---
 

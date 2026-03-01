@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { statSync } from 'node:fs';
-import { getDb, loadConfig } from '@omniwatch/db';
-import { DB_PATH, APP_VERSION } from '@omniwatch/shared';
+import { getDb, loadConfig } from '@vigil/db';
+import { DB_PATH, APP_VERSION } from '@vigil/shared';
 import { isDaemonRunning, getDaemonPid } from '../lib/rpc-bridge.js';
 
 export const systemRoutes = new Hono();

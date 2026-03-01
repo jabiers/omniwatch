@@ -4,7 +4,7 @@ import { StatusBar } from './StatusBar.js';
 import { AgentTable } from './AgentTable.js';
 import { LogViewer } from './LogViewer.js';
 import { rpcCall } from '../ipc-client.js';
-import type { Agent } from '@omniwatch/shared';
+import type { Agent } from '@vigil/shared';
 
 export function Dashboard(): React.ReactElement {
   const { exit } = useApp();
@@ -13,7 +13,7 @@ export function Dashboard(): React.ReactElement {
 
   const refresh = async () => {
     try {
-      const list = await rpcCall('agent.list', {}) as Agent[];
+      const list = (await rpcCall('agent.list', {})) as Agent[];
       setAgents(list);
       if (!selectedId && list.length > 0) setSelectedId(list[0].id);
     } catch {

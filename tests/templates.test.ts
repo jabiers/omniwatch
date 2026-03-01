@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { registerTemplate, getTemplate, listTemplates, TEMPLATES, BASE_SYSTEM_PROMPT } from '../apps/daemon/src/agent/templates/base-prompt.js';
+import {
+  registerTemplate,
+  getTemplate,
+  listTemplates,
+  TEMPLATES,
+  BASE_SYSTEM_PROMPT,
+} from '../apps/daemon/src/agent/templates/base-prompt.js';
 import { webMonitorTemplate } from '../apps/daemon/src/agent/templates/web-monitor.js';
 import { apiCheckerTemplate } from '../apps/daemon/src/agent/templates/api-checker.js';
 import { rssWatcherTemplate } from '../apps/daemon/src/agent/templates/rss-watcher.js';
@@ -7,7 +13,7 @@ import { rssWatcherTemplate } from '../apps/daemon/src/agent/templates/rss-watch
 describe('Agent Templates', () => {
   it('BASE_SYSTEM_PROMPT contains essential rules', () => {
     expect(BASE_SYSTEM_PROMPT).toContain('Export a default');
-    expect(BASE_SYSTEM_PROMPT).toContain('omni.fetch');
+    expect(BASE_SYSTEM_PROMPT).toContain('vigil.fetch');
     expect(BASE_SYSTEM_PROMPT).toContain('NEVER use');
   });
 

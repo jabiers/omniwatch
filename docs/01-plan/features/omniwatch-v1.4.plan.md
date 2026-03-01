@@ -1,4 +1,4 @@
-# OmniWatch v1.4 Plan - UX & Performance
+# Vigil v1.4 Plan - UX & Performance
 
 ## Overview
 - **Version**: 1.4.0
