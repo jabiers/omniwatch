@@ -49,13 +49,13 @@ export function dequeueMessages(topic: string, limit: number = QUEUE_BATCH_SIZE)
       const prefix = topic.slice(0, -1); // 'btc.*' → 'btc.'
       messages = db
         .prepare(
-          "SELECT * FROM message_queue WHERE topic LIKE ? AND status = 'pending' ORDER BY created_at ASC LIMIT ?",
+          "SELECT id, topic, payload, from_agent, status, retry_count, created_at, processed_at FROM message_queue WHERE topic LIKE ? AND status = 'pending' ORDER BY created_at ASC LIMIT ?",
         )
         .all(`${prefix}%`, limit) as QueueMessage[];
     } else {
       messages = db
         .prepare(
-          "SELECT * FROM message_queue WHERE topic = ? AND status = 'pending' ORDER BY created_at ASC LIMIT ?",
+          "SELECT id, topic, payload, from_agent, status, retry_count, created_at, processed_at FROM message_queue WHERE topic = ? AND status = 'pending' ORDER BY created_at ASC LIMIT ?",
         )
         .all(topic, limit) as QueueMessage[];
     }
@@ -137,7 +137,9 @@ export function getQueueStats(): QueueStats {
 export function getDeadLetters(limit = 50): DeadLetter[] {
   const db = getDb();
   return db
-    .prepare('SELECT * FROM dead_letters ORDER BY created_at DESC LIMIT ?')
+    .prepare(
+      'SELECT id, original_id, topic, payload, error, created_at FROM dead_letters ORDER BY created_at DESC LIMIT ?',
+    )
     .all(limit) as DeadLetter[];
 }
 

@@ -136,14 +136,22 @@ function evaluateRule(value: number, operator: AlertRule['operator'], threshold:
 }
 
 // Alert rule CRUD
+/** Explicit columns for alert_rules queries */
+const ALERT_RULE_COLUMNS =
+  'id, tenant_id, metric_name, operator, threshold, window_minutes, notify_channels, enabled, created_at';
+
 export function getAlertRules(tenantId?: string): AlertRule[] {
   const db = getDb();
   if (tenantId) {
     return db
-      .prepare('SELECT * FROM alert_rules WHERE tenant_id = ? ORDER BY created_at DESC')
+      .prepare(
+        `SELECT ${ALERT_RULE_COLUMNS} FROM alert_rules WHERE tenant_id = ? ORDER BY created_at DESC`,
+      )
       .all(tenantId) as AlertRule[];
   }
-  return db.prepare('SELECT * FROM alert_rules ORDER BY created_at DESC').all() as AlertRule[];
+  return db
+    .prepare(`SELECT ${ALERT_RULE_COLUMNS} FROM alert_rules ORDER BY created_at DESC`)
+    .all() as AlertRule[];
 }
 
 export function createAlertRule(rule: Omit<AlertRule, 'id' | 'created_at'>): AlertRule {
@@ -162,13 +170,19 @@ export function createAlertRule(rule: Omit<AlertRule, 'id' | 'created_at'>): Ale
       rule.enabled ? 1 : 0,
     );
   return db
-    .prepare('SELECT * FROM alert_rules WHERE id = ?')
+    .prepare(
+      'SELECT id, tenant_id, metric_name, operator, threshold, window_minutes, notify_channels, enabled, created_at FROM alert_rules WHERE id = ?',
+    )
     .get(result.lastInsertRowid) as AlertRule;
 }
 
 export function updateAlertRule(id: number, updates: Partial<AlertRule>): AlertRule | null {
   const db = getDb();
-  const existing = db.prepare('SELECT * FROM alert_rules WHERE id = ?').get(id) as AlertRule | null;
+  const existing = db
+    .prepare(
+      'SELECT id, tenant_id, metric_name, operator, threshold, window_minutes, notify_channels, enabled, created_at FROM alert_rules WHERE id = ?',
+    )
+    .get(id) as AlertRule | null;
   if (!existing) return null;
 
   const merged = { ...existing, ...updates };
@@ -184,7 +198,11 @@ export function updateAlertRule(id: number, updates: Partial<AlertRule>): AlertR
     id,
   );
 
-  return db.prepare('SELECT * FROM alert_rules WHERE id = ?').get(id) as AlertRule;
+  return db
+    .prepare(
+      'SELECT id, tenant_id, metric_name, operator, threshold, window_minutes, notify_channels, enabled, created_at FROM alert_rules WHERE id = ?',
+    )
+    .get(id) as AlertRule;
 }
 
 export function deleteAlertRule(id: number): boolean {

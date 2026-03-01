@@ -100,10 +100,14 @@ export function createAgentRecord(
   return getAgent(id)!;
 }
 
+/** Explicit columns for agent queries */
+const AGENT_COLUMNS =
+  'id, name, type, status, prompt, description, code_hash, config, sandbox_level, schedule, last_run, error_count, heal_count, parent_id, spawn_depth, tenant_id, created_at, updated_at';
+
 export function getAgent(id: string): Agent | null {
   const db = getDb();
   return db
-    .prepare('SELECT * FROM agents WHERE id = ? AND status != ?')
+    .prepare(`SELECT ${AGENT_COLUMNS} FROM agents WHERE id = ? AND status != ?`)
     .get(id, 'destroyed') as Agent | null;
 }
 
@@ -111,11 +115,13 @@ export function listAgents(status?: string): Agent[] {
   const db = getDb();
   if (status) {
     return db
-      .prepare('SELECT * FROM agents WHERE status = ? ORDER BY created_at DESC')
+      .prepare(`SELECT ${AGENT_COLUMNS} FROM agents WHERE status = ? ORDER BY created_at DESC`)
       .all(status) as Agent[];
   }
   return db
-    .prepare("SELECT * FROM agents WHERE status != 'destroyed' ORDER BY created_at DESC")
+    .prepare(
+      `SELECT ${AGENT_COLUMNS} FROM agents WHERE status != 'destroyed' ORDER BY created_at DESC`,
+    )
     .all() as Agent[];
 }
 

@@ -180,17 +180,13 @@ export function getMeshEvents(limit = 50, topic?: string): unknown[] {
   if (topic) {
     return db
       .prepare(
-        `
-      SELECT * FROM mesh_events WHERE topic = ? ORDER BY created_at DESC LIMIT ?
-    `,
+        'SELECT id, publisher_id, topic, payload, created_at FROM mesh_events WHERE topic = ? ORDER BY created_at DESC LIMIT ?',
       )
       .all(topic, limit);
   }
   return db
     .prepare(
-      `
-    SELECT * FROM mesh_events ORDER BY created_at DESC LIMIT ?
-  `,
+      'SELECT id, publisher_id, topic, payload, created_at FROM mesh_events ORDER BY created_at DESC LIMIT ?',
     )
     .all(limit);
 }
