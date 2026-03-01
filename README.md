@@ -93,6 +93,12 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
 - **Direct Function Calls** -- No more Unix Socket RPC; all engine calls are in-process
 - **CLI HTTP API** -- CLI communicates via HTTP (no daemon spawn, no Unix Socket)
 
+### Quality & Security (v3.0-v3.9)
+- **Test Suite** -- 477 tests across 59 files (367 root + 110 web)
+- **Query Optimization** -- Explicit SELECT columns in API routes and daemon modules
+- **Security Hardening** -- Tenant isolation on bulk ops, SSRF prevention, webhook masking
+- **Dashboard Tests** -- All 14 pages covered with render tests
+
 ## Architecture
 
 ```
@@ -115,7 +121,7 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
 | Layer | Role |
 |-------|------|
 | **CLI** (`omni`) | Lightweight HTTP client. 15 commands + Ink TUI. Talks to API via HTTP. |
-| **API Server** (`apps/api`) | Unified Hono server (65+ endpoints) + embedded daemon engine + WebSocket + MCP. |
+| **API Server** (`apps/api`) | Unified Hono server (70+ endpoints) + embedded daemon engine + WebSocket + MCP. |
 | **Engine** (`apps/daemon`) | Agent lifecycle, health, AI, sandbox, queue, metrics — runs in-process within API. |
 | **Web** (`apps/web`) | Next.js 15 Glass Console. 14 pages with auth, charts, admin. |
 | **Agent** | Sandboxed Node.js process with SDK (`omni.fetch`, `omni.notify`, `omni.store`). |
@@ -143,7 +149,7 @@ The Glass Console dashboard (port 3457) provides full control over the platform.
 
 ## API
 
-- **REST API**: 65+ endpoints with Zod validation and RBAC authorization
+- **REST API**: 70+ endpoints with Zod validation and RBAC authorization
 - **WebSocket**: Real-time agent status updates with heartbeat ping/pong
 - **MCP Server**: 7 tools and 3 resources for AI integration (Streamable HTTP)
 - **OpenAPI**: Swagger UI at `/api/docs` with full endpoint documentation
@@ -237,8 +243,8 @@ npx turbo build
 # Dev mode (watch)
 npx turbo dev
 
-# Run all tests (395+ tests, 45 files)
-npx vitest run
+# Run all tests (477 tests, 59 files)
+npx turbo test
 
 # Type check
 pnpm lint
@@ -287,7 +293,7 @@ omniwatch/
 |   +-- shared/                 # Types, constants, errors, IPC, auth
 |   +-- db/                     # SQLite schema + versioned migrations
 |       +-- src/migrations/     # v001-v006
-+-- tests/                      # 45 files, 395+ tests
++-- tests/                      # 59 files, 477 tests
 +-- bin/omni.mjs                # CLI entry point
 +-- Dockerfile                  # Production container
 +-- docker-compose.yml          # Docker Compose config

@@ -89,4 +89,5 @@ export type { EnvConfig } from './env.js';
 export { getEnvConfig, validateEnv } from './env.js';
 
 // Utility helpers
-export { getErrorMessage, safeJsonParse } from './utils.js';
+export { getErrorMessage, safeJsonParse, apiError } from './utils.js';
+export type { ApiErrorResponse } from './utils.js';
