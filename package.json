@@ -1,6 +1,6 @@
 {
   "name": "omniwatch",
-  "version": "0.4.0",
+  "version": "1.0.0",
   "private": true,
   "description": "AI-native CLI tool for autonomous agent management. Don't Config, Just Speak.",
   "type": "module",
@@ -9,9 +9,19 @@
     "dev": "turbo dev",
     "test": "turbo test",
     "lint": "turbo lint",
+    "format": "prettier --write 'apps/**/*.{ts,tsx}' 'packages/**/*.ts'",
+    "format:check": "prettier --check 'apps/**/*.{ts,tsx}' 'packages/**/*.ts'",
+    "typecheck": "tsc --noEmit",
     "clean": "turbo clean"
   },
-  "keywords": ["cli", "ai", "monitoring", "agent", "automation", "claude"],
+  "keywords": [
+    "cli",
+    "ai",
+    "monitoring",
+    "agent",
+    "automation",
+    "claude"
+  ],
   "author": "Paul",
   "license": "MIT",
   "bin": {
@@ -22,20 +32,30 @@
     "node": ">=20.0.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["better-sqlite3", "esbuild", "sharp", "isolated-vm"]
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "esbuild",
+      "sharp",
+      "isolated-vm"
+    ]
   },
   "devDependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@eslint/js": "^10.0.1",
+    "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
+    "acorn": "^8.16.0",
+    "better-sqlite3": "^11.7.0",
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "eslint": "^10.0.2",
+    "nanoid": "^5.0.9",
+    "ora": "^8.1.1",
+    "prettier": "^3.8.1",
     "turbo": "^2.3.0",
     "typescript": "^5.7.0",
-    "vitest": "^2.1.0",
-    "commander": "^13.1.0",
-    "nanoid": "^5.0.9",
-    "chalk": "^5.4.1",
-    "ora": "^8.1.1",
-    "acorn": "^8.16.0",
-    "@anthropic-ai/sdk": "^0.39.0",
-    "better-sqlite3": "^11.7.0",
-    "@types/better-sqlite3": "^7.6.12"
+    "vitest": "^2.1.0"
   }
 }
