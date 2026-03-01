@@ -19,13 +19,31 @@ import { oauthRoutes } from './routes/oauth.js';
 import { errorHandler } from './middleware/error-handler.js';
 import { requestLogger } from './middleware/logger.js';
 import { authMiddleware } from './middleware/auth.js';
+import { correlationId } from './middleware/correlation-id.js';
+import { securityHeaders } from './middleware/security-headers.js';
+import { rateLimiter } from './middleware/rate-limit.js';
 import { registerOpenAPI } from './openapi.js';
+
+// CORS with configurable origin whitelist
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3457')
+  .split(',')
+  .map((s) => s.trim());
 
 /** Create a configured Hono app instance */
 export function createApp(): Hono {
   const app = new Hono();
 
-  app.use('*', cors());
+  // Middleware stack (order matters)
+  app.use('*', correlationId);
+  app.use('*', securityHeaders());
+  app.use(
+    '*',
+    cors({
+      origin: (origin) => (allowedOrigins.includes(origin) ? origin : null),
+      credentials: true,
+    }),
+  );
+  app.use('*', rateLimiter());
   app.use('*', requestLogger);
   app.use('/api/*', authMiddleware);
   app.onError(errorHandler);
@@ -50,9 +68,7 @@ export function createApp(): Hono {
   app.route('/api', marketplaceRoutes);
 
   // Health check
-  app.get('/health', (c) =>
-    c.json({ status: 'ok', timestamp: new Date().toISOString() }),
-  );
+  app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
   // OpenAPI spec + Swagger UI
   registerOpenAPI(app);
