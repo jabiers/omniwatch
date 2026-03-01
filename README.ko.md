@@ -4,7 +4,7 @@
 
 > AI 기반 자율형 관제 플랫폼 — **"Don't Config, Just Speak"**
 
-OmniWatch는 원하는 작업을 자연어로 설명하면 AI가 자동으로 백그라운드 에이전트를 생성, 실행, 모니터링하고 24시간 자가 복구하는 플랫폼입니다. CLI, 통합 API 서버(내장 엔진), 그리고 완전한 기능의 웹 대시보드를 제공합니다.
+OmniWatch는 원하는 작업을 자연어로 설명하면 AI가 자동으로 백그라운드 에이전트를 생성, 실행, 모니터링하고 24시간 자가 복구하는 플랫폼입니다. CLI와 대시보드+REST API를 단일 포트로 제공하는 통합 웹 서버를 포함합니다.
 
 ```
 $ omni watch "Alert me when AirPods Pro drops below $250 on Amazon"

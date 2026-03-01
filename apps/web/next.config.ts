@@ -9,26 +9,26 @@ const analyzer = withBundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
 });
 
-const API_URL = process.env.API_URL || 'http://localhost:3456';
-
 const nextConfig: NextConfig = {
   // Standalone output for Docker deployment
   output: 'standalone',
   // Native modules that must not be bundled
-  serverExternalPackages: ['better-sqlite3', '@omniwatch/daemon', 'isolated-vm'],
+  serverExternalPackages: [
+    'better-sqlite3',
+    '@omniwatch/daemon',
+    '@omniwatch/api',
+    'isolated-vm',
+    'ws',
+  ],
   // Transpile workspace packages
   transpilePackages: ['@omniwatch/db', '@omniwatch/shared'],
   // Environment variables exposed to the browser
   env: {
     NEXT_PUBLIC_APP_VERSION: rootPkg.version,
   },
-  // Proxy API requests to the API server so dashboard works on a single port
-  async rewrites() {
-    return [
-      { source: '/api/:path*', destination: `${API_URL}/api/:path*` },
-      { source: '/health', destination: `${API_URL}/health` },
-      { source: '/ws', destination: `${API_URL}/ws` },
-    ];
+  // Enable instrumentation hook for engine initialization
+  experimental: {
+    instrumentationHook: true,
   },
 };
 

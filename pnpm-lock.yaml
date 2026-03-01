@@ -86,6 +86,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.27.1
         version: 1.27.1(zod@3.25.76)
+      '@omniwatch/daemon':
+        specifier: workspace:*
+        version: link:../daemon
       '@omniwatch/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -185,6 +188,9 @@ importers:
       '@omniwatch/api':
         specifier: workspace:*
         version: link:../api
+      '@omniwatch/daemon':
+        specifier: workspace:*
+        version: link:../daemon
       '@omniwatch/db':
         specifier: workspace:*
         version: link:../../packages/db

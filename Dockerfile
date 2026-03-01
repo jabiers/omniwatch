@@ -9,6 +9,24 @@ COPY . .
 RUN pnpm install --frozen-lockfile
 RUN npx turbo build
 
+FROM base AS production
+RUN apk add --no-cache libstdc++
+WORKDIR /app
+# Copy Next.js standalone output (includes server + all dependencies)
+COPY --from=builder /app/apps/web/.next/standalone ./
+COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder /app/apps/web/public ./apps/web/public
+# Copy custom server for WebSocket support
+COPY --from=builder /app/apps/web/server.custom.mjs ./apps/web/
+ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3457
+ENV OMNI_DATA_DIR=/data
+VOLUME /data
+EXPOSE 3457
+CMD ["node", "apps/web/server.custom.mjs"]
+
+# Legacy: standalone API server (for backward compatibility)
 FROM base AS api
 RUN apk add --no-cache libstdc++
 WORKDIR /app
@@ -27,15 +45,3 @@ ENV OMNI_DATA_DIR=/data
 VOLUME /data
 EXPOSE 3456
 CMD ["node", "apps/api/dist/index.js"]
-
-FROM base AS web
-WORKDIR /app
-COPY --from=builder /app/apps/web/.next/standalone ./
-COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder /app/apps/web/public ./apps/web/public
-ENV NODE_ENV=production
-ENV API_URL=http://api:3456
-ENV HOSTNAME=0.0.0.0
-ENV PORT=3000
-EXPOSE 3000
-CMD ["node", "apps/web/server.js"]

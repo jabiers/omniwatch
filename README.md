@@ -4,7 +4,7 @@
 
 > AI-powered autonomous monitoring platform — **"Don't Config, Just Speak"**
 
-OmniWatch is a platform where you describe what you want in plain language, and AI automatically generates, runs, monitors, and self-heals background agents 24/7. It ships with a CLI, a unified API server (with embedded engine), and a full-featured web dashboard.
+OmniWatch is a platform where you describe what you want in plain language, and AI automatically generates, runs, monitors, and self-heals background agents 24/7. It ships with a CLI and a unified web server that serves both the dashboard and REST API on a single port.
 
 ```
 $ omni watch "Alert me when AirPods Pro drops below $250 on Amazon"

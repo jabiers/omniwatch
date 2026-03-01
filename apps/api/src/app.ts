@@ -25,7 +25,7 @@ import { rateLimiter } from './middleware/rate-limit.js';
 import { registerOpenAPI } from './openapi.js';
 
 // CORS with configurable origin whitelist
-const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3457')
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3457,http://localhost:3456')
   .split(',')
   .map((s) => s.trim());
 

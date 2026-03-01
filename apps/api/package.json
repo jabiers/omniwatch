@@ -1,11 +1,12 @@
 {
   "name": "@omniwatch/api",
-  "version": "2.9.0",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
-    "./app": "./dist/app.js"
+    "./app": "./dist/app.js",
+    "./ws": "./dist/ws.js"
   },
   "scripts": {
     "build": "tsup",
