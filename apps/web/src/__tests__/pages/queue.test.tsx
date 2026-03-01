@@ -20,15 +20,17 @@ vi.mock('../../lib/api', () => ({
       return Promise.resolve({
         ok: true,
         json: () =>
-          Promise.resolve([
-            {
-              id: 1,
-              topic: 'agent.check',
-              error: 'Timeout exceeded',
-              payload: '{}',
-              created_at: '2026-03-01T12:00:00Z',
-            },
-          ]),
+          Promise.resolve({
+            dead_letters: [
+              {
+                id: 1,
+                topic: 'agent.check',
+                error: 'Timeout exceeded',
+                payload: '{}',
+                created_at: '2026-03-01T12:00:00Z',
+              },
+            ],
+          }),
       });
     }
     return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });

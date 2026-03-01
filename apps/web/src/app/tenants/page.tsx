@@ -110,8 +110,8 @@ export default function TenantsPage() {
     try {
       const res = await apiFetch('/api/tenants');
       if (res.ok) {
-        const data = (await res.json()) as Tenant[] | { tenants?: Tenant[] };
-        const list: Tenant[] = Array.isArray(data) ? data : (data.tenants ?? []);
+        const data = (await res.json()) as { tenants?: Tenant[] };
+        const list: Tenant[] = data.tenants ?? [];
         setTenants(list);
         // Auto-select first tenant if none selected
         if (!selectedTenantId && list.length > 0) {
@@ -131,8 +131,8 @@ export default function TenantsPage() {
     try {
       const res = await apiFetch(`/api/users?tenant_id=${tenantId}`);
       if (res.ok) {
-        const data = (await res.json()) as User[] | { users?: User[] };
-        setUsers(Array.isArray(data) ? data : (data.users ?? []));
+        const data = (await res.json()) as { users?: User[] };
+        setUsers(data.users ?? []);
       }
     } catch {
       // API not available

@@ -6,28 +6,30 @@ vi.mock('../../lib/api', () => ({
   apiFetch: vi.fn().mockResolvedValue({
     ok: true,
     json: () =>
-      Promise.resolve([
-        {
-          id: 1,
-          agent_id: 'agent-1',
-          channel: 'log',
-          title: 'CPU Alert',
-          severity: 'warning',
-          message: 'CPU usage exceeded 90%',
-          status: 'sent',
-          created_at: '2026-03-01T12:00:00Z',
-        },
-        {
-          id: 2,
-          agent_id: 'agent-2',
-          channel: 'slack',
-          title: 'Agent Down',
-          severity: 'critical',
-          message: 'Agent stopped unexpectedly',
-          status: 'sent',
-          created_at: '2026-03-01T11:00:00Z',
-        },
-      ]),
+      Promise.resolve({
+        notifications: [
+          {
+            id: 1,
+            agent_id: 'agent-1',
+            channel: 'log',
+            title: 'CPU Alert',
+            severity: 'warning',
+            message: 'CPU usage exceeded 90%',
+            status: 'sent',
+            created_at: '2026-03-01T12:00:00Z',
+          },
+          {
+            id: 2,
+            agent_id: 'agent-2',
+            channel: 'slack',
+            title: 'Agent Down',
+            severity: 'critical',
+            message: 'Agent stopped unexpectedly',
+            status: 'sent',
+            created_at: '2026-03-01T11:00:00Z',
+          },
+        ],
+      }),
   }),
 }));
 

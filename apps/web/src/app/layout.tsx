@@ -88,8 +88,8 @@ function AppShell({ children }: { children: React.ReactNode }) {
       try {
         const res = await apiFetch('/api/notifications?limit=50');
         if (res.ok) {
-          const data = await res.json();
-          const list = Array.isArray(data) ? data : (data.notifications ?? []);
+          const data = (await res.json()) as { notifications?: unknown[] };
+          const list = data.notifications ?? [];
           setNotifCount(list.length);
         }
       } catch {

@@ -67,15 +67,13 @@ export default function DashboardPage() {
       ]);
 
       if (agentsRes.status === 'fulfilled' && agentsRes.value.ok) {
-        const data = (await agentsRes.value.json()) as Agent[] | { agents?: Agent[] };
-        setAgents(Array.isArray(data) ? data : (data.agents ?? []));
+        const data = (await agentsRes.value.json()) as { agents: Agent[] };
+        setAgents(data.agents ?? []);
       }
 
       if (notifsRes.status === 'fulfilled' && notifsRes.value.ok) {
-        const data = (await notifsRes.value.json()) as
-          | Notification[]
-          | { notifications?: Notification[] };
-        setNotifications(Array.isArray(data) ? data : (data.notifications ?? []));
+        const data = (await notifsRes.value.json()) as { notifications: Notification[] };
+        setNotifications(data.notifications ?? []);
       }
 
       if (statusRes.status === 'fulfilled' && statusRes.value.ok) {

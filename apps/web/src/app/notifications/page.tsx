@@ -55,8 +55,8 @@ export default function NotificationsPage() {
       const offset = (page - 1) * PAGE_LIMIT;
       const res = await apiFetch(`/api/notifications?limit=${PAGE_LIMIT}&offset=${offset}`);
       if (res.ok) {
-        const data = (await res.json()) as Notification[] | { notifications?: Notification[] };
-        const list = Array.isArray(data) ? data : (data.notifications ?? []);
+        const data = (await res.json()) as { notifications?: Notification[] };
+        const list = data.notifications ?? [];
         setNotifications(list);
         setHasNextPage(list.length === PAGE_LIMIT);
       }

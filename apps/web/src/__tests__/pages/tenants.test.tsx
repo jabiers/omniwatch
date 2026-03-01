@@ -8,30 +8,34 @@ vi.mock('../../lib/api', () => ({
       return Promise.resolve({
         ok: true,
         json: () =>
-          Promise.resolve([
-            {
-              id: 'tenant-1',
-              name: 'Acme Corp',
-              plan: 'pro',
-              max_agents: 50,
-              created_at: '2026-01-01T00:00:00Z',
-            },
-          ]),
+          Promise.resolve({
+            tenants: [
+              {
+                id: 'tenant-1',
+                name: 'Acme Corp',
+                plan: 'pro',
+                max_agents: 50,
+                created_at: '2026-01-01T00:00:00Z',
+              },
+            ],
+          }),
       });
     }
     if (url.includes('/api/users')) {
       return Promise.resolve({
         ok: true,
         json: () =>
-          Promise.resolve([
-            {
-              id: 'user-1',
-              tenant_id: 'tenant-1',
-              email: 'admin@acme.com',
-              role: 'admin',
-              created_at: '2026-01-01T00:00:00Z',
-            },
-          ]),
+          Promise.resolve({
+            users: [
+              {
+                id: 'user-1',
+                tenant_id: 'tenant-1',
+                email: 'admin@acme.com',
+                role: 'admin',
+                created_at: '2026-01-01T00:00:00Z',
+              },
+            ],
+          }),
       });
     }
     return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });

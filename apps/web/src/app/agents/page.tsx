@@ -50,8 +50,8 @@ export default function AgentsPage() {
       const offset = (page - 1) * PAGE_LIMIT;
       const res = await apiFetch(`/api/agents?limit=${PAGE_LIMIT}&offset=${offset}`);
       if (res.ok) {
-        const data = await res.json();
-        const list = Array.isArray(data) ? data : (data.agents ?? []);
+        const data = (await res.json()) as { agents?: Agent[] };
+        const list = data.agents ?? [];
         setAgents(list);
         // If we got exactly PAGE_LIMIT results, there may be more pages
         setHasNextPage(list.length === PAGE_LIMIT);

@@ -142,8 +142,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     try {
       const res = await apiFetch(`/api/agents/${id}`);
       if (res.ok) {
-        const data = (await res.json()) as AgentDetail | { agent?: AgentDetail };
-        setAgent('agent' in data && data.agent ? data.agent : (data as AgentDetail));
+        const data = (await res.json()) as { agent: AgentDetail };
+        setAgent(data.agent);
       }
     } catch {
       // API not available
@@ -155,8 +155,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
       const levelParam = logFilter !== 'all' ? `?level=${logFilter}` : '';
       const res = await apiFetch(`/api/agents/${id}/logs${levelParam}`);
       if (res.ok) {
-        const data = (await res.json()) as LogEntry[] | { logs?: LogEntry[] };
-        const raw: LogEntry[] = Array.isArray(data) ? data : (data.logs ?? []);
+        const data = (await res.json()) as { logs: LogEntry[] };
+        const raw: LogEntry[] = data.logs ?? [];
         // API returns DESC order, reverse to show oldest first (newest at bottom)
         setLogs(raw.reverse());
       }
@@ -169,8 +169,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     try {
       const res = await apiFetch(`/api/agents/${id}/metrics`);
       if (res.ok) {
-        const data = (await res.json()) as MetricsData | { metrics?: MetricsData };
-        setMetrics('metrics' in data && data.metrics ? data.metrics : (data as MetricsData));
+        const data = (await res.json()) as { metrics: MetricsData };
+        setMetrics(data.metrics);
       }
     } catch {
       // API not available
@@ -181,11 +181,8 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     try {
       const res = await apiFetch(`/api/analytics/metrics?agentId=${id}&period=hourly&limit=20`);
       if (res.ok) {
-        const data = (await res.json()) as
-          | { metrics?: MetricHistoryEntry[] }
-          | MetricHistoryEntry[];
-        const raw = Array.isArray(data) ? data : (data.metrics ?? []);
-        setMetricsHistory(raw);
+        const data = (await res.json()) as { metrics: MetricHistoryEntry[] };
+        setMetricsHistory(data.metrics ?? []);
       }
     } catch {
       // Analytics API not available

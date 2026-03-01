@@ -126,7 +126,7 @@ vi.mock('../../lib/api', () => ({
       return Promise.resolve({ ok: true, json: () => Promise.resolve({ metrics: [] }) });
     }
     if (url.match(/\/api\/agents\//)) {
-      return Promise.resolve({ ok: true, json: () => Promise.resolve(mockAgent) });
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({ agent: mockAgent }) });
     }
     return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
   }),

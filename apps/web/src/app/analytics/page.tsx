@@ -138,8 +138,8 @@ export default function AnalyticsPage() {
     try {
       const res = await apiFetch('/api/agents');
       if (res.ok) {
-        const data = (await res.json()) as Agent[] | { agents?: Agent[] };
-        const list: Agent[] = Array.isArray(data) ? data : (data.agents ?? []);
+        const data = (await res.json()) as { agents?: Agent[] };
+        const list: Agent[] = data.agents ?? [];
         setAgents(list);
         if (!selectedAgent && list.length > 0) {
           setSelectedAgent(list[0].id);
@@ -172,20 +172,20 @@ export default function AnalyticsPage() {
 
       // Anomalies
       if (results[0].status === 'fulfilled' && results[0].value.ok) {
-        const data = (await results[0].value.json()) as Anomaly[];
-        setAnomalies(Array.isArray(data) ? data : []);
+        const data = (await results[0].value.json()) as { anomalies?: Anomaly[] };
+        setAnomalies(data.anomalies ?? []);
       }
 
       // Alert Rules
       if (results[1].status === 'fulfilled' && results[1].value.ok) {
-        const data = (await results[1].value.json()) as AlertRule[];
-        setAlertRules(Array.isArray(data) ? data : []);
+        const data = (await results[1].value.json()) as { rules?: AlertRule[] };
+        setAlertRules(data.rules ?? []);
       }
 
       // Metrics
       if (results[2]?.status === 'fulfilled' && results[2].value.ok) {
-        const data = (await results[2].value.json()) as MetricRow[];
-        setMetrics(Array.isArray(data) ? data : []);
+        const data = (await results[2].value.json()) as { metrics?: MetricRow[] };
+        setMetrics(data.metrics ?? []);
       } else if (selectedAgent) {
         setMetrics([]);
       }

@@ -62,10 +62,8 @@ export default function QueuePage() {
       }
 
       if (dlRes.status === 'fulfilled' && dlRes.value.ok) {
-        const data = (await dlRes.value.json()) as
-          | DeadLetter[]
-          | { dead_letters?: DeadLetter[]; deadLetters?: DeadLetter[] };
-        const list = Array.isArray(data) ? data : (data.dead_letters ?? data.deadLetters ?? []);
+        const data = (await dlRes.value.json()) as { dead_letters?: DeadLetter[] };
+        const list = data.dead_letters ?? [];
         setDeadLetters(list);
         setDlHasNextPage(list.length === PAGE_LIMIT);
       }
