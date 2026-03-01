@@ -73,6 +73,7 @@ export {
   ANOMALY_Z_THRESHOLD,
   ANOMALY_WINDOW_HOURS,
   ALERT_CHECK_INTERVAL,
+  APP_VERSION,
 } from './constants.js';
 
 // Errors

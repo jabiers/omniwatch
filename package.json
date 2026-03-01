@@ -1,6 +1,6 @@
 {
   "name": "omniwatch",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "private": true,
   "description": "AI-native CLI tool for autonomous agent management. Don't Config, Just Speak.",
   "type": "module",
@@ -11,9 +11,11 @@
     "lint": "eslint .",
     "format": "prettier --write 'apps/**/*.{ts,tsx}' 'packages/**/*.ts'",
     "format:check": "prettier --check 'apps/**/*.{ts,tsx}' 'packages/**/*.ts'",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "typecheck": "tsc --noEmit",
     "clean": "turbo clean",
-    "prepare": "husky"
+    "prepare": "husky",
+    "version:sync": "node scripts/sync-version.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx}": [

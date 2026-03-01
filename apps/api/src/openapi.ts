@@ -1,10 +1,11 @@
 import type { Hono } from 'hono';
+import { APP_VERSION } from '@omniwatch/shared';
 
 const spec = {
   openapi: '3.0.3',
   info: {
     title: 'OmniWatch API',
-    version: '1.2.0',
+    version: APP_VERSION,
     description: 'AI Agent Orchestration Platform',
   },
   servers: [{ url: 'http://localhost:3456', description: 'Local development' }],
@@ -46,7 +47,7 @@ const spec = {
                     status: { type: 'string', enum: ['healthy', 'degraded'] },
                     timestamp: { type: 'string', format: 'date-time' },
                     uptime: { type: 'integer', description: 'Uptime in seconds' },
-                    version: { type: 'string', example: '1.2.0' },
+                    version: { type: 'string', example: APP_VERSION },
                     checks: {
                       type: 'object',
                       properties: {

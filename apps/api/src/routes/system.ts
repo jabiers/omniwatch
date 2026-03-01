@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { statSync } from 'node:fs';
 import { getDb, loadConfig } from '@omniwatch/db';
-import { DB_PATH } from '@omniwatch/shared';
+import { DB_PATH, APP_VERSION } from '@omniwatch/shared';
 import { isDaemonRunning, getDaemonPid } from '../lib/rpc-bridge.js';
 
 export const systemRoutes = new Hono();
@@ -21,7 +21,7 @@ systemRoutes.get('/system/health/detailed', (c) => {
     status: dbOk ? 'healthy' : 'degraded',
     timestamp: new Date().toISOString(),
     uptime: Math.round(process.uptime()),
-    version: '1.2.0',
+    version: APP_VERSION,
     checks: {
       database: { status: dbOk ? 'up' : 'down' },
       memory: {
