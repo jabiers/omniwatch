@@ -38,6 +38,11 @@ const updateAlertSchema = z.object({
   enabled: z.boolean().optional(),
 });
 
+/** Schema: numeric :id path param */
+const numericIdParam = z.object({
+  id: z.coerce.number().int().min(1),
+});
+
 /** Schema: GET /security/events query params */
 const securityEventsQuerySchema = z.object({
   agentId: z.string().optional(),
@@ -110,10 +115,11 @@ analyticsRoutes.post(
 analyticsRoutes.put(
   '/analytics/alerts/:id',
   requireRole('admin'),
+  zValidator('param', numericIdParam),
   zValidator('json', updateAlertSchema),
   async (c) => {
     try {
-      const id = Number(c.req.param('id'));
+      const { id } = c.req.valid('param');
       const body = c.req.valid('json');
       const rule = handleAnalyticsRPC.updateAlert({ id, updates: body });
       return c.json(rule);
@@ -124,15 +130,20 @@ analyticsRoutes.put(
 );
 
 /** DELETE /analytics/alerts/:id — Delete alert rule */
-analyticsRoutes.delete('/analytics/alerts/:id', requireRole('admin'), async (c) => {
-  try {
-    const id = Number(c.req.param('id'));
-    handleAnalyticsRPC.deleteAlert({ id });
-    return c.body(null, 204);
-  } catch (err) {
-    return c.json({ error: getErrorMessage(err) }, 500);
-  }
-});
+analyticsRoutes.delete(
+  '/analytics/alerts/:id',
+  requireRole('admin'),
+  zValidator('param', numericIdParam),
+  async (c) => {
+    try {
+      const { id } = c.req.valid('param');
+      handleAnalyticsRPC.deleteAlert({ id });
+      return c.body(null, 204);
+    } catch (err) {
+      return c.json({ error: getErrorMessage(err) }, 500);
+    }
+  },
+);
 
 /** GET /security/events — Security audit log */
 analyticsRoutes.get(

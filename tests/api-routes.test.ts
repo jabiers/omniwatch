@@ -1071,3 +1071,73 @@ describe('DELETE Endpoints', () => {
     expect(res.status).toBe(404);
   });
 });
+
+describe('Tenant Isolation on Agent Sub-routes', () => {
+  it('GET /agents/:id/logs returns 404 for other tenant agent (non-admin)', async () => {
+    // First call: auth middleware user lookup → viewer in tenant-a
+    mockGet.mockReturnValueOnce({ id: 'u1', tenant_id: 'tenant-a', role: 'viewer' });
+    // Second call: agent lookup → agent belongs to tenant-b
+    mockGet.mockReturnValueOnce({ id: 'a1', tenant_id: 'tenant-b' });
+    const res = await app.request('/api/agents/a1/logs', {
+      headers: { 'X-API-Key': 'omni_test' },
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('GET /agents/:id/logs returns 200 for own tenant agent', async () => {
+    mockGet.mockReturnValueOnce({ id: 'a1', tenant_id: 'default' });
+    mockAll.mockReturnValueOnce([]);
+    const res = await app.request('/api/agents/a1/logs');
+    expect(res.status).toBe(200);
+  });
+
+  it('GET /agents/:id/metrics returns 404 for other tenant agent (non-admin)', async () => {
+    // First call: auth middleware user lookup → viewer in tenant-a
+    mockGet.mockReturnValueOnce({ id: 'u1', tenant_id: 'tenant-a', role: 'viewer' });
+    // Second call: agent lookup → agent belongs to tenant-b
+    mockGet.mockReturnValueOnce({ id: 'a1', tenant_id: 'tenant-b' });
+    const res = await app.request('/api/agents/a1/metrics', {
+      headers: { 'X-API-Key': 'omni_test' },
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('GET /agents/:id/metrics returns 200 for own tenant agent', async () => {
+    mockGet.mockReturnValueOnce({ id: 'a1', tenant_id: 'default' });
+    mockGet.mockReturnValueOnce(null);
+    const res = await app.request('/api/agents/a1/metrics');
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('Numeric ID Validation', () => {
+  it('PUT /analytics/alerts/:id rejects non-numeric id', async () => {
+    const res = await app.request('/api/analytics/alerts/abc', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: false }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('DELETE /analytics/alerts/:id rejects non-numeric id', async () => {
+    const res = await app.request('/api/analytics/alerts/abc', {
+      method: 'DELETE',
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('POST /queue/dead-letters/:id/retry rejects non-numeric id', async () => {
+    const res = await app.request('/api/queue/dead-letters/abc/retry', {
+      method: 'POST',
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('POST /queue/dead-letters/:id/retry rejects negative id', async () => {
+    const res = await app.request('/api/queue/dead-letters/-1/retry', {
+      method: 'POST',
+    });
+    expect(res.status).toBe(400);
+  });
+});

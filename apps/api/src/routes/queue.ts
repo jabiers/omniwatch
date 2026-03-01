@@ -11,6 +11,11 @@ const deadLettersQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).default(50),
 });
 
+/** Schema: numeric :id path param */
+const numericIdParam = z.object({
+  id: z.coerce.number().int().min(1),
+});
+
 export const queueRoutes = new Hono();
 
 /** GET /queue/stats — Queue statistics */
@@ -40,15 +45,17 @@ queueRoutes.get(
 );
 
 /** POST /queue/dead-letters/:id/retry — Retry a dead letter */
-queueRoutes.post('/queue/dead-letters/:id/retry', requireRole('admin', 'operator'), async (c) => {
-  try {
-    const id = Number(c.req.param('id'));
-    if (isNaN(id) || id < 1) {
-      return c.json({ error: 'Invalid dead letter ID' }, 400);
+queueRoutes.post(
+  '/queue/dead-letters/:id/retry',
+  requireRole('admin', 'operator'),
+  zValidator('param', numericIdParam),
+  async (c) => {
+    try {
+      const { id } = c.req.valid('param');
+      const result = handleQueueRPC.retryDeadLetter({ id });
+      return c.json(result);
+    } catch (err) {
+      return c.json({ error: getErrorMessage(err) }, 500);
     }
-    const result = handleQueueRPC.retryDeadLetter({ id });
-    return c.json(result);
-  } catch (err) {
-    return c.json({ error: getErrorMessage(err) }, 500);
-  }
-});
+  },
+);

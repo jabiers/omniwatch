@@ -234,11 +234,17 @@ agentRoutes.post(
 /** GET /agents/:id/logs - get agent logs with optional filters */
 agentRoutes.get('/agents/:id/logs', zValidator('query', agentLogsQuerySchema), (c) => {
   const db = getDb();
+  const auth = c.get('auth');
   const { id } = c.req.param();
   const { limit, level } = c.req.valid('query');
 
-  const agent = db.prepare('SELECT id FROM agents WHERE id = ?').get(id);
+  const agent = db.prepare('SELECT id, tenant_id FROM agents WHERE id = ?').get(id) as
+    | { id: string; tenant_id: string }
+    | undefined;
   if (!agent) {
+    return c.json({ error: `Agent '${id}' not found` }, 404);
+  }
+  if (auth.role !== 'admin' && agent.tenant_id !== auth.tenantId) {
     return c.json({ error: `Agent '${id}' not found` }, 404);
   }
 
@@ -263,10 +269,16 @@ agentRoutes.get('/agents/:id/logs', zValidator('query', agentLogsQuerySchema), (
 /** GET /agents/:id/metrics - get agent metrics */
 agentRoutes.get('/agents/:id/metrics', (c) => {
   const db = getDb();
+  const auth = c.get('auth');
   const { id } = c.req.param();
 
-  const agent = db.prepare('SELECT id FROM agents WHERE id = ?').get(id);
+  const agent = db.prepare('SELECT id, tenant_id FROM agents WHERE id = ?').get(id) as
+    | { id: string; tenant_id: string }
+    | undefined;
   if (!agent) {
+    return c.json({ error: `Agent '${id}' not found` }, 404);
+  }
+  if (auth.role !== 'admin' && agent.tenant_id !== auth.tenantId) {
     return c.json({ error: `Agent '${id}' not found` }, 404);
   }
 
