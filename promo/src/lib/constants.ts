@@ -116,7 +116,10 @@ export const VERSIONS: Version[] = [
   { version: 'v2.3', theme: 'IPC Cleanup', highlight: 'IPC Protocol Fully Removed (-3,090 LOC)' },
   { version: 'v2.4', theme: 'Type Safety', highlight: 'as-any Removal + Zod Validation' },
   { version: 'v2.5', theme: 'Reliability', highlight: 'Error Handling + 10 New Tests' },
-  { version: 'v2.6', theme: 'Current', highlight: 'DB Indexes + Query Optimization' },
+  { version: 'v2.6', theme: 'Performance', highlight: 'DB Indexes + Query Optimization' },
+  { version: 'v2.7', theme: 'Testing', highlight: 'Doc Sync + Web Component Tests' },
+  { version: 'v2.8', theme: 'API Docs', highlight: 'OpenAPI 65+ Endpoints Complete' },
+  { version: 'v2.9', theme: 'Current', highlight: 'Promo Sync + Store Tests + Polish' },
 ];
 
 export interface Stat {
@@ -126,12 +129,12 @@ export interface Stat {
 }
 
 export const STATS: Stat[] = [
-  { value: 349, suffix: '+', label: 'Tests Passing' },
+  { value: 365, suffix: '+', label: 'Tests Passing' },
   { value: 65, suffix: '+', label: 'API Endpoints' },
   { value: 18, suffix: '', label: 'Database Tables' },
   { value: 14, suffix: '', label: 'Dashboard Pages' },
   { value: 15, suffix: '', label: 'CLI Commands' },
-  { value: 22, suffix: '', label: 'Releases' },
+  { value: 25, suffix: '', label: 'Releases' },
 ];
 
 export interface TechCategory {

@@ -236,7 +236,7 @@ npx turbo build
 # 개발 모드 (watch)
 npx turbo dev
 
-# 전체 테스트 실행 (349개 이상 테스트, 43개 파일)
+# 전체 테스트 실행 (395개 이상 테스트, 45개 파일)
 npx vitest run
 
 # 타입 체크
@@ -286,7 +286,7 @@ omniwatch/
 |   +-- shared/                 # 타입, 상수, 에러, IPC, 인증
 |   +-- db/                     # SQLite 스키마 + 버전별 마이그레이션
 |       +-- src/migrations/     # v001-v006
-+-- tests/                      # 43개 파일, 349개 이상 테스트
++-- tests/                      # 45개 파일, 395개 이상 테스트
 +-- bin/omni.mjs                # CLI 진입점
 +-- Dockerfile                  # 프로덕션 컨테이너
 +-- docker-compose.yml          # Docker Compose 설정
