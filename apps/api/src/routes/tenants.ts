@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
-import { generateApiKey, hashApiKey } from '@omniwatch/shared';
+import { generateApiKey, hashApiKey, getErrorMessage } from '@omniwatch/shared';
 import type { Tenant, User } from '@omniwatch/shared';
 import { requireRole } from '../middleware/auth.js';
 import { nanoid } from 'nanoid';
@@ -47,23 +47,27 @@ tenantRoutes.post(
   requireRole('admin'),
   zValidator('json', createTenantSchema),
   async (c) => {
-    const body = c.req.valid('json');
+    try {
+      const body = c.req.valid('json');
 
-    const db = getDb();
-    const id = nanoid(8);
-    db.prepare('INSERT INTO tenants (id, name, plan, max_agents) VALUES (?, ?, ?, ?)').run(
-      id,
-      body.name,
-      body.plan,
-      body.max_agents,
-    );
+      const db = getDb();
+      const id = nanoid(8);
+      db.prepare('INSERT INTO tenants (id, name, plan, max_agents) VALUES (?, ?, ?, ?)').run(
+        id,
+        body.name,
+        body.plan,
+        body.max_agents,
+      );
 
-    const tenant = db
-      .prepare(
-        'SELECT id, name, plan, max_agents, created_at, updated_at FROM tenants WHERE id = ?',
-      )
-      .get(id) as Tenant;
-    return c.json(tenant, 201);
+      const tenant = db
+        .prepare(
+          'SELECT id, name, plan, max_agents, created_at, updated_at FROM tenants WHERE id = ?',
+        )
+        .get(id) as Tenant;
+      return c.json(tenant, 201);
+    } catch (err) {
+      return c.json({ error: getErrorMessage(err) }, 500);
+    }
   },
 );
 
@@ -73,66 +77,74 @@ tenantRoutes.put(
   requireRole('admin'),
   zValidator('json', updateTenantSchema),
   async (c) => {
-    const tenantId = c.req.param('id');
-    const body = c.req.valid('json');
-    const db = getDb();
+    try {
+      const tenantId = c.req.param('id');
+      const body = c.req.valid('json');
+      const db = getDb();
 
-    const existing = db
-      .prepare(
-        'SELECT id, name, plan, max_agents, created_at, updated_at FROM tenants WHERE id = ?',
-      )
-      .get(tenantId) as Tenant | undefined;
-    if (!existing) return c.json({ error: 'Tenant not found' }, 404);
+      const existing = db
+        .prepare(
+          'SELECT id, name, plan, max_agents, created_at, updated_at FROM tenants WHERE id = ?',
+        )
+        .get(tenantId) as Tenant | undefined;
+      if (!existing) return c.json({ error: 'Tenant not found' }, 404);
 
-    const updates: string[] = [];
-    const values: (string | number)[] = [];
+      const updates: string[] = [];
+      const values: (string | number)[] = [];
 
-    if (body.name !== undefined) {
-      updates.push('name = ?');
-      values.push(body.name);
+      if (body.name !== undefined) {
+        updates.push('name = ?');
+        values.push(body.name);
+      }
+      if (body.plan !== undefined) {
+        updates.push('plan = ?');
+        values.push(body.plan);
+      }
+      if (body.max_agents !== undefined) {
+        updates.push('max_agents = ?');
+        values.push(body.max_agents);
+      }
+
+      if (updates.length === 0) return c.json({ error: 'No fields to update' }, 400);
+
+      values.push(tenantId);
+      db.prepare(`UPDATE tenants SET ${updates.join(', ')} WHERE id = ?`).run(...values);
+
+      const tenant = db
+        .prepare(
+          'SELECT id, name, plan, max_agents, created_at, updated_at FROM tenants WHERE id = ?',
+        )
+        .get(tenantId) as Tenant;
+      return c.json(tenant);
+    } catch (err) {
+      return c.json({ error: getErrorMessage(err) }, 500);
     }
-    if (body.plan !== undefined) {
-      updates.push('plan = ?');
-      values.push(body.plan);
-    }
-    if (body.max_agents !== undefined) {
-      updates.push('max_agents = ?');
-      values.push(body.max_agents);
-    }
-
-    if (updates.length === 0) return c.json({ error: 'No fields to update' }, 400);
-
-    values.push(tenantId);
-    db.prepare(`UPDATE tenants SET ${updates.join(', ')} WHERE id = ?`).run(...values);
-
-    const tenant = db
-      .prepare(
-        'SELECT id, name, plan, max_agents, created_at, updated_at FROM tenants WHERE id = ?',
-      )
-      .get(tenantId) as Tenant;
-    return c.json(tenant);
   },
 );
 
 /** POST /users/:id/rotate-key — Rotate API key for a user (admin only) */
 tenantRoutes.post('/users/:id/rotate-key', requireRole('admin'), async (c) => {
-  const auth = c.get('auth');
-  const userId = c.req.param('id');
-  const db = getDb();
+  try {
+    const auth = c.get('auth');
+    const userId = c.req.param('id');
+    const db = getDb();
 
-  // Ensure user belongs to same tenant
-  const user = db
-    .prepare('SELECT id, tenant_id FROM users WHERE id = ? AND tenant_id = ?')
-    .get(userId, auth.tenantId) as { id: string; tenant_id: string } | undefined;
+    // Ensure user belongs to same tenant
+    const user = db
+      .prepare('SELECT id, tenant_id FROM users WHERE id = ? AND tenant_id = ?')
+      .get(userId, auth.tenantId) as { id: string; tenant_id: string } | undefined;
 
-  if (!user) return c.json({ error: 'User not found' }, 404);
+    if (!user) return c.json({ error: 'User not found' }, 404);
 
-  const newApiKey = generateApiKey();
-  const keyHash = hashApiKey(newApiKey);
+    const newApiKey = generateApiKey();
+    const keyHash = hashApiKey(newApiKey);
 
-  db.prepare('UPDATE users SET api_key_hash = ? WHERE id = ?').run(keyHash, userId);
+    db.prepare('UPDATE users SET api_key_hash = ? WHERE id = ?').run(keyHash, userId);
 
-  return c.json({ api_key: newApiKey });
+    return c.json({ api_key: newApiKey });
+  } catch (err) {
+    return c.json({ error: getErrorMessage(err) }, 500);
+  }
 });
 
 /** GET /users — List users in tenant */
@@ -153,34 +165,38 @@ tenantRoutes.post(
   requireRole('admin'),
   zValidator('json', createUserSchema),
   async (c) => {
-    const auth = c.get('auth');
-    const body = c.req.valid('json');
+    try {
+      const auth = c.get('auth');
+      const body = c.req.valid('json');
 
-    const db = getDb();
-    // Check for duplicate email
-    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(body.email);
-    if (existing) return c.json({ error: 'Email already exists' }, 409);
+      const db = getDb();
+      // Check for duplicate email
+      const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(body.email);
+      if (existing) return c.json({ error: 'Email already exists' }, 409);
 
-    const id = nanoid(8);
-    const apiKey = generateApiKey();
-    const keyHash = hashApiKey(apiKey);
-    const role = body.role;
+      const id = nanoid(8);
+      const apiKey = generateApiKey();
+      const keyHash = hashApiKey(apiKey);
+      const role = body.role;
 
-    db.prepare(
-      'INSERT INTO users (id, tenant_id, email, role, api_key_hash) VALUES (?, ?, ?, ?, ?)',
-    ).run(id, auth.tenantId, body.email, role, keyHash);
+      db.prepare(
+        'INSERT INTO users (id, tenant_id, email, role, api_key_hash) VALUES (?, ?, ?, ?, ?)',
+      ).run(id, auth.tenantId, body.email, role, keyHash);
 
-    // Return API key only on creation (never stored in plaintext)
-    return c.json(
-      {
-        id,
-        tenant_id: auth.tenantId,
-        email: body.email,
-        role,
-        api_key: apiKey, // only returned once
-      },
-      201,
-    );
+      // Return API key only on creation (never stored in plaintext)
+      return c.json(
+        {
+          id,
+          tenant_id: auth.tenantId,
+          email: body.email,
+          role,
+          api_key: apiKey, // only returned once
+        },
+        201,
+      );
+    } catch (err) {
+      return c.json({ error: getErrorMessage(err) }, 500);
+    }
   },
 );
 

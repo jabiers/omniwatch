@@ -3,6 +3,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { handleAnalyticsRPC, handleSecurityRPC } from '../engine/engine.js';
+import { getErrorMessage } from '@omniwatch/shared';
 import { requireRole } from '../middleware/auth.js';
 
 /** Schema: GET /analytics/metrics query params */
@@ -51,9 +52,13 @@ analyticsRoutes.get(
   requireRole('admin', 'operator', 'viewer'),
   zValidator('query', metricsQuerySchema),
   async (c) => {
-    const { agentId, period, limit } = c.req.valid('query');
-    const metrics = handleAnalyticsRPC.metrics({ agentId, period, limit });
-    return c.json(metrics);
+    try {
+      const { agentId, period, limit } = c.req.valid('query');
+      const metrics = handleAnalyticsRPC.metrics({ agentId, period, limit });
+      return c.json(metrics);
+    } catch (err) {
+      return c.json({ error: getErrorMessage(err) }, 500);
+    }
   },
 );
 
@@ -63,17 +68,25 @@ analyticsRoutes.get(
   requireRole('admin', 'operator', 'viewer'),
   zValidator('query', anomaliesQuerySchema),
   async (c) => {
-    const { agentId } = c.req.valid('query');
-    const anomalies = handleAnalyticsRPC.anomalies({ agentId });
-    return c.json(anomalies);
+    try {
+      const { agentId } = c.req.valid('query');
+      const anomalies = handleAnalyticsRPC.anomalies({ agentId });
+      return c.json(anomalies);
+    } catch (err) {
+      return c.json({ error: getErrorMessage(err) }, 500);
+    }
   },
 );
 
 /** GET /analytics/alerts — List alert rules */
 analyticsRoutes.get('/analytics/alerts', requireRole('admin', 'operator', 'viewer'), async (c) => {
-  const auth = c.get('auth');
-  const rules = handleAnalyticsRPC.alertRules({ tenantId: auth.tenantId });
-  return c.json(rules);
+  try {
+    const auth = c.get('auth');
+    const rules = handleAnalyticsRPC.alertRules({ tenantId: auth.tenantId });
+    return c.json(rules);
+  } catch (err) {
+    return c.json({ error: getErrorMessage(err) }, 500);
+  }
 });
 
 /** POST /analytics/alerts — Create alert rule */
@@ -82,10 +95,14 @@ analyticsRoutes.post(
   requireRole('admin'),
   zValidator('json', createAlertSchema),
   async (c) => {
-    const auth = c.get('auth');
-    const body = c.req.valid('json');
-    const rule = handleAnalyticsRPC.createAlert({ ...body, tenantId: auth.tenantId });
-    return c.json(rule, 201);
+    try {
+      const auth = c.get('auth');
+      const body = c.req.valid('json');
+      const rule = handleAnalyticsRPC.createAlert({ ...body, tenantId: auth.tenantId });
+      return c.json(rule, 201);
+    } catch (err) {
+      return c.json({ error: getErrorMessage(err) }, 500);
+    }
   },
 );
 
@@ -95,18 +112,26 @@ analyticsRoutes.put(
   requireRole('admin'),
   zValidator('json', updateAlertSchema),
   async (c) => {
-    const id = Number(c.req.param('id'));
-    const body = c.req.valid('json');
-    const rule = handleAnalyticsRPC.updateAlert({ id, updates: body });
-    return c.json(rule);
+    try {
+      const id = Number(c.req.param('id'));
+      const body = c.req.valid('json');
+      const rule = handleAnalyticsRPC.updateAlert({ id, updates: body });
+      return c.json(rule);
+    } catch (err) {
+      return c.json({ error: getErrorMessage(err) }, 500);
+    }
   },
 );
 
 /** DELETE /analytics/alerts/:id — Delete alert rule */
 analyticsRoutes.delete('/analytics/alerts/:id', requireRole('admin'), async (c) => {
-  const id = Number(c.req.param('id'));
-  const result = handleAnalyticsRPC.deleteAlert({ id });
-  return c.json(result);
+  try {
+    const id = Number(c.req.param('id'));
+    const result = handleAnalyticsRPC.deleteAlert({ id });
+    return c.json(result);
+  } catch (err) {
+    return c.json({ error: getErrorMessage(err) }, 500);
+  }
 });
 
 /** GET /security/events — Security audit log */
@@ -115,8 +140,12 @@ analyticsRoutes.get(
   requireRole('admin'),
   zValidator('query', securityEventsQuerySchema),
   async (c) => {
-    const { agentId, limit } = c.req.valid('query');
-    const events = handleSecurityRPC.events({ agentId, limit });
-    return c.json(events);
+    try {
+      const { agentId, limit } = c.req.valid('query');
+      const events = handleSecurityRPC.events({ agentId, limit });
+      return c.json(events);
+    } catch (err) {
+      return c.json({ error: getErrorMessage(err) }, 500);
+    }
   },
 );
