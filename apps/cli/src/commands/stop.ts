@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { rpcCall } from '../ipc-client.js';
-import { ensureDaemon } from './daemon.js';
+import { stopAgent } from '../api-client.js';
+import { ensureServer } from './server.js';
 import type { Agent } from '@omniwatch/shared';
 
 export const stopCommand = new Command('stop')
@@ -9,8 +9,8 @@ export const stopCommand = new Command('stop')
   .argument('<id>', 'Agent ID')
   .action(async (id: string) => {
     try {
-      await ensureDaemon();
-      const agent = await rpcCall('agent.stop', { id }) as Agent;
+      await ensureServer();
+      const agent = (await stopAgent(id)) as Agent;
       console.log(chalk.yellow(`Agent ${chalk.cyan(agent.name)} stopped.`));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);

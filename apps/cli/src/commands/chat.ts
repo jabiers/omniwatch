@@ -1,8 +1,8 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { createInterface } from 'node:readline';
-import { rpcCall } from '../ipc-client.js';
-import { ensureDaemon } from './daemon.js';
+import { getAgent, chatWithAgent, applyCode } from '../api-client.js';
+import { ensureServer } from './server.js';
 import type { Agent } from '@omniwatch/shared';
 
 export const chatCommand = new Command('chat')
@@ -10,10 +10,10 @@ export const chatCommand = new Command('chat')
   .argument('<id>', 'Agent ID to chat with')
   .action(async (id: string) => {
     try {
-      await ensureDaemon();
+      await ensureServer();
 
       // Verify agent exists
-      const agent = await rpcCall('agent.get', { id }) as Agent;
+      const agent = (await getAgent(id)) as Agent;
       console.log();
       console.log(chalk.cyan(`  Chatting with: ${agent.name}`));
       console.log(chalk.dim('  Type "exit" to leave, "apply" to apply pending changes'));
@@ -44,7 +44,7 @@ export const chatCommand = new Command('chat')
 
         if (input === 'apply' && pendingCode) {
           try {
-            await rpcCall('agent.apply', { id, code: pendingCode });
+            await applyCode(id, pendingCode);
             console.log(chalk.green('  Code applied and agent restarted.'));
             pendingCode = null;
           } catch (err) {
@@ -56,7 +56,7 @@ export const chatCommand = new Command('chat')
         }
 
         try {
-          const response = await rpcCall('agent.chat', { id, message: input }, { timeout: 30_000 }) as {
+          const response = (await chatWithAgent(id, input)) as {
             message: string;
             modifiedCode?: string;
             action?: string;

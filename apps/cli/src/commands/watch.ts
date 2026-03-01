@@ -2,8 +2,8 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
 import { createInterface } from 'node:readline';
-import { rpcCall } from '../ipc-client.js';
-import { ensureDaemon } from './daemon.js';
+import { previewAgent, createAgent } from '../api-client.js';
+import { ensureServer } from './server.js';
 import type { Agent } from '@omniwatch/shared';
 
 function confirm(question: string): Promise<boolean> {
@@ -23,14 +23,14 @@ export const watchCommand = new Command('watch')
   .option('-t, --template <name>', 'Use preset template (web-monitor|api-checker|rss-watcher)')
   .action(async (prompt: string, options: { preview?: boolean; template?: string }) => {
     try {
-      await ensureDaemon();
+      await ensureServer();
 
       if (options.preview) {
         const spinner = ora('Generating preview...').start();
-        const preview = await rpcCall('agent.preview', {
+        const preview = (await previewAgent({
           prompt,
           template: options.template,
-        }, { timeout: 120_000 }) as {
+        })) as {
           name: string;
           description: string;
           code: string;
@@ -68,13 +68,13 @@ export const watchCommand = new Command('watch')
 
       const spinner = ora('Generating agent code with Claude...').start();
 
-      const agent = await rpcCall('agent.create', {
+      const agent = (await createAgent({
         prompt,
         template: options.template,
-      }, { timeout: 120_000 }) as Agent;
+      })) as Agent;
 
       spinner.succeed(
-        `Agent ${chalk.cyan(agent.name)} ${chalk.dim(`(${agent.id})`)} created and running.`
+        `Agent ${chalk.cyan(agent.name)} ${chalk.dim(`(${agent.id})`)} created and running.`,
       );
 
       if (agent.description) {

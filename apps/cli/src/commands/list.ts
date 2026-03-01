@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { rpcCall } from '../ipc-client.js';
-import { ensureDaemon } from './daemon.js';
+import { listAgents } from '../api-client.js';
+import { ensureServer } from './server.js';
 import type { Agent } from '@omniwatch/shared';
 
 const STATUS_COLORS: Record<string, (s: string) => string> = {
@@ -19,11 +19,11 @@ export const listCommand = new Command('list')
   .option('-s, --status <status>', 'Filter by status')
   .action(async (options) => {
     try {
-      await ensureDaemon();
+      await ensureServer();
 
-      const agents = await rpcCall('agent.list', {
+      const agents = (await listAgents({
         status: options.status,
-      }) as Agent[];
+      })) as Agent[];
 
       if (agents.length === 0) {
         console.log(chalk.dim('No agents found. Create one with: omni watch "<prompt>"'));
@@ -31,9 +31,7 @@ export const listCommand = new Command('list')
       }
 
       console.log();
-      console.log(
-        chalk.dim('  ID              NAME                STATUS      CREATED')
-      );
+      console.log(chalk.dim('  ID              NAME                STATUS      CREATED'));
       console.log(chalk.dim('  ' + '─'.repeat(68)));
 
       for (const agent of agents) {

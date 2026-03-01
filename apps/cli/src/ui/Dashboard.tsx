@@ -3,7 +3,7 @@ import { Box, useApp, useInput } from 'ink';
 import { StatusBar } from './StatusBar.js';
 import { AgentTable } from './AgentTable.js';
 import { LogViewer } from './LogViewer.js';
-import { rpcCall } from '../ipc-client.js';
+import { listAgents, startAgent, stopAgent, destroyAgent } from '../api-client.js';
 import type { Agent } from '@omniwatch/shared';
 
 export function Dashboard(): React.ReactElement {
@@ -13,7 +13,7 @@ export function Dashboard(): React.ReactElement {
 
   const refresh = async () => {
     try {
-      const list = await rpcCall('agent.list', {}) as Agent[];
+      const list = (await listAgents()) as Agent[];
       setAgents(list);
       if (!selectedId && list.length > 0) setSelectedId(list[0].id);
     } catch {
@@ -34,9 +34,9 @@ export function Dashboard(): React.ReactElement {
 
   const handleAction = async (action: string, id: string) => {
     try {
-      if (action === 'start') await rpcCall('agent.start', { id });
-      else if (action === 'stop') await rpcCall('agent.stop', { id });
-      else if (action === 'destroy') await rpcCall('agent.destroy', { id });
+      if (action === 'start') await startAgent(id);
+      else if (action === 'stop') await stopAgent(id);
+      else if (action === 'destroy') await destroyAgent(id);
       await refresh();
     } catch {
       // ignore errors in dashboard

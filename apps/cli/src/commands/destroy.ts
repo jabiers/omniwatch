@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { rpcCall } from '../ipc-client.js';
-import { ensureDaemon } from './daemon.js';
+import { destroyAgent } from '../api-client.js';
+import { ensureServer } from './server.js';
 
 export const destroyCommand = new Command('destroy')
   .description('Destroy an agent permanently')
@@ -9,7 +9,7 @@ export const destroyCommand = new Command('destroy')
   .option('-f, --force', 'Skip confirmation')
   .action(async (id: string, options) => {
     try {
-      await ensureDaemon();
+      await ensureServer();
 
       if (!options.force) {
         const readline = await import('node:readline');
@@ -19,10 +19,7 @@ export const destroyCommand = new Command('destroy')
         });
 
         const answer = await new Promise<string>((resolve) => {
-          rl.question(
-            chalk.yellow(`Destroy agent ${id}? This cannot be undone. [y/N] `),
-            resolve,
-          );
+          rl.question(chalk.yellow(`Destroy agent ${id}? This cannot be undone. [y/N] `), resolve);
         });
 
         rl.close();
@@ -33,7 +30,7 @@ export const destroyCommand = new Command('destroy')
         }
       }
 
-      await rpcCall('agent.destroy', { id });
+      await destroyAgent(id);
       console.log(chalk.red(`Agent ${id} destroyed.`));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
