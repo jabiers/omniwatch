@@ -5,6 +5,7 @@ import { getDb } from '@omniwatch/db';
 import type { Agent, AgentLog } from '@omniwatch/shared';
 import { rpcCall } from '../lib/rpc-bridge.js';
 import { requireRole } from '../middleware/auth.js';
+import { broadcast } from '../ws.js';
 
 /** Schema: POST /agents request body */
 const createAgentSchema = z.object({
@@ -85,6 +86,8 @@ agentRoutes.post('/agents', requireRole('admin', 'operator'), zValidator('json',
       type: body.type,
       tenantId: auth.tenantId,
     });
+    const created = result as { id?: string; name?: string };
+    broadcast('agent:created', { id: created.id, name: created.name });
     return c.json({ agent: result }, 201);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
@@ -98,6 +101,7 @@ agentRoutes.delete('/agents/:id', requireRole('admin', 'operator'), async (c) =>
 
   try {
     const result = await rpcCall('agent.destroy', { id });
+    broadcast('agent:destroyed', { id });
     return c.json({ result });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
@@ -111,6 +115,7 @@ agentRoutes.post('/agents/:id/start', requireRole('admin', 'operator'), async (c
 
   try {
     const result = await rpcCall('agent.start', { id });
+    broadcast('agent:status', { id, status: 'running' });
     return c.json({ result });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
@@ -124,6 +129,7 @@ agentRoutes.post('/agents/:id/stop', requireRole('admin', 'operator'), async (c)
 
   try {
     const result = await rpcCall('agent.stop', { id });
+    broadcast('agent:status', { id, status: 'stopped' });
     return c.json({ result });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
@@ -137,6 +143,7 @@ agentRoutes.post('/agents/:id/restart', requireRole('admin', 'operator'), async 
 
   try {
     const result = await rpcCall('agent.restart', { id });
+    broadcast('agent:status', { id, status: 'running' });
     return c.json({ result });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
