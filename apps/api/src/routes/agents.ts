@@ -193,17 +193,23 @@ agentRoutes.post(
       return c.json({ error: 'Admin role required for bulk destroy' }, 403);
     }
 
+    // Batch tenant isolation: single query instead of N queries
+    let allowedIds: Set<string>;
+    if (auth.role !== 'admin') {
+      const placeholders = ids.map(() => '?').join(',');
+      const agents = db
+        .prepare(`SELECT id FROM agents WHERE id IN (${placeholders}) AND tenant_id = ?`)
+        .all(...ids, auth.tenantId) as { id: string }[];
+      allowedIds = new Set(agents.map((a) => a.id));
+    } else {
+      allowedIds = new Set(ids);
+    }
+
     for (const id of ids) {
       try {
-        // Tenant isolation: verify agent belongs to requesting user's tenant
-        if (auth.role !== 'admin') {
-          const agent = db.prepare('SELECT tenant_id FROM agents WHERE id = ?').get(id) as
-            | { tenant_id: string }
-            | undefined;
-          if (!agent || agent.tenant_id !== auth.tenantId) {
-            results.push({ id, success: false, error: 'Agent not found' });
-            continue;
-          }
+        if (!allowedIds.has(id)) {
+          results.push({ id, success: false, error: 'Agent not found' });
+          continue;
         }
 
         const handler =

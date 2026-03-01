@@ -64,7 +64,7 @@ tenantRoutes.post(
           'SELECT id, name, plan, max_agents, created_at, updated_at FROM tenants WHERE id = ?',
         )
         .get(id) as Tenant;
-      return c.json(tenant, 201);
+      return c.json({ tenant }, 201);
     } catch (err) {
       return c.json({ error: getErrorMessage(err) }, 500);
     }

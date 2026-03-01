@@ -939,8 +939,9 @@ describe('POST /api/tenants', () => {
       body: JSON.stringify({ name: 'Acme', plan: 'pro', max_agents: 50 }),
     });
     expect(res.status).toBe(201);
-    const body = await res.json();
-    expect(body).toHaveProperty('name', 'Acme');
+    const body = (await res.json()) as { tenant: { name: string } };
+    expect(body).toHaveProperty('tenant');
+    expect(body.tenant).toHaveProperty('name', 'Acme');
   });
 });
 

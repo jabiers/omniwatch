@@ -104,7 +104,7 @@ analyticsRoutes.post(
       const auth = c.get('auth');
       const body = c.req.valid('json');
       const rule = handleAnalyticsRPC.createAlert({ ...body, tenantId: auth.tenantId });
-      return c.json(rule, 201);
+      return c.json({ rule }, 201);
     } catch (err) {
       return c.json({ error: getErrorMessage(err) }, 500);
     }
