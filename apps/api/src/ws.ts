@@ -3,9 +3,9 @@ import type { Server } from 'node:http';
 
 const clients = new Set<WebSocket>();
 
-/** Heartbeat interval (30s ping, 10s timeout) */
+/** Heartbeat interval (30s ping, 5s timeout) */
 const PING_INTERVAL = 30_000;
-const PONG_TIMEOUT = 10_000;
+const PONG_TIMEOUT = 5_000;
 
 /** Initialize WebSocket server on the existing HTTP server */
 export function initWebSocket(server: Server): void {
@@ -18,7 +18,7 @@ export function initWebSocket(server: Server): void {
     let pongReceived = true;
     let pongTimer: ReturnType<typeof setTimeout> | null = null;
 
-    // Send ping every 30s, expect pong within 10s
+    // Send ping every 30s, expect pong within 5s
     const pingInterval = setInterval(() => {
       if (!pongReceived) {
         // No pong received since last ping — terminate
