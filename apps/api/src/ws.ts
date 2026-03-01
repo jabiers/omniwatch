@@ -22,7 +22,9 @@ function pollLogs(ws: WebSocket, sub: LogSubscription): void {
   try {
     const db = getDb();
     const logs = db
-      .prepare('SELECT * FROM agent_logs WHERE agent_id = ? AND id > ? ORDER BY id ASC LIMIT 50')
+      .prepare(
+        'SELECT id, agent_id, level, message, metadata, created_at FROM agent_logs WHERE agent_id = ? AND id > ? ORDER BY id ASC LIMIT 50',
+      )
       .all(sub.agentId, sub.lastLogId) as { id: number }[];
 
     if (logs.length > 0) {

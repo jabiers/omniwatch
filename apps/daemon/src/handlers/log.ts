@@ -13,13 +13,15 @@ export const handleLogRPC = {
     if (level) {
       return db
         .prepare(
-          'SELECT * FROM agent_logs WHERE agent_id = ? AND level = ? ORDER BY created_at DESC LIMIT ?',
+          'SELECT id, agent_id, level, message, metadata, created_at FROM agent_logs WHERE agent_id = ? AND level = ? ORDER BY created_at DESC LIMIT ?',
         )
         .all(id, level, limit) as AgentLog[];
     }
 
     return db
-      .prepare('SELECT * FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT ?')
+      .prepare(
+        'SELECT id, agent_id, level, message, metadata, created_at FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT ?',
+      )
       .all(id, limit) as AgentLog[];
   },
 };
