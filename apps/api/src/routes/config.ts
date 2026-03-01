@@ -1,5 +1,37 @@
 import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
 import { loadConfig, saveConfig, type OmniConfig } from '@omniwatch/db';
+
+const updateConfigSchema = z.object({
+  config: z.object({
+    ai: z
+      .object({
+        model: z.string().optional(),
+        api_key: z.string().optional(),
+        ollama_url: z.string().optional(),
+      })
+      .optional(),
+    notification: z
+      .object({
+        slack_webhook: z.string().optional(),
+        discord_webhook: z.string().optional(),
+        webhook_url: z.string().optional(),
+        telegram_token: z.string().optional(),
+        telegram_chat_id: z.string().optional(),
+        system: z.boolean().optional(),
+        channels: z.record(z.boolean()).optional(),
+      })
+      .optional(),
+    agent: z
+      .object({
+        max_count: z.number().int().positive().optional(),
+        memory_limit_mb: z.number().int().positive().optional(),
+        max_heal_attempts: z.number().int().nonnegative().optional(),
+      })
+      .optional(),
+  }),
+});
 
 export const configRoutes = new Hono();
 
@@ -26,15 +58,9 @@ configRoutes.get('/config', (c) => {
 });
 
 /** PUT /config - update config fields */
-configRoutes.put('/config', async (c) => {
-  const body = await c.req.json<{ config: Partial<OmniConfig> }>();
-
-  if (!body.config) {
-    return c.json({ error: 'config object is required' }, 400);
-  }
-
+configRoutes.put('/config', zValidator('json', updateConfigSchema), async (c) => {
+  const { config: updates } = c.req.valid('json');
   const current = loadConfig();
-  const updates = body.config;
 
   // Merge AI settings (skip masked api_key)
   if (updates.ai) {
@@ -54,16 +80,20 @@ configRoutes.put('/config', async (c) => {
     if (n.telegram_token !== undefined && !n.telegram_token.startsWith('••••')) {
       current.notification.telegram_token = n.telegram_token;
     }
-    if (n.telegram_chat_id !== undefined) current.notification.telegram_chat_id = n.telegram_chat_id;
+    if (n.telegram_chat_id !== undefined)
+      current.notification.telegram_chat_id = n.telegram_chat_id;
     if (n.system !== undefined) current.notification.system = n.system;
-    if (n.channels) current.notification.channels = { ...current.notification.channels, ...n.channels };
+    if (n.channels)
+      current.notification.channels = { ...current.notification.channels, ...n.channels };
   }
 
   // Merge agent settings
   if (updates.agent) {
     if (updates.agent.max_count !== undefined) current.agent.max_count = updates.agent.max_count;
-    if (updates.agent.memory_limit_mb !== undefined) current.agent.memory_limit_mb = updates.agent.memory_limit_mb;
-    if (updates.agent.max_heal_attempts !== undefined) current.agent.max_heal_attempts = updates.agent.max_heal_attempts;
+    if (updates.agent.memory_limit_mb !== undefined)
+      current.agent.memory_limit_mb = updates.agent.memory_limit_mb;
+    if (updates.agent.max_heal_attempts !== undefined)
+      current.agent.max_heal_attempts = updates.agent.max_heal_attempts;
   }
 
   saveConfig(current);

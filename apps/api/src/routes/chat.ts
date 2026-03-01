@@ -1,60 +1,54 @@
 import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
 import { handleChatRPC } from '@omniwatch/daemon/engine';
+
+const chatSchema = z.object({ message: z.string().min(1, 'message is required').max(5000) });
+const previewSchema = z.object({
+  prompt: z.string().min(1, 'prompt is required').max(5000),
+  template: z.string().optional(),
+});
+const applySchema = z.object({ code: z.string().min(1, 'code is required') });
 
 export const chatRoutes = new Hono();
 
 /** POST /agents/:id/chat - send chat message to modify agent */
-chatRoutes.post('/agents/:id/chat', async (c) => {
+chatRoutes.post('/agents/:id/chat', zValidator('json', chatSchema), async (c) => {
   const { id } = c.req.param();
-  const body = await c.req.json<{ message: string }>();
-
-  if (!body.message) {
-    return c.json({ error: 'message is required' }, 400);
-  }
+  const { message } = c.req.valid('json');
 
   try {
-    const result = await handleChatRPC.chat({ id, message: body.message });
+    const result = await handleChatRPC.chat({ id, message });
     return c.json({ result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.json({ error: message }, 502);
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return c.json({ error: msg }, 502);
   }
 });
 
 /** POST /agents/preview - preview agent code without creating */
-chatRoutes.post('/agents/preview', async (c) => {
-  const body = await c.req.json<{ prompt: string; template?: string }>();
-
-  if (!body.prompt) {
-    return c.json({ error: 'prompt is required' }, 400);
-  }
+chatRoutes.post('/agents/preview', zValidator('json', previewSchema), async (c) => {
+  const { prompt, template } = c.req.valid('json');
 
   try {
-    const result = await handleChatRPC.preview({
-      prompt: body.prompt,
-      template: body.template,
-    });
+    const result = await handleChatRPC.preview({ prompt, template });
     return c.json({ result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.json({ error: message }, 502);
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return c.json({ error: msg }, 502);
   }
 });
 
 /** POST /agents/:id/apply - apply code change to agent */
-chatRoutes.post('/agents/:id/apply', async (c) => {
+chatRoutes.post('/agents/:id/apply', zValidator('json', applySchema), async (c) => {
   const { id } = c.req.param();
-  const body = await c.req.json<{ code: string }>();
-
-  if (!body.code) {
-    return c.json({ error: 'code is required' }, 400);
-  }
+  const { code } = c.req.valid('json');
 
   try {
-    const result = await handleChatRPC.apply({ id, code: body.code });
+    const result = await handleChatRPC.apply({ id, code });
     return c.json({ result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return c.json({ error: message }, 502);
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return c.json({ error: msg }, 502);
   }
 });

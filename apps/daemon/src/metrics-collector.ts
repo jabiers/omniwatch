@@ -8,7 +8,7 @@ export function recordMetric(agentId: string, metricName: string, value: number)
     const db = getDb();
     db.prepare(
       'INSERT INTO metric_rollups (agent_id, metric_name, period, min_value, max_value, avg_value, count, period_start) ' +
-      "VALUES (?, ?, 'raw', ?, ?, ?, 1, datetime('now'))"
+        "VALUES (?, ?, 'raw', ?, ?, ?, 1, datetime('now'))",
     ).run(agentId, metricName, value, value, value);
   } catch {
     // Silently ignore metric recording failures
@@ -50,7 +50,9 @@ export function performHourlyRollup(): number {
   const db = getDb();
   try {
     // Aggregate raw metrics from the last hour into hourly rollup
-    const result = db.prepare(`
+    const result = db
+      .prepare(
+        `
       INSERT OR REPLACE INTO metric_rollups (agent_id, metric_name, period, min_value, max_value, avg_value, count, period_start)
       SELECT
         agent_id,
@@ -65,11 +67,13 @@ export function performHourlyRollup(): number {
       WHERE period = 'raw'
         AND period_start >= datetime('now', '-1 hour')
       GROUP BY agent_id, metric_name, strftime('%Y-%m-%dT%H:00:00', period_start)
-    `).run();
+    `,
+      )
+      .run();
 
     // Clean up raw metrics older than 24 hours
     db.prepare(
-      "DELETE FROM metric_rollups WHERE period = 'raw' AND period_start < datetime('now', '-24 hours')"
+      "DELETE FROM metric_rollups WHERE period = 'raw' AND period_start < datetime('now', '-24 hours')",
     ).run();
 
     log('info', `Hourly metric rollup: ${result.changes} aggregated`);
@@ -84,7 +88,9 @@ export function performHourlyRollup(): number {
 export function performDailyRollup(): number {
   const db = getDb();
   try {
-    const result = db.prepare(`
+    const result = db
+      .prepare(
+        `
       INSERT OR REPLACE INTO metric_rollups (agent_id, metric_name, period, min_value, max_value, avg_value, count, period_start)
       SELECT
         agent_id,
@@ -99,7 +105,9 @@ export function performDailyRollup(): number {
       WHERE period = 'hourly'
         AND period_start >= datetime('now', '-24 hours')
       GROUP BY agent_id, metric_name, strftime('%Y-%m-%dT00:00:00', period_start)
-    `).run();
+    `,
+      )
+      .run();
 
     return result.changes;
   } catch {
@@ -114,10 +122,17 @@ export function getAgentMetrics(
   limit = 24,
 ): { metric_name: string; avg_value: number; count: number; period_start: string }[] {
   const db = getDb();
-  return db.prepare(
-    'SELECT metric_name, avg_value, count, period_start FROM metric_rollups ' +
-    'WHERE agent_id = ? AND period = ? ORDER BY period_start DESC LIMIT ?'
-  ).all(agentId, period, limit) as any[];
+  return db
+    .prepare(
+      'SELECT metric_name, avg_value, count, period_start FROM metric_rollups ' +
+        'WHERE agent_id = ? AND period = ? ORDER BY period_start DESC LIMIT ?',
+    )
+    .all(agentId, period, limit) as {
+    metric_name: string;
+    avg_value: number;
+    count: number;
+    period_start: string;
+  }[];
 }
 
 /** Get all metrics across agents for a metric name */
@@ -127,8 +142,15 @@ export function getMetricsByName(
   limit = 100,
 ): { agent_id: string; avg_value: number; count: number; period_start: string }[] {
   const db = getDb();
-  return db.prepare(
-    'SELECT agent_id, avg_value, count, period_start FROM metric_rollups ' +
-    'WHERE metric_name = ? AND period = ? ORDER BY period_start DESC LIMIT ?'
-  ).all(metricName, period, limit) as any[];
+  return db
+    .prepare(
+      'SELECT agent_id, avg_value, count, period_start FROM metric_rollups ' +
+        'WHERE metric_name = ? AND period = ? ORDER BY period_start DESC LIMIT ?',
+    )
+    .all(metricName, period, limit) as {
+    agent_id: string;
+    avg_value: number;
+    count: number;
+    period_start: string;
+  }[];
 }

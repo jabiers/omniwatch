@@ -1,5 +1,7 @@
 /** Snapshot (Time Travel) API routes */
 import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
 import { handleSnapshotRPC } from '@omniwatch/daemon/engine';
 
@@ -51,7 +53,7 @@ snapshotRoutes.post('/agents/:id/snapshots', async (c) => {
     return c.json({ error: `Agent '${id}' not found` }, 404);
   }
 
-  const body = await c.req.json<{ label?: string }>().catch(() => ({ label: undefined }));
+  const body = await c.req.json<{ label?: string }>().catch(() => ({}));
 
   try {
     const result = await handleSnapshotRPC.capture({ agentId: id, label: body.label });

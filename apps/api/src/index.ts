@@ -2,6 +2,7 @@
 import { serve } from '@hono/node-server';
 import type { Server } from 'node:http';
 import { initEngine, shutdownEngine } from '@omniwatch/daemon/engine';
+import { log } from '@omniwatch/shared';
 import { createApp } from './app.js';
 import { initWebSocket } from './ws.js';
 
@@ -11,7 +12,7 @@ async function main(): Promise<void> {
 
   const app = createApp();
   const port = parseInt(process.env.PORT || '3456');
-  console.log(`OmniWatch API running on http://localhost:${port}`);
+  log('info', `OmniWatch API running on http://localhost:${port}`);
   const server = serve({ fetch: app.fetch, port }) as Server;
   initWebSocket(server);
 
@@ -25,6 +26,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  console.error('Failed to start server:', err);
+  log('error', `Failed to start server: ${err instanceof Error ? err.message : String(err)}`);
   process.exit(1);
 });

@@ -1,6 +1,19 @@
 /** Analytics RPC handlers */
-import { getAgentMetrics, getMetricsByName, performHourlyRollup, performDailyRollup } from '../metrics-collector.js';
-import { detectAnomalies, checkAlertRules, getAlertRules, createAlertRule, updateAlertRule, deleteAlertRule } from '../anomaly-detector.js';
+import {
+  getAgentMetrics,
+  getMetricsByName,
+  performHourlyRollup,
+  performDailyRollup,
+} from '../metrics-collector.js';
+import {
+  detectAnomalies,
+  checkAlertRules,
+  getAlertRules,
+  createAlertRule,
+  updateAlertRule,
+  deleteAlertRule,
+} from '../anomaly-detector.js';
+import type { AlertRule } from '@omniwatch/shared';
 
 export const handleAnalyticsRPC: Record<string, (params: Record<string, unknown>) => unknown> = {
   metrics: (params) => {
@@ -49,7 +62,7 @@ export const handleAnalyticsRPC: Record<string, (params: Record<string, unknown>
   updateAlert: (params) => {
     const id = params.id as number;
     if (!id) throw new Error('id is required');
-    return updateAlertRule(id, params.updates as Record<string, unknown> as any);
+    return updateAlertRule(id, params.updates as Partial<AlertRule>);
   },
 
   deleteAlert: (params) => {
