@@ -24,6 +24,7 @@ import {
   Trash2,
   X,
   Check,
+  Download,
 } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
 
@@ -97,6 +98,14 @@ const CHART_COLORS = [
   '#f87171', // red-400
 ];
 
+/** Quick-select time range options */
+const TIME_RANGES: { label: string; hours: number }[] = [
+  { label: '1h', hours: 1 },
+  { label: '24h', hours: 24 },
+  { label: '7d', hours: 168 },
+  { label: '30d', hours: 720 },
+];
+
 /* ------------------------------------------------------------------ */
 /*  Page Component                                                     */
 /* ------------------------------------------------------------------ */
@@ -110,6 +119,8 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [timeRange, setTimeRange] = useState<string>('24h');
+  const [period, setPeriod] = useState<string>('hourly');
 
   // Alert CRUD state
   const [showAlertForm, setShowAlertForm] = useState(false);
@@ -149,7 +160,12 @@ export default function AnalyticsPage() {
       ];
 
       if (selectedAgent) {
-        fetches.push(apiFetch(`/api/analytics/metrics?agentId=${selectedAgent}&period=hourly`));
+        const hours = TIME_RANGES.find((t) => t.label === timeRange)?.hours || 24;
+        fetches.push(
+          apiFetch(
+            `/api/analytics/metrics?agentId=${selectedAgent}&period=${period}&hours=${hours}`,
+          ),
+        );
       }
 
       const results = await Promise.allSettled(fetches);
@@ -180,7 +196,7 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedAgent]);
+  }, [selectedAgent, timeRange, period]);
 
   // Load agents on mount
   useEffect(() => {
@@ -339,6 +355,30 @@ export default function AnalyticsPage() {
   }
 
   /* ---------------------------------------------------------------- */
+  /*  CSV Export                                                       */
+  /* ---------------------------------------------------------------- */
+
+  /** Export current metrics data as a CSV file download */
+  function exportCSV() {
+    if (metrics.length === 0) return;
+    const header = 'period_start,metric_name,avg_value,min_value,max_value,count\n';
+    const rows = metrics
+      .map(
+        (m) =>
+          `${m.period_start},${m.metric_name},${m.avg_value},${m.min_value},${m.max_value},${m.count}`,
+      )
+      .join('\n');
+    const csv = header + rows;
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `omniwatch-metrics-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /* ---------------------------------------------------------------- */
   /*  Helpers                                                          */
   /* ---------------------------------------------------------------- */
 
@@ -412,6 +452,14 @@ export default function AnalyticsPage() {
         <div className="flex items-center gap-3">
           <span className="text-xs text-gray-600">{lastRefresh.toLocaleTimeString()}</span>
           <button
+            onClick={exportCSV}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-white/[0.05] text-gray-400 hover:bg-white/[0.1] transition-colors"
+            aria-label="Export metrics as CSV"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export CSV
+          </button>
+          <button
             onClick={loadAnalytics}
             aria-label="Refresh analytics"
             className="p-2 rounded-lg bg-white/[0.05] text-gray-400 hover:bg-white/[0.1] transition-colors"
@@ -421,8 +469,8 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Agent Selector */}
-      <div className="flex items-center gap-3">
+      {/* Agent Selector + Filters */}
+      <div className="flex items-center gap-3 flex-wrap">
         <label htmlFor="analytics-agent" className="text-sm text-gray-400">
           Agent:
         </label>
@@ -445,6 +493,40 @@ export default function AnalyticsPage() {
             ))
           )}
         </select>
+
+        {/* Time Range Quick Select */}
+        <div className="flex gap-1 ml-2">
+          {TIME_RANGES.map((tr) => (
+            <button
+              key={tr.label}
+              onClick={() => setTimeRange(tr.label)}
+              className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
+                timeRange === tr.label
+                  ? 'bg-emerald-500/20 text-emerald-400'
+                  : 'text-gray-400 hover:bg-white/[0.05]'
+              }`}
+            >
+              {tr.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Period Toggle */}
+        <div className="flex gap-1 ml-4">
+          {['hourly', 'daily'].map((p) => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
+                period === p
+                  ? 'bg-blue-500/20 text-blue-400'
+                  : 'text-gray-400 hover:bg-white/[0.05]'
+              }`}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Error Banner */}
@@ -485,7 +567,7 @@ export default function AnalyticsPage() {
             Metric Trends
             {selectedAgent && (
               <span className="text-xs text-gray-500 font-normal">
-                &mdash; {agentName(selectedAgent)} (hourly)
+                &mdash; {agentName(selectedAgent)} ({period}, {timeRange})
               </span>
             )}
           </h2>
