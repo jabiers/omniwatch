@@ -22,6 +22,8 @@ import {
   LogOut,
   Sun,
   Moon,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { AuthGuard } from '../components/auth-guard';
 import { ErrorBoundary } from '../components/error-boundary';
@@ -71,8 +73,18 @@ function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { clearAuth, role } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('sidebar-collapsed') === 'true';
+  });
   const wsStatus = useWsStatus();
   const { theme, toggleTheme } = useTheme();
+
+  function toggleCollapse() {
+    const next = !collapsed;
+    setCollapsed(next);
+    localStorage.setItem('sidebar-collapsed', String(next));
+  }
 
   useEffect(() => {
     initTheme();
@@ -95,16 +107,18 @@ function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static z-40 h-screen w-60 border-r border-white/[0.08] bg-[#0a0a0f] flex flex-col transition-transform lg:translate-x-0 ${
+        className={`fixed lg:static z-40 h-screen ${collapsed ? 'w-16' : 'w-60'} border-r border-white/[0.08] bg-[#0a0a0f] flex flex-col transition-all duration-200 lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3 px-5 py-5 border-b border-white/[0.08]">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+        <div
+          className={`flex items-center gap-3 ${collapsed ? 'px-3 justify-center' : 'px-5'} py-5 border-b border-white/[0.08]`}
+        >
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
             <Activity className="w-4 h-4 text-emerald-400" />
           </div>
-          <span className="text-lg font-semibold tracking-tight">OmniWatch</span>
+          {!collapsed && <span className="text-lg font-semibold tracking-tight">OmniWatch</span>}
         </div>
 
         {/* Navigation */}
@@ -117,46 +131,68 @@ function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                title={collapsed ? item.label : undefined}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${collapsed ? 'justify-center' : ''} ${
                   isActive
                     ? 'bg-emerald-500/10 text-emerald-400'
                     : 'text-gray-400 hover:bg-white/[0.05] hover:text-gray-200'
                 }`}
               >
-                <Icon className="w-4 h-4" />
-                {item.label}
+                <Icon className="w-4 h-4 shrink-0" />
+                {!collapsed && item.label}
               </Link>
             );
           })}
         </nav>
 
-        {/* Bottom section: theme toggle + logout + status */}
+        {/* Bottom section: collapse toggle + theme toggle + logout + status */}
         <div className="border-t border-white/[0.08]">
+          {/* Collapse toggle */}
+          <button
+            onClick={toggleCollapse}
+            className="w-full flex items-center justify-center py-3 text-gray-500 hover:text-white hover:bg-white/[0.05] transition-colors"
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
+
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
-            className="w-full flex items-center gap-3 px-5 py-3 text-sm text-gray-400 hover:text-white hover:bg-white/[0.05] transition-colors"
+            className={`w-full flex items-center gap-3 ${collapsed ? 'justify-center px-3' : 'px-5'} py-3 text-sm text-gray-400 hover:text-white hover:bg-white/[0.05] transition-colors`}
             aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
           >
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            {theme === 'dark' ? (
+              <Sun className="w-4 h-4 shrink-0" />
+            ) : (
+              <Moon className="w-4 h-4 shrink-0" />
+            )}
+            {!collapsed && (theme === 'dark' ? 'Light Mode' : 'Dark Mode')}
           </button>
 
           {/* Logout button */}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-5 py-3 text-sm text-gray-400 hover:text-red-400 hover:bg-red-500/5 transition-colors"
+            className={`w-full flex items-center gap-3 ${collapsed ? 'justify-center px-3' : 'px-5'} py-3 text-sm text-gray-400 hover:text-red-400 hover:bg-red-500/5 transition-colors`}
           >
-            <LogOut className="w-4 h-4" />
-            Logout
-            {role && <span className="ml-auto text-xs text-gray-600 capitalize">{role}</span>}
+            <LogOut className="w-4 h-4 shrink-0" />
+            {!collapsed && (
+              <>
+                Logout
+                {role && <span className="ml-auto text-xs text-gray-600 capitalize">{role}</span>}
+              </>
+            )}
           </button>
 
           {/* Status */}
-          <div className="px-5 py-3 border-t border-white/[0.08]">
-            <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div
+            className={`${collapsed ? 'px-3 justify-center' : 'px-5'} py-3 border-t border-white/[0.08]`}
+          >
+            <div
+              className={`flex items-center gap-2 text-xs text-gray-500 ${collapsed ? 'justify-center' : ''}`}
+            >
               <span
-                className={`w-2 h-2 rounded-full ${
+                className={`w-2 h-2 rounded-full shrink-0 ${
                   wsStatus === 'connected'
                     ? 'bg-emerald-500 animate-pulse'
                     : wsStatus === 'reconnecting'
@@ -164,11 +200,12 @@ function AppShell({ children }: { children: React.ReactNode }) {
                       : 'bg-red-500'
                 }`}
               />
-              {wsStatus === 'connected'
-                ? 'Connected'
-                : wsStatus === 'reconnecting'
-                  ? 'Reconnecting...'
-                  : 'Disconnected'}
+              {!collapsed &&
+                (wsStatus === 'connected'
+                  ? 'Connected'
+                  : wsStatus === 'reconnecting'
+                    ? 'Reconnecting...'
+                    : 'Disconnected')}
             </div>
           </div>
         </div>

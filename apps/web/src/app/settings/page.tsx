@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Eye, EyeOff, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Save, Eye, EyeOff, CheckCircle, XCircle, Loader2, Sun, Moon } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
+import { useTheme } from '../../lib/theme-store';
 import { Skeleton, SkeletonCard } from '../../components/skeleton';
 
 /** Shape matches the actual API response (snake_case) */
@@ -62,6 +63,8 @@ const CLOUD_PROVIDERS = [
 ];
 
 export default function SettingsPage() {
+  const { theme, toggleTheme } = useTheme();
+
   // AI config
   const [aiApiKey, setAiApiKey] = useState('');
   const [aiModel, setAiModel] = useState('claude-sonnet-4-20250514');
@@ -282,6 +285,28 @@ export default function SettingsPage() {
       )}
 
       <form onSubmit={handleSave} className="space-y-6">
+        {/* Appearance */}
+        <div className="rounded-xl bg-white/[0.04] border border-white/[0.08] p-6 space-y-4">
+          <h2 className="text-lg font-semibold flex items-center gap-2">
+            <Sun className="w-5 h-5 text-yellow-400" />
+            Appearance
+          </h2>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">Theme</p>
+              <p className="text-xs text-gray-500">Switch between dark and light mode</p>
+            </div>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/[0.05] text-sm hover:bg-white/[0.1] transition-colors"
+            >
+              {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+              {theme === 'dark' ? 'Dark' : 'Light'}
+            </button>
+          </div>
+        </div>
+
         {/* AI Configuration */}
         <div className="glass-card space-y-4">
           <h2 className="text-lg font-medium">AI Configuration</h2>
