@@ -17,9 +17,9 @@ const STEPS: Step[] = [
   },
   {
     number: 2,
-    title: 'Start the Daemon',
-    description: 'Launch the background daemon that manages all your agents',
-    code: 'omni daemon start',
+    title: 'Start the Server',
+    description: 'Launch the unified API server with embedded engine',
+    code: 'pnpm dev',
   },
   {
     number: 3,

@@ -4,7 +4,7 @@
 
 > AI-powered autonomous monitoring platform — **"Don't Config, Just Speak"**
 
-OmniWatch is a platform where you describe what you want in plain language, and AI automatically generates, runs, monitors, and self-heals background agents 24/7. It ships with a CLI, a background daemon, a REST API, and a full-featured web dashboard.
+OmniWatch is a platform where you describe what you want in plain language, and AI automatically generates, runs, monitors, and self-heals background agents 24/7. It ships with a CLI, a unified API server (with embedded engine), and a full-featured web dashboard.
 
 ```
 $ omni watch "Alert me when AirPods Pro drops below $250 on Amazon"
@@ -35,12 +35,9 @@ cd omniwatch
 pnpm install
 pnpm build
 
-# Start everything (API + Dashboard + Daemon watch mode)
+# Start everything (API + Dashboard)
 pnpm dev
 # Dashboard at http://localhost:3457 (API is proxied automatically)
-
-# In another terminal — start the daemon
-node apps/daemon/dist/index.js
 
 # Create an API key to log in to the dashboard
 node apps/cli/dist/index.js auth create-key --role admin
@@ -91,28 +88,34 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
 - **Real-time WebSocket** -- Live agent status updates with heartbeat and auto-reconnect
 - **Success Toasts** -- Instant feedback on agent lifecycle actions
 
+### Unified Architecture (v2.0)
+- **Single Process** -- Daemon engine embedded in API server, eliminating IPC overhead
+- **Direct Function Calls** -- No more Unix Socket RPC; all engine calls are in-process
+
 ## Architecture
 
 ```
 [Terminal]                              [Browser]
     |                                       |
     v                                       v
-[CLI: omni] --Unix Socket--> [Daemon] <-- [Next.js + Hono API]
-                                |              |
-                                |--fork--> [Agent A] (sandbox)
-                                |--fork--> [Agent B] (sandbox)
-                                |--fork--> [Agent N] (sandbox)
-                                v
-                          [SQLite DB (WAL)]
-                          |-- 18 tables
-                          +-- versioned migrations (v001-v005)
+[CLI: omni] --------HTTP---------> [Unified API Server (Hono + Engine)]
+                                       |              |
+                                       |--fork--> [Agent A] (sandbox)
+                                       |--fork--> [Agent B] (sandbox)
+                                       |--fork--> [Agent N] (sandbox)
+                                       v
+                                 [SQLite DB (WAL)]
+                                 |-- 18 tables
+                                 +-- versioned migrations (v001-v005)
+
+                          [Next.js Dashboard] --API proxy--> [API Server]
 ```
 
 | Layer | Role |
 |-------|------|
 | **CLI** (`omni`) | Lightweight terminal client. 15 commands + Ink TUI. |
-| **Daemon** (`omnid`) | Background service. Agent lifecycle, health, AI, sandbox, queue, metrics. |
-| **API** (`apps/api`) | Hono REST API (65+ endpoints) + WebSocket + MCP. |
+| **API Server** (`apps/api`) | Unified Hono server (65+ endpoints) + embedded daemon engine + WebSocket + MCP. |
+| **Engine** (`apps/daemon`) | Agent lifecycle, health, AI, sandbox, queue, metrics — runs in-process within API. |
 | **Web** (`apps/web`) | Next.js 15 Glass Console. 14 pages with auth, charts, admin. |
 | **Agent** | Sandboxed Node.js process with SDK (`omni.fetch`, `omni.notify`, `omni.store`). |
 
@@ -232,7 +235,7 @@ npx turbo build
 # Dev mode (watch)
 npx turbo dev
 
-# Run all tests (376+ tests, 40 files)
+# Run all tests (375+ tests, 40 files)
 npx vitest run
 
 # Type check
@@ -261,14 +264,15 @@ GitHub Actions workflow runs on every push and PR to `main`:
 omniwatch/
 +-- apps/
 |   +-- cli/                    # CLI client (15 commands + Ink TUI)
-|   +-- daemon/                 # Background daemon
-|   |   +-- src/handlers/       # 7 RPC handler groups
+|   +-- daemon/                 # Engine module (embedded in API since v2.0)
+|   |   +-- src/engine.ts       # Engine lifecycle (initEngine/shutdownEngine)
+|   |   +-- src/handlers/       # 8 handler groups (direct function calls)
 |   |   +-- src/agent/          # Agent runtime + SDK
 |   |   +-- src/sandbox.ts      # VM isolation + isolated-vm
 |   |   +-- src/message-queue.ts
 |   |   +-- src/metrics-collector.ts
 |   |   +-- src/anomaly-detector.ts
-|   +-- api/                    # Hono REST API
+|   +-- api/                    # Unified API server (Hono + Engine)
 |   |   +-- src/routes/         # 15 route groups
 |   |   +-- src/middleware/     # auth, error-handler, logger
 |   |   +-- src/openapi.ts      # OpenAPI/Swagger
@@ -281,7 +285,7 @@ omniwatch/
 |   +-- shared/                 # Types, constants, errors, IPC, auth
 |   +-- db/                     # SQLite schema + versioned migrations
 |       +-- src/migrations/     # v001-v005
-+-- tests/                      # 40 files, 376+ tests
++-- tests/                      # 40 files, 375+ tests
 +-- bin/omni.mjs                # CLI entry point
 +-- Dockerfile                  # Production container
 +-- docker-compose.yml          # Docker Compose config
@@ -304,7 +308,7 @@ omniwatch/
 | Sandbox | node:vm + isolated-vm |
 | Auth | API Key + OAuth (GitHub/Google) |
 | MCP | @modelcontextprotocol/sdk |
-| IPC | Unix Domain Socket (JSON-RPC 2.0) |
+| IPC | Direct function calls (in-process since v2.0) |
 | Build | tsup (esbuild) + next build |
 | Test | Vitest |
 | CI/CD | GitHub Actions |

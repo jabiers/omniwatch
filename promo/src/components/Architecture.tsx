@@ -87,18 +87,18 @@ export default function Architecture() {
               <Node icon={'\u25a1'} label="Web Dashboard" className="float float-delay-1" />
             </div>
 
-            {/* Arrows down to daemon */}
+            {/* Arrows down to unified server */}
             <div className="flex justify-center gap-16">
               <ArrowDown />
               <ArrowDown />
             </div>
 
-            {/* Middle row: Daemon + Agents */}
+            {/* Middle row: Unified API Server + Agents */}
             <div className="flex justify-center items-center gap-4">
               <Node
                 icon={'\u25c9'}
-                label="Daemon"
-                subtitle="Event bus + Runtime"
+                label="API Server + Engine"
+                subtitle="Hono + Daemon Engine (unified)"
                 large
                 className="float float-delay-2"
               />
@@ -147,8 +147,8 @@ export default function Architecture() {
             <ArrowDown />
             <Node
               icon={'\u25c9'}
-              label="Daemon"
-              subtitle="Event bus + Runtime"
+              label="API Server + Engine"
+              subtitle="Hono + Daemon Engine (unified)"
               large
               className="float float-delay-2"
             />
