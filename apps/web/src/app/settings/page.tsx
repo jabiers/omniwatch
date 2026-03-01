@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Save, Eye, EyeOff, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
+import { Skeleton, SkeletonCard } from '../../components/skeleton';
 
 /** Shape matches the actual API response (snake_case) */
 interface OllamaModel {
@@ -248,7 +249,14 @@ export default function SettingsPage() {
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64 text-gray-500">Loading...</div>;
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <Skeleton className="h-8 w-32" />
+        <SkeletonCard />
+        <SkeletonCard />
+        <SkeletonCard />
+      </div>
+    );
   }
 
   return (

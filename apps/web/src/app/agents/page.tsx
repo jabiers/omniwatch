@@ -17,6 +17,8 @@ import { apiFetch } from '../../lib/api';
 import { Pagination } from '../../components/pagination';
 import { useToastStore } from '../../lib/toast-store';
 import { useWebSocket } from '../../lib/ws';
+import { SkeletonTable } from '../../components/skeleton';
+import { StatusBadge } from '../../components/status-badge';
 
 interface Agent {
   id: string;
@@ -26,13 +28,6 @@ interface Agent {
   lastRun?: string;
   createdAt?: string;
 }
-
-const statusConfig: Record<string, { dot: string; text: string }> = {
-  running: { dot: 'bg-emerald-500', text: 'text-emerald-400' },
-  stopped: { dot: 'bg-gray-500', text: 'text-gray-400' },
-  error: { dot: 'bg-red-500', text: 'text-red-400' },
-  healing: { dot: 'bg-yellow-500', text: 'text-yellow-400' },
-};
 
 const statusOptions = ['all', 'running', 'stopped', 'error', 'healing'];
 const PAGE_LIMIT = 20;
@@ -315,8 +310,8 @@ export default function AgentsPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="text-center text-sm text-gray-500 py-8">
-                  Loading...
+                <td colSpan={6} className="px-4 py-4">
+                  <SkeletonTable rows={8} />
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
@@ -327,7 +322,6 @@ export default function AgentsPage() {
               </tr>
             ) : (
               filtered.map((agent) => {
-                const sc = statusConfig[agent.status] ?? statusConfig.stopped;
                 const isSelected = selected.has(agent.id);
                 return (
                   <tr
@@ -359,10 +353,7 @@ export default function AgentsPage() {
                     <td className="px-4 py-3 text-sm text-gray-400 capitalize">{agent.type}</td>
                     {/* Status */}
                     <td className="px-4 py-3">
-                      <span className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${sc.dot}`} />
-                        <span className={`text-sm capitalize ${sc.text}`}>{agent.status}</span>
-                      </span>
+                      <StatusBadge status={agent.status} />
                     </td>
                     {/* Last Run */}
                     <td className="px-4 py-3 text-sm text-gray-500">

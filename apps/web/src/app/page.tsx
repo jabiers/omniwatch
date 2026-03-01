@@ -2,9 +2,22 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { Bot, AlertTriangle, Play, Bell, Square, Activity, Wifi, WifiOff } from 'lucide-react';
+import {
+  Bot,
+  AlertTriangle,
+  Play,
+  Bell,
+  Square,
+  Activity,
+  Wifi,
+  WifiOff,
+  Plus,
+  BookOpen,
+} from 'lucide-react';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useWebSocket } from '../lib/ws';
 import { apiFetch } from '../lib/api';
+import { Skeleton } from '../components/skeleton';
 
 interface Agent {
   id: string;
@@ -159,6 +172,22 @@ export default function DashboardPage() {
     },
   ];
 
+  const statusData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    agents.forEach((a) => {
+      counts[a.status] = (counts[a.status] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [agents]);
+
+  const STATUS_COLORS: Record<string, string> = {
+    running: '#10b981',
+    stopped: '#6b7280',
+    error: '#ef4444',
+    healing: '#eab308',
+    idle: '#3b82f6',
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -194,12 +223,75 @@ export default function DashboardPage() {
         })}
       </div>
 
+      {/* Quick Actions */}
+      <div className="flex gap-3">
+        <Link
+          href="/agents/new"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm hover:bg-emerald-500/20 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Create Agent
+        </Link>
+        <Link
+          href="/recipes"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-500/10 text-blue-400 text-sm hover:bg-blue-500/20 transition-colors"
+        >
+          <BookOpen className="w-4 h-4" />
+          Browse Recipes
+        </Link>
+      </div>
+
       {/* System Uptime */}
       {systemStatus?.uptime != null && (
         <div className="glass-card flex items-center gap-3">
           <Activity className="w-4 h-4 text-emerald-400" />
           <span className="text-sm text-gray-400">System Uptime:</span>
           <span className="text-sm font-mono">{formatUptime(systemStatus.uptime)}</span>
+        </div>
+      )}
+
+      {/* Agent Distribution */}
+      {agents.length > 0 && (
+        <div className="rounded-xl bg-white/[0.04] border border-white/[0.08] p-5">
+          <h2 className="text-sm font-medium mb-4">Agent Distribution</h2>
+          <div className="flex items-center justify-center" style={{ height: 200 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={statusData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={80}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {statusData.map((entry) => (
+                    <Cell key={entry.name} fill={STATUS_COLORS[entry.name] || '#6b7280'} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    background: '#1a1a2e',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 8,
+                  }}
+                  itemStyle={{ color: '#e5e7eb' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex flex-wrap justify-center gap-4 mt-3">
+            {statusData.map((entry) => (
+              <div key={entry.name} className="flex items-center gap-1.5 text-xs text-gray-400">
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ background: STATUS_COLORS[entry.name] || '#6b7280' }}
+                />
+                {entry.name}: {entry.value}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -213,7 +305,11 @@ export default function DashboardPage() {
             </Link>
           </div>
           {loading ? (
-            <p className="text-sm text-gray-500">Loading...</p>
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
           ) : agents.length === 0 ? (
             <p className="text-sm text-gray-500">
               No agents yet.{' '}
@@ -277,7 +373,11 @@ export default function DashboardPage() {
             </Link>
           </div>
           {loading ? (
-            <p className="text-sm text-gray-500">Loading...</p>
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
           ) : notifications.length === 0 ? (
             <p className="text-sm text-gray-500">No notifications yet.</p>
           ) : (

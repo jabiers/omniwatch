@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { apiFetch } from '../../../lib/api';
 import { useToastStore } from '../../../lib/toast-store';
+import { Skeleton, SkeletonCard, SkeletonTable } from '../../../components/skeleton';
 
 interface MetricsData {
   run_count: number;
@@ -359,7 +360,18 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const displayMetrics = metrics;
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64 text-gray-500">Loading...</div>;
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-5 w-32" />
+        <SkeletonCard />
+        <div className="grid grid-cols-3 gap-4">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+        <SkeletonTable rows={6} />
+      </div>
+    );
   }
 
   if (!agent) {
