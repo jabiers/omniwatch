@@ -1,5 +1,12 @@
 import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
+
+/** Schema: GET /usage query params */
+const usageQuerySchema = z.object({
+  days: z.coerce.number().int().min(1).max(365).default(30),
+});
 
 export const usageRoutes = new Hono();
 
@@ -31,13 +38,9 @@ interface DailyRow {
 }
 
 /** GET /usage - AI usage summary with cost tracking (tenant-scoped) */
-usageRoutes.get('/usage', (c) => {
+usageRoutes.get('/usage', zValidator('query', usageQuerySchema), (c) => {
   const auth = c.get('auth');
-  const rawDays = Number(c.req.query('days') || '30');
-  if (!Number.isFinite(rawDays) || rawDays < 1) {
-    return c.json({ error: 'days must be an integer between 1 and 365' }, 400);
-  }
-  const days = Math.min(Math.max(Math.floor(rawDays), 1), 365);
+  const { days } = c.req.valid('query');
   const db = getDb();
 
   // Tenant filter: non-admin users see only their tenant's usage

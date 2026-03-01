@@ -51,6 +51,12 @@ const loginSchema = z.object({
   apiKey: z.string().min(1, 'apiKey is required'),
 });
 
+/** Schema: OAuth callback query params */
+const oauthCallbackSchema = z.object({
+  state: z.string().min(1).optional(),
+  code: z.string().min(1).optional(),
+});
+
 export const oauthRoutes = new Hono();
 
 // ─── POST /auth/login — API key login ────────────────────────────────
@@ -185,22 +191,22 @@ oauthRoutes.get('/auth/github', (c) => {
   return c.redirect(url.toString());
 });
 
-oauthRoutes.get('/auth/github/callback', async (c) => {
+oauthRoutes.get('/auth/github/callback', zValidator('query', oauthCallbackSchema), async (c) => {
   const clientId = process.env.GITHUB_CLIENT_ID;
   const clientSecret = process.env.GITHUB_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     return c.json({ error: 'GitHub OAuth is not configured' }, 501);
   }
 
+  const { state: queryState, code } = c.req.valid('query');
+
   // CSRF state validation
   const cookieState = getCookie(c, 'oauth_state');
-  const queryState = c.req.query('state');
   deleteCookie(c, 'oauth_state', { path: '/' });
   if (!cookieState || !queryState || cookieState !== queryState) {
     return c.json({ error: 'CSRF validation failed' }, 403);
   }
 
-  const code = c.req.query('code');
   if (!code) {
     return c.json({ error: 'Missing code parameter' }, 400);
   }
@@ -298,22 +304,22 @@ oauthRoutes.get('/auth/google', (c) => {
   return c.redirect(url.toString());
 });
 
-oauthRoutes.get('/auth/google/callback', async (c) => {
+oauthRoutes.get('/auth/google/callback', zValidator('query', oauthCallbackSchema), async (c) => {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     return c.json({ error: 'Google OAuth is not configured' }, 501);
   }
 
+  const { state: queryState, code } = c.req.valid('query');
+
   // CSRF state validation
   const cookieState = getCookie(c, 'oauth_state');
-  const queryState = c.req.query('state');
   deleteCookie(c, 'oauth_state', { path: '/' });
   if (!cookieState || !queryState || cookieState !== queryState) {
     return c.json({ error: 'CSRF validation failed' }, 403);
   }
 
-  const code = c.req.query('code');
   if (!code) {
     return c.json({ error: 'Missing code parameter' }, 400);
   }

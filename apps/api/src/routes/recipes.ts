@@ -1,13 +1,20 @@
 import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
 import { listRecipes, searchRecipes, getRecipe, getErrorMessage } from '@omniwatch/shared';
 import { handleAgentRPC } from '@omniwatch/daemon/engine';
+
+/** Schema: GET /recipes query params */
+const listRecipesSchema = z.object({
+  q: z.string().max(200).optional(),
+  category: z.string().max(50).optional(),
+});
 
 export const recipeRoutes = new Hono();
 
 /** GET /recipes - list all or search recipes */
-recipeRoutes.get('/recipes', (c) => {
-  const query = c.req.query('q');
-  const category = c.req.query('category');
+recipeRoutes.get('/recipes', zValidator('query', listRecipesSchema), (c) => {
+  const { q: query, category } = c.req.valid('query');
 
   let recipes = query ? searchRecipes(query) : listRecipes();
   if (category) {
