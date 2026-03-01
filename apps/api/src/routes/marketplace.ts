@@ -12,7 +12,9 @@ const publishRecipeSchema = z.object({
   name: z.string().min(1, 'name is required').max(200),
   description: z.string().max(2000).optional(),
   prompt: z.string().min(1, 'prompt is required'),
-  category: z.enum(['general', 'monitoring', 'security', 'performance', 'data', 'automation']).default('general'),
+  category: z
+    .enum(['general', 'monitoring', 'security', 'performance', 'data', 'automation'])
+    .default('general'),
   tags: z.array(z.string().max(50)).max(10).default([]),
   config: z.record(z.unknown()).optional(),
   version: z.string().max(20).default('1.0.0'),
@@ -64,7 +66,8 @@ marketplaceRoutes.get('/marketplace', zValidator('query', listQuerySchema), (c) 
   }
 
   if (search) {
-    query += " AND (name LIKE '%' || ? || '%' ESCAPE '\\' OR description LIKE '%' || ? || '%' ESCAPE '\\' OR tags LIKE '%' || ? || '%' ESCAPE '\\')";
+    query +=
+      " AND (name LIKE '%' || ? || '%' ESCAPE '\\' OR description LIKE '%' || ? || '%' ESCAPE '\\' OR tags LIKE '%' || ? || '%' ESCAPE '\\')";
     const sanitized = escapeLike(search);
     params.push(sanitized, sanitized, sanitized);
   }
@@ -102,9 +105,9 @@ marketplaceRoutes.get('/marketplace/:id', (c) => {
   const id = c.req.param('id');
   const db = getDb();
 
-  const row = db.prepare(
-    'SELECT * FROM marketplace_recipes WHERE id = ? AND published = 1'
-  ).get(id) as MarketplaceRecipe | null;
+  const row = db
+    .prepare('SELECT * FROM marketplace_recipes WHERE id = ? AND published = 1')
+    .get(id) as MarketplaceRecipe | null;
 
   if (!row) {
     return c.json({ error: 'Recipe not found' }, 404);
@@ -120,47 +123,60 @@ marketplaceRoutes.get('/marketplace/:id', (c) => {
 });
 
 /** POST /marketplace — Publish a new recipe (admin/operator) */
-marketplaceRoutes.post('/marketplace', requireRole('admin', 'operator'), zValidator('json', publishRecipeSchema), (c) => {
-  const body = c.req.valid('json');
-  const auth = c.get('auth');
-  const db = getDb();
+marketplaceRoutes.post(
+  '/marketplace',
+  requireRole('admin', 'operator'),
+  zValidator('json', publishRecipeSchema),
+  (c) => {
+    const body = c.req.valid('json');
+    const auth = c.get('auth');
+    const db = getDb();
 
-  const id = randomUUID().slice(0, 12);
+    const id = randomUUID().slice(0, 12);
 
-  db.prepare(`
+    db.prepare(
+      `
     INSERT INTO marketplace_recipes (id, name, description, prompt, category, author, version, tags, config)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    id,
-    body.name,
-    body.description ?? null,
-    body.prompt,
-    body.category,
-    auth.userId,
-    body.version,
-    JSON.stringify(body.tags),
-    JSON.stringify(body.config ?? {}),
-  );
+  `,
+    ).run(
+      id,
+      body.name,
+      body.description ?? null,
+      body.prompt,
+      body.category,
+      auth.userId,
+      body.version,
+      JSON.stringify(body.tags),
+      JSON.stringify(body.config ?? {}),
+    );
 
-  const recipe = db.prepare('SELECT * FROM marketplace_recipes WHERE id = ?').get(id) as MarketplaceRecipe;
+    const recipe = db
+      .prepare('SELECT * FROM marketplace_recipes WHERE id = ?')
+      .get(id) as MarketplaceRecipe;
 
-  return c.json({
-    recipe: {
-      ...recipe,
-      tags: JSON.parse(recipe.tags || '[]'),
-      config: JSON.parse(recipe.config || '{}'),
-    },
-  }, 201);
-});
+    return c.json(
+      {
+        recipe: {
+          ...recipe,
+          tags: JSON.parse(recipe.tags || '[]'),
+          config: JSON.parse(recipe.config || '{}'),
+        },
+      },
+      201,
+    );
+  },
+);
 
 /** POST /marketplace/:id/install — Install a marketplace recipe as an agent */
 marketplaceRoutes.post('/marketplace/:id/install', async (c) => {
   const id = c.req.param('id');
+  const auth = c.get('auth');
   const db = getDb();
 
-  const row = db.prepare(
-    'SELECT * FROM marketplace_recipes WHERE id = ? AND published = 1'
-  ).get(id) as MarketplaceRecipe | null;
+  const row = db
+    .prepare('SELECT * FROM marketplace_recipes WHERE id = ? AND published = 1')
+    .get(id) as MarketplaceRecipe | null;
 
   if (!row) {
     return c.json({ error: 'Recipe not found' }, 404);
@@ -173,11 +189,12 @@ marketplaceRoutes.post('/marketplace/:id/install', async (c) => {
       prompt: row.prompt,
       type: config.type || 'watcher',
       template: config.template,
+      tenantId: auth.tenantId,
     });
 
     // Increment download count
     db.prepare(
-      'UPDATE marketplace_recipes SET downloads = downloads + 1, updated_at = datetime(\'now\') WHERE id = ?'
+      "UPDATE marketplace_recipes SET downloads = downloads + 1, updated_at = datetime('now') WHERE id = ?",
     ).run(id);
 
     return c.json({ agent: result }, 201);

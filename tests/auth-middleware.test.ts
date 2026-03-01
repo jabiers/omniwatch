@@ -59,15 +59,22 @@ import { createApp } from '../apps/api/src/app.js';
 
 describe('Auth Middleware', () => {
   const originalNodeEnv = process.env.NODE_ENV;
+  const originalDevAuth = process.env.OMNIWATCH_DEV_AUTH;
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockAll.mockReturnValue([]);
     process.env.NODE_ENV = 'test'; // non-production = dev mode
+    delete process.env.OMNIWATCH_DEV_AUTH;
   });
 
   afterEach(() => {
     process.env.NODE_ENV = originalNodeEnv;
+    if (originalDevAuth !== undefined) {
+      process.env.OMNIWATCH_DEV_AUTH = originalDevAuth;
+    } else {
+      delete process.env.OMNIWATCH_DEV_AUTH;
+    }
   });
 
   // ─── Public Paths ──────────────────────────────────────────────────
@@ -115,7 +122,11 @@ describe('Auth Middleware', () => {
 
   // ─── Dev Mode (non-production) ─────────────────────────────────────
 
-  describe('Dev mode (NODE_ENV != production)', () => {
+  describe('Dev mode (OMNIWATCH_DEV_AUTH=1)', () => {
+    beforeEach(() => {
+      process.env.OMNIWATCH_DEV_AUTH = '1';
+    });
+
     it('should allow access to protected routes without API key', async () => {
       const app = createApp();
       // Dev mode: auth middleware assigns admin role, no DB call

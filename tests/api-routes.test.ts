@@ -49,6 +49,9 @@ vi.mock('nanoid', () => ({
   nanoid: vi.fn().mockReturnValue('mock-nanoid-12'),
 }));
 
+// Enable dev auth bypass for tests
+process.env.OMNIWATCH_DEV_AUTH = '1';
+
 import { createApp } from '../apps/api/src/app.js';
 
 let app: ReturnType<typeof createApp>;
@@ -321,9 +324,7 @@ describe('GET /api/analytics/metrics', () => {
 
 describe('GET /api/notifications', () => {
   it('should return 200 with notifications array', async () => {
-    const notifications = [
-      { id: 1, agent_id: 'agent-1', severity: 'info', message: 'started' },
-    ];
+    const notifications = [{ id: 1, agent_id: 'agent-1', severity: 'info', message: 'started' }];
     mockAll.mockReturnValueOnce(notifications);
 
     const res = await app.request('/api/notifications');

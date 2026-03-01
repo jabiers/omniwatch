@@ -78,7 +78,7 @@ export const MAX_AGENTS_FREE = 10;
 export const MAX_AGENTS_PRO = 50;
 
 // App version (synced via scripts/sync-version.mjs)
-export const APP_VERSION = '1.8.0';
+export const APP_VERSION = '1.9.0';
 
 // v0.6: Analytics
 export const METRIC_ROLLUP_INTERVAL = 3_600_000; // 1 hour

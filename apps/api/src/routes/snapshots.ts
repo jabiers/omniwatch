@@ -5,26 +5,52 @@ import { rpcCall } from '../lib/rpc-bridge.js';
 
 export const snapshotRoutes = new Hono();
 
+/** Verify agent exists and belongs to the user's tenant */
+function verifyAgentAccess(
+  db: ReturnType<typeof getDb>,
+  agentId: string,
+  auth: { tenantId: string; role: string },
+): { id: string } | null {
+  const agent = db.prepare('SELECT id, tenant_id FROM agents WHERE id = ?').get(agentId) as {
+    id: string;
+    tenant_id: string;
+  } | null;
+  if (!agent) return null;
+  if (auth.role !== 'admin' && agent.tenant_id !== auth.tenantId) return null;
+  return agent;
+}
+
 /** GET /agents/:id/snapshots - list snapshots for an agent */
 snapshotRoutes.get('/agents/:id/snapshots', (c) => {
   const db = getDb();
+  const auth = c.get('auth');
   const { id } = c.req.param();
 
-  const agent = db.prepare('SELECT id FROM agents WHERE id = ?').get(id);
+  const agent = verifyAgentAccess(db, id, auth);
   if (!agent) {
     return c.json({ error: `Agent '${id}' not found` }, 404);
   }
 
-  const snapshots = db.prepare(
-    'SELECT id, agent_id, seq, label, created_at FROM agent_snapshots WHERE agent_id = ? ORDER BY seq DESC'
-  ).all(id);
+  const snapshots = db
+    .prepare(
+      'SELECT id, agent_id, seq, label, created_at FROM agent_snapshots WHERE agent_id = ? ORDER BY seq DESC',
+    )
+    .all(id);
 
   return c.json({ snapshots });
 });
 
 /** POST /agents/:id/snapshots - capture a snapshot */
 snapshotRoutes.post('/agents/:id/snapshots', async (c) => {
+  const db = getDb();
+  const auth = c.get('auth');
   const { id } = c.req.param();
+
+  const agent = verifyAgentAccess(db, id, auth);
+  if (!agent) {
+    return c.json({ error: `Agent '${id}' not found` }, 404);
+  }
+
   const body = await c.req.json<{ label?: string }>().catch(() => ({ label: undefined }));
 
   try {
@@ -41,7 +67,14 @@ snapshotRoutes.post('/agents/:id/snapshots', async (c) => {
 
 /** POST /agents/:id/snapshots/:seq/restore - restore a snapshot */
 snapshotRoutes.post('/agents/:id/snapshots/:seq/restore', async (c) => {
+  const db = getDb();
+  const auth = c.get('auth');
   const { id, seq } = c.req.param();
+
+  const agent = verifyAgentAccess(db, id, auth);
+  if (!agent) {
+    return c.json({ error: `Agent '${id}' not found` }, 404);
+  }
 
   try {
     const result = await rpcCall('snapshot.restore', {
@@ -58,11 +91,27 @@ snapshotRoutes.post('/agents/:id/snapshots/:seq/restore', async (c) => {
 /** GET /agents/:id/children - get child agents (spawn chain) */
 snapshotRoutes.get('/agents/:id/children', (c) => {
   const db = getDb();
+  const auth = c.get('auth');
   const { id } = c.req.param();
 
-  const children = db.prepare(
-    "SELECT * FROM agents WHERE parent_id = ? AND status != 'destroyed' ORDER BY created_at DESC"
-  ).all(id);
+  const agent = verifyAgentAccess(db, id, auth);
+  if (!agent) {
+    return c.json({ error: `Agent '${id}' not found` }, 404);
+  }
+
+  let tenantFilter = '';
+  const params: unknown[] = [id];
+
+  if (auth.role !== 'admin') {
+    tenantFilter = 'AND tenant_id = ?';
+    params.push(auth.tenantId);
+  }
+
+  const children = db
+    .prepare(
+      `SELECT * FROM agents WHERE parent_id = ? AND status != 'destroyed' ${tenantFilter} ORDER BY created_at DESC`,
+    )
+    .all(...params);
 
   return c.json({ children });
 });

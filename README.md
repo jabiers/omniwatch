@@ -1,3 +1,5 @@
+**English** | [한국어](README.ko.md)
+
 # OmniWatch
 
 > AI-powered autonomous monitoring platform — **"Don't Config, Just Speak"**
