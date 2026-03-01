@@ -4,24 +4,32 @@ services:
       context: .
       target: api
     ports:
-      - "3456:3456"
+      - '3456:3456'
     volumes:
       - omniwatch-data:/data
     environment:
       - NODE_ENV=production
       - OMNI_DATA_DIR=/data
     restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3456/api/system/status']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   web:
     build:
       context: .
       target: web
     ports:
-      - "3457:3000"
+      - '3457:3000'
     environment:
       - NODE_ENV=production
+      - API_URL=http://api:3456
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
