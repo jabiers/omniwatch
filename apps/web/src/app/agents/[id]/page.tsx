@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback, use } from 'react';
+import { useEffect, useState, useRef, useCallback, use, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -19,7 +19,9 @@ import {
   Camera,
   GitBranch,
   RotateCw,
+  Search,
 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { apiFetch } from '../../../lib/api';
 import { useToastStore } from '../../../lib/toast-store';
 import { Skeleton, SkeletonCard, SkeletonTable } from '../../../components/skeleton';
@@ -94,6 +96,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [metrics, setMetrics] = useState<MetricsData | null>(null);
   const [logFilter, setLogFilter] = useState('all');
+  const [logSearch, setLogSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmDestroy, setConfirmDestroy] = useState(false);
@@ -107,6 +110,9 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     index: number;
     success: boolean;
   } | null>(null);
+
+  // Metrics history for chart
+  const [metricsHistory, setMetricsHistory] = useState<any[]>([]);
 
   // v0.5: Snapshots & spawn chain state
   const [snapshots, setSnapshots] = useState<SnapshotMeta[]>([]);
@@ -158,6 +164,19 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
       }
     } catch {
       // API not available
+    }
+  }, [id]);
+
+  const loadMetricsHistory = useCallback(async () => {
+    try {
+      const res = await apiFetch(`/api/analytics/metrics?agentId=${id}&period=hourly&limit=20`);
+      if (res.ok) {
+        const data = (await res.json()) as { metrics?: any[] } | any[];
+        const raw = Array.isArray(data) ? data : (data.metrics ?? []);
+        setMetricsHistory(raw);
+      }
+    } catch {
+      // Analytics API not available
     }
   }, [id]);
 
@@ -355,7 +374,18 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     }
   }
 
-  const filteredLogs = logFilter === 'all' ? logs : logs.filter((l) => l.level === logFilter);
+  const metricsChartData = useMemo(() => {
+    if (!metricsHistory || !Array.isArray(metricsHistory) || metricsHistory.length === 0) return [];
+    return metricsHistory.slice(-20).map((m: any) => ({
+      time: new Date(m.period_start || m.created_at || m.timestamp).toLocaleTimeString(),
+      value: m.avg_value ?? m.sum_value ?? m.value ?? 0,
+      count: m.count ?? m.sample_count ?? 0,
+    }));
+  }, [metricsHistory]);
+
+  const filteredLogs = (
+    logFilter === 'all' ? logs : logs.filter((l) => l.level === logFilter)
+  ).filter((log) => !logSearch || log.message?.toLowerCase().includes(logSearch.toLowerCase()));
 
   const displayMetrics = metrics;
 
@@ -554,6 +584,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
           onClick={() => {
             setActiveTab('metrics');
             loadMetrics();
+            loadMetricsHistory();
           }}
           className={`flex items-center gap-2 px-4 py-2.5 text-sm transition-colors border-b-2 -mb-[1px] ${
             activeTab === 'metrics'
@@ -609,7 +640,18 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
         <div className="glass-card !p-0">
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08]">
             <h2 className="text-sm font-medium">Live Logs</h2>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Search logs..."
+                  value={logSearch}
+                  onChange={(e) => setLogSearch(e.target.value)}
+                  className="pl-10 pr-4 py-2 w-64 rounded-lg bg-white/[0.05] border border-white/[0.08] text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
+                  aria-label="Search logs by message"
+                />
+              </div>
               <Filter className="w-3 h-3 text-gray-500" />
               {['all', 'info', 'warn', 'error', 'debug'].map((level) => (
                 <button
@@ -764,6 +806,43 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
       {/* Metrics Tab */}
       {activeTab === 'metrics' && (
         <div className="glass-card">
+          {/* Performance Trend Chart */}
+          {metricsChartData.length > 0 && (
+            <div className="rounded-xl bg-white/[0.04] border border-white/[0.08] p-5 mb-4">
+              <h3 className="text-sm font-medium mb-3">Performance Trend</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={metricsChartData}>
+                  <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#6b7280' }} />
+                  <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: '#1a1a2e',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: 8,
+                    }}
+                    itemStyle={{ color: '#e5e7eb' }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    dot={false}
+                    name="Avg Value"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="count"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dot={false}
+                    name="Count"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
           {displayMetrics ? (
             <div className="space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
