@@ -766,3 +766,66 @@ describe('Config GET webhook masking', () => {
     expect(body.config.notification.webhook_url).toBe('');
   });
 });
+
+// ─── Mesh routes ──────────────────────────────────────────────────────
+
+describe('Mesh API routes', () => {
+  it('GET /api/mesh/topology should return nodes and edges', async () => {
+    const res = await app.request('/api/mesh/topology');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { nodes: unknown[]; edges: unknown[] };
+    expect(body).toHaveProperty('nodes');
+    expect(body).toHaveProperty('edges');
+  });
+
+  it('GET /api/mesh/events should return events array', async () => {
+    const res = await app.request('/api/mesh/events');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { events: unknown[] };
+    expect(body).toHaveProperty('events');
+  });
+
+  it('GET /api/mesh/events should accept limit and topic query params', async () => {
+    const res = await app.request('/api/mesh/events?limit=10&topic=alerts');
+    expect(res.status).toBe(200);
+  });
+
+  it('GET /api/mesh/subscriptions should return subscriptions array', async () => {
+    const res = await app.request('/api/mesh/subscriptions');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { subscriptions: unknown[] };
+    expect(body).toHaveProperty('subscriptions');
+  });
+});
+
+// ─── Snapshot routes ──────────────────────────────────────────────────
+
+describe('Snapshot API routes', () => {
+  it('GET /api/agents/:id/snapshots should return 404 for non-existent agent', async () => {
+    mockGet.mockReturnValueOnce(null);
+    const res = await app.request('/api/agents/nonexistent/snapshots');
+    expect(res.status).toBe(404);
+  });
+
+  it('GET /api/agents/:id/snapshots should return snapshots for existing agent', async () => {
+    mockGet.mockReturnValueOnce({ id: 'a1', tenant_id: 'default' });
+    const res = await app.request('/api/agents/a1/snapshots');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { snapshots: unknown[] };
+    expect(body).toHaveProperty('snapshots');
+  });
+
+  it('GET /api/agents/:id/children should return 404 for non-existent agent', async () => {
+    mockGet.mockReturnValueOnce(null);
+    const res = await app.request('/api/agents/nonexistent/children');
+    expect(res.status).toBe(404);
+  });
+
+  it('GET /api/agents/:id/children should return children for existing agent', async () => {
+    mockGet.mockReturnValueOnce({ id: 'a1', tenant_id: 'default' });
+    const res = await app.request('/api/agents/a1/children');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { children: unknown[] };
+    expect(body).toHaveProperty('children');
+  });
+});

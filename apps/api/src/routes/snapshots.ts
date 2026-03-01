@@ -43,26 +43,34 @@ snapshotRoutes.get('/agents/:id/snapshots', (c) => {
   return c.json({ snapshots });
 });
 
-/** POST /agents/:id/snapshots - capture a snapshot */
-snapshotRoutes.post('/agents/:id/snapshots', async (c) => {
-  const db = getDb();
-  const auth = c.get('auth');
-  const { id } = c.req.param();
-
-  const agent = verifyAgentAccess(db, id, auth);
-  if (!agent) {
-    return c.json({ error: `Agent '${id}' not found` }, 404);
-  }
-
-  const body = await c.req.json<{ label?: string }>().catch(() => ({}));
-
-  try {
-    const result = await handleSnapshotRPC.capture({ agentId: id, label: body.label });
-    return c.json(result, 201);
-  } catch (err) {
-    return c.json({ error: getErrorMessage(err) }, 502);
-  }
+const captureSnapshotSchema = z.object({
+  label: z.string().max(100).optional(),
 });
+
+/** POST /agents/:id/snapshots - capture a snapshot */
+snapshotRoutes.post(
+  '/agents/:id/snapshots',
+  zValidator('json', captureSnapshotSchema),
+  async (c) => {
+    const db = getDb();
+    const auth = c.get('auth');
+    const { id } = c.req.param();
+
+    const agent = verifyAgentAccess(db, id, auth);
+    if (!agent) {
+      return c.json({ error: `Agent '${id}' not found` }, 404);
+    }
+
+    const { label } = c.req.valid('json');
+
+    try {
+      const result = await handleSnapshotRPC.capture({ agentId: id, label });
+      return c.json(result, 201);
+    } catch (err) {
+      return c.json({ error: getErrorMessage(err) }, 502);
+    }
+  },
+);
 
 /** POST /agents/:id/snapshots/:seq/restore - restore a snapshot */
 snapshotRoutes.post('/agents/:id/snapshots/:seq/restore', async (c) => {
@@ -107,7 +115,7 @@ snapshotRoutes.get('/agents/:id/children', (c) => {
 
   const children = db
     .prepare(
-      `SELECT * FROM agents WHERE parent_id = ? AND status != 'destroyed' ${tenantFilter} ORDER BY created_at DESC`,
+      `SELECT id, name, type, status, parent_id, spawn_depth, created_at FROM agents WHERE parent_id = ? AND status != 'destroyed' ${tenantFilter} ORDER BY created_at DESC`,
     )
     .all(...params);
 

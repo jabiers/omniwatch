@@ -1,8 +1,15 @@
 /** Mesh topology and events API routes */
 import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
 import { handleMeshRPC } from '@omniwatch/daemon/engine';
 import { getErrorMessage } from '@omniwatch/shared';
+
+const meshEventsSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(500).default(50),
+  topic: z.string().max(200).optional(),
+});
 
 export const meshRoutes = new Hono();
 
@@ -17,11 +24,10 @@ meshRoutes.get('/mesh/topology', async (c) => {
 });
 
 /** GET /mesh/events - get recent mesh events */
-meshRoutes.get('/mesh/events', (c) => {
+meshRoutes.get('/mesh/events', zValidator('query', meshEventsSchema), (c) => {
   const db = getDb();
   const auth = c.get('auth');
-  const limit = Math.min(parseInt(c.req.query('limit') || '50', 10), 500);
-  const topic = c.req.query('topic');
+  const { limit, topic } = c.req.valid('query');
 
   const conditions: string[] = [];
   const params: unknown[] = [];
@@ -37,7 +43,7 @@ meshRoutes.get('/mesh/events', (c) => {
   }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-  const sql = `SELECT e.* FROM mesh_events e JOIN agents a ON e.publisher_id = a.id ${where} ORDER BY e.created_at DESC LIMIT ?`;
+  const sql = `SELECT e.id, e.publisher_id, e.topic, e.payload, e.created_at FROM mesh_events e JOIN agents a ON e.publisher_id = a.id ${where} ORDER BY e.created_at DESC LIMIT ?`;
   params.push(limit);
 
   const events = db.prepare(sql).all(...params);
