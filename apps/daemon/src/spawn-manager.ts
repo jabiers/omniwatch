@@ -20,7 +20,7 @@ interface SpawnOptions {
 function checkSpawnRateLimit(agentId: string): boolean {
   const now = Date.now();
   const timestamps = spawnTimestamps.get(agentId) || [];
-  const recent = timestamps.filter(t => now - t < 60_000);
+  const recent = timestamps.filter((t) => now - t < 60_000);
   spawnTimestamps.set(agentId, recent);
   return recent.length < SPAWN_RATE_LIMIT;
 }
@@ -49,9 +49,11 @@ export async function spawnChildAgent(
 
   // Check total agent count
   const db = getDb();
-  const { count } = db.prepare(
-    "SELECT COUNT(*) as count FROM agents WHERE status IN ('running', 'creating', 'ready')"
-  ).get() as { count: number };
+  const { count } = db
+    .prepare(
+      "SELECT COUNT(*) as count FROM agents WHERE status IN ('running', 'creating', 'ready')",
+    )
+    .get() as { count: number };
 
   if (count >= MAX_AGENTS) {
     throw new Error(`Max agents limit (${MAX_AGENTS}) reached`);
@@ -62,7 +64,10 @@ export async function spawnChildAgent(
   timestamps.push(Date.now());
   spawnTimestamps.set(parentId, timestamps);
 
-  log('info', `Agent ${parentId} spawning child (depth ${childDepth}): "${prompt.slice(0, 60)}..."`);
+  log(
+    'info',
+    `Agent ${parentId} spawning child (depth ${childDepth}): "${prompt.slice(0, 60)}..."`,
+  );
 
   // Generate code for child agent
   const generated = await generateAgentCode(prompt);
@@ -83,10 +88,12 @@ export async function spawnChildAgent(
   );
 
   // Set parent_id and spawn_depth
-  db.prepare(`
+  db.prepare(
+    `
     UPDATE agents SET parent_id = ?, spawn_depth = ?, updated_at = datetime('now')
     WHERE id = ?
-  `).run(parentId, childDepth, child.id);
+  `,
+  ).run(parentId, childDepth, child.id);
 
   // Install dependencies and start
   if (generated.dependencies.length > 0) {
@@ -101,9 +108,11 @@ export async function spawnChildAgent(
 /** Get all children of an agent */
 export function getChildAgents(parentId: string): unknown[] {
   const db = getDb();
-  return db.prepare(
-    "SELECT * FROM agents WHERE parent_id = ? AND status != 'destroyed' ORDER BY created_at DESC"
-  ).all(parentId);
+  return db
+    .prepare(
+      "SELECT id, name, type, status, parent_id, spawn_depth, created_at FROM agents WHERE parent_id = ? AND status != 'destroyed' ORDER BY created_at DESC",
+    )
+    .all(parentId);
 }
 
 /** Get full spawn chain (ancestors + descendants) */

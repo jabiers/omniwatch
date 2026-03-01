@@ -147,8 +147,8 @@ function checkZombieAgents(): void {
 function checkErrorAgents(): void {
   const db = getDb();
   const errorAgents = db
-    .prepare("SELECT * FROM agents WHERE status = 'error' LIMIT 100")
-    .all() as Agent[];
+    .prepare("SELECT id, heal_count FROM agents WHERE status = 'error' LIMIT 100")
+    .all() as Pick<Agent, 'id' | 'heal_count'>[];
 
   for (const agent of errorAgents) {
     if (agent.heal_count >= MAX_HEAL_ATTEMPTS) continue;

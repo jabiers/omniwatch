@@ -67,7 +67,11 @@ export function detectAnomalies(agentId?: string): AnomalyAlert[] {
 /** Check alert rules and send notifications */
 export async function checkAlertRules(): Promise<number> {
   const db = getDb();
-  const rules = db.prepare('SELECT * FROM alert_rules WHERE enabled = 1').all() as AlertRule[];
+  const rules = db
+    .prepare(
+      'SELECT id, metric_name, operator, threshold, window_minutes, tenant_id, notify_channels FROM alert_rules WHERE enabled = 1',
+    )
+    .all() as AlertRule[];
 
   let triggered = 0;
 

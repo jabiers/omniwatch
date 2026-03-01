@@ -27,9 +27,9 @@ function checkSchedules(): void {
   const db = getDb();
   const scheduled = db
     .prepare(
-      "SELECT * FROM agents WHERE schedule IS NOT NULL AND status IN ('ready', 'stopped') LIMIT 100",
+      "SELECT id, schedule FROM agents WHERE schedule IS NOT NULL AND status IN ('ready', 'stopped') LIMIT 100",
     )
-    .all() as Agent[];
+    .all() as Pick<Agent, 'id' | 'schedule'>[];
 
   for (const agent of scheduled) {
     if (!agent.schedule) continue;

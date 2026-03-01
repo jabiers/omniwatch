@@ -279,7 +279,10 @@ export async function destroyAgent(id: string): Promise<void> {
 
 export async function restoreRunningAgents(): Promise<void> {
   const db = getDb();
-  const agents = db.prepare("SELECT * FROM agents WHERE status = 'running'").all() as Agent[];
+  const agents = db.prepare("SELECT id, status FROM agents WHERE status = 'running'").all() as Pick<
+    Agent,
+    'id' | 'status'
+  >[];
 
   for (const agent of agents) {
     try {

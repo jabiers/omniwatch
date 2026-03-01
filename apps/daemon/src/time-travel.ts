@@ -21,9 +21,9 @@ export function captureSnapshot(agentId: string, label?: string): number {
   }
 
   // Get current store data
-  const storeRows = db.prepare(
-    'SELECT key, value FROM agent_store WHERE agent_id = ?'
-  ).all(agentId) as { key: string; value: string }[];
+  const storeRows = db
+    .prepare('SELECT key, value FROM agent_store WHERE agent_id = ?')
+    .all(agentId) as { key: string; value: string }[];
 
   const store: Record<string, unknown> = {};
   for (const row of storeRows) {
@@ -35,14 +35,16 @@ export function captureSnapshot(agentId: string, label?: string): number {
   }
 
   // Get recent logs (last 50)
-  const recentLogs = db.prepare(
-    'SELECT level, message, created_at FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT 50'
-  ).all(agentId);
+  const recentLogs = db
+    .prepare(
+      'SELECT level, message, created_at FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT 50',
+    )
+    .all(agentId);
 
   // Determine next sequence number
-  const lastSeq = db.prepare(
-    'SELECT MAX(seq) as max_seq FROM agent_snapshots WHERE agent_id = ?'
-  ).get(agentId) as { max_seq: number | null };
+  const lastSeq = db
+    .prepare('SELECT MAX(seq) as max_seq FROM agent_snapshots WHERE agent_id = ?')
+    .get(agentId) as { max_seq: number | null };
   const seq = (lastSeq.max_seq ?? 0) + 1;
 
   // Build state JSON
@@ -61,10 +63,12 @@ export function captureSnapshot(agentId: string, label?: string): number {
   });
 
   // Insert snapshot
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO agent_snapshots (agent_id, seq, label, state_json)
     VALUES (?, ?, ?, ?)
-  `).run(agentId, seq, label || null, stateJson);
+  `,
+  ).run(agentId, seq, label || null, stateJson);
 
   // Prune old snapshots (FIFO rotation)
   pruneSnapshots(agentId);
@@ -76,9 +80,9 @@ export function captureSnapshot(agentId: string, label?: string): number {
 /** Restore an agent's store state from a snapshot */
 export function restoreSnapshot(agentId: string, seq: number): void {
   const db = getDb();
-  const snapshot = db.prepare(
-    'SELECT * FROM agent_snapshots WHERE agent_id = ? AND seq = ?'
-  ).get(agentId, seq) as { state_json: string } | undefined;
+  const snapshot = db
+    .prepare('SELECT state_json FROM agent_snapshots WHERE agent_id = ? AND seq = ?')
+    .get(agentId, seq) as { state_json: string } | undefined;
 
   if (!snapshot) {
     throw new Error(`Snapshot #${seq} not found for agent ${agentId}`);
@@ -110,25 +114,29 @@ export function restoreSnapshot(agentId: string, seq: number): void {
 /** List snapshots for an agent */
 export function listSnapshots(agentId: string): SnapshotMeta[] {
   const db = getDb();
-  return db.prepare(
-    'SELECT id, agent_id, seq, label, created_at FROM agent_snapshots WHERE agent_id = ? ORDER BY seq DESC'
-  ).all(agentId) as SnapshotMeta[];
+  return db
+    .prepare(
+      'SELECT id, agent_id, seq, label, created_at FROM agent_snapshots WHERE agent_id = ? ORDER BY seq DESC',
+    )
+    .all(agentId) as SnapshotMeta[];
 }
 
 /** Prune old snapshots beyond max limit */
 function pruneSnapshots(agentId: string): void {
   const db = getDb();
-  const { count } = db.prepare(
-    'SELECT COUNT(*) as count FROM agent_snapshots WHERE agent_id = ?'
-  ).get(agentId) as { count: number };
+  const { count } = db
+    .prepare('SELECT COUNT(*) as count FROM agent_snapshots WHERE agent_id = ?')
+    .get(agentId) as { count: number };
 
   if (count > MAX_SNAPSHOTS_PER_AGENT) {
     const toDelete = count - MAX_SNAPSHOTS_PER_AGENT;
-    db.prepare(`
+    db.prepare(
+      `
       DELETE FROM agent_snapshots WHERE id IN (
         SELECT id FROM agent_snapshots WHERE agent_id = ?
         ORDER BY seq ASC LIMIT ?
       )
-    `).run(agentId, toDelete);
+    `,
+    ).run(agentId, toDelete);
   }
 }

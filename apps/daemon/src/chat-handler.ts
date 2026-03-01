@@ -46,8 +46,10 @@ export async function handleChat(
   // Load recent logs for context
   const db = getDb();
   const recentLogs = db
-    .prepare('SELECT * FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT 10')
-    .all(agentId) as AgentLog[];
+    .prepare(
+      'SELECT level, message FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT 10',
+    )
+    .all(agentId) as Pick<AgentLog, 'level' | 'message'>[];
 
   const ai = getAIProvider();
 
