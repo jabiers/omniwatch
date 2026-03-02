@@ -85,6 +85,9 @@ export const DASHBOARD_POLL_INTERVAL = 30_000; // 30 seconds
 export const MCP_DEFAULT_LIMIT = 20;
 export const MCP_LOG_LIMIT = 30;
 
+// v0.7: OAuth session
+export const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
 // System health
 export const OLLAMA_HEALTH_TIMEOUT = 3_000; // 3s
 

@@ -5,12 +5,9 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { createHash } from 'node:crypto';
 import { getDb } from '@omniwatch/db';
-import { hashApiKey, getErrorMessage } from '@omniwatch/shared';
+import { hashApiKey, getErrorMessage, SESSION_TTL_MS } from '@omniwatch/shared';
 import type { UserRole } from '@omniwatch/shared';
 import { nanoid } from 'nanoid';
-
-/** Session token expiry: 7 days */
-const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 /** Generate an ISO expiry timestamp N ms from now */
 function expiresAt(ms: number): string {

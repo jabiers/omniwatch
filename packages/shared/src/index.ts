@@ -71,6 +71,7 @@ export {
   DASHBOARD_POLL_INTERVAL,
   MCP_DEFAULT_LIMIT,
   MCP_LOG_LIMIT,
+  SESSION_TTL_MS,
   OLLAMA_HEALTH_TIMEOUT,
 } from './constants.js';
 
