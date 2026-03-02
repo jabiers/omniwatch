@@ -3,6 +3,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { loadConfig, saveConfig, type OmniConfig } from '@omniwatch/db';
 import { getErrorMessage } from '@omniwatch/shared';
+import { requireRole } from '../middleware/auth.js';
 
 /** Blocklist for SSRF prevention — reject internal/private network URLs */
 const SSRF_BLOCKED_HOSTS = [
@@ -99,49 +100,56 @@ configRoutes.get('/config', (c) => {
   return c.json({ config: masked });
 });
 
-/** PUT /config - update config fields */
-configRoutes.put('/config', zValidator('json', updateConfigSchema), async (c) => {
-  try {
-    const { config: updates } = c.req.valid('json');
-    const current = loadConfig();
+/** PUT /config - update config fields (admin only) */
+configRoutes.put(
+  '/config',
+  requireRole('admin'),
+  zValidator('json', updateConfigSchema),
+  async (c) => {
+    try {
+      const { config: updates } = c.req.valid('json');
+      const current = loadConfig();
 
-    // Merge AI settings (skip masked api_key)
-    if (updates.ai) {
-      if (updates.ai.model) current.ai.model = updates.ai.model;
-      if (updates.ai.api_key && !updates.ai.api_key.startsWith('••••')) {
-        current.ai.api_key = updates.ai.api_key;
+      // Merge AI settings (skip masked api_key)
+      if (updates.ai) {
+        if (updates.ai.model) current.ai.model = updates.ai.model;
+        if (updates.ai.api_key && !updates.ai.api_key.startsWith('••••')) {
+          current.ai.api_key = updates.ai.api_key;
+        }
+        if (updates.ai.ollama_url !== undefined) current.ai.ollama_url = updates.ai.ollama_url;
       }
-      if (updates.ai.ollama_url !== undefined) current.ai.ollama_url = updates.ai.ollama_url;
-    }
 
-    // Merge notification settings
-    if (updates.notification) {
-      const n = updates.notification;
-      if (n.slack_webhook !== undefined) current.notification.slack_webhook = n.slack_webhook;
-      if (n.discord_webhook !== undefined) current.notification.discord_webhook = n.discord_webhook;
-      if (n.webhook_url !== undefined) current.notification.webhook_url = n.webhook_url;
-      if (n.telegram_token !== undefined && !n.telegram_token.startsWith('••••')) {
-        current.notification.telegram_token = n.telegram_token;
+      // Merge notification settings
+      if (updates.notification) {
+        const n = updates.notification;
+        if (n.slack_webhook !== undefined) current.notification.slack_webhook = n.slack_webhook;
+        if (n.discord_webhook !== undefined)
+          current.notification.discord_webhook = n.discord_webhook;
+        if (n.webhook_url !== undefined) current.notification.webhook_url = n.webhook_url;
+        if (n.telegram_token !== undefined && !n.telegram_token.startsWith('••••')) {
+          current.notification.telegram_token = n.telegram_token;
+        }
+        if (n.telegram_chat_id !== undefined)
+          current.notification.telegram_chat_id = n.telegram_chat_id;
+        if (n.system !== undefined) current.notification.system = n.system;
+        if (n.channels)
+          current.notification.channels = { ...current.notification.channels, ...n.channels };
       }
-      if (n.telegram_chat_id !== undefined)
-        current.notification.telegram_chat_id = n.telegram_chat_id;
-      if (n.system !== undefined) current.notification.system = n.system;
-      if (n.channels)
-        current.notification.channels = { ...current.notification.channels, ...n.channels };
-    }
 
-    // Merge agent settings
-    if (updates.agent) {
-      if (updates.agent.max_count !== undefined) current.agent.max_count = updates.agent.max_count;
-      if (updates.agent.memory_limit_mb !== undefined)
-        current.agent.memory_limit_mb = updates.agent.memory_limit_mb;
-      if (updates.agent.max_heal_attempts !== undefined)
-        current.agent.max_heal_attempts = updates.agent.max_heal_attempts;
-    }
+      // Merge agent settings
+      if (updates.agent) {
+        if (updates.agent.max_count !== undefined)
+          current.agent.max_count = updates.agent.max_count;
+        if (updates.agent.memory_limit_mb !== undefined)
+          current.agent.memory_limit_mb = updates.agent.memory_limit_mb;
+        if (updates.agent.max_heal_attempts !== undefined)
+          current.agent.max_heal_attempts = updates.agent.max_heal_attempts;
+      }
 
-    saveConfig(current);
-    return c.json({ success: true });
-  } catch (err) {
-    return c.json({ error: getErrorMessage(err) }, 500);
-  }
-});
+      saveConfig(current);
+      return c.json({ success: true });
+    } catch (err) {
+      return c.json({ error: getErrorMessage(err) }, 500);
+    }
+  },
+);

@@ -65,6 +65,7 @@ export function createAgentRecord(
   code: string,
   config: AgentConfig,
   type: AgentType = 'watcher',
+  tenantId: string = 'default',
 ): Agent {
   enforceAgentLimit();
 
@@ -74,10 +75,10 @@ export function createAgentRecord(
 
   db.prepare(
     `
-    INSERT INTO agents (id, name, type, prompt, description, status, code_hash, config)
-    VALUES (?, ?, ?, ?, ?, 'creating', ?, ?)
+    INSERT INTO agents (id, name, type, prompt, description, status, code_hash, config, tenant_id)
+    VALUES (?, ?, ?, ?, ?, 'creating', ?, ?, ?)
   `,
-  ).run(id, name, type, prompt, description, codeHash, JSON.stringify(config));
+  ).run(id, name, type, prompt, description, codeHash, JSON.stringify(config), tenantId);
 
   // Write agent code to disk
   const agentDir = join(AGENTS_DIR, id);

@@ -24,7 +24,7 @@ const spec = {
     description:
       'AI Agent Orchestration Platform — 70+ endpoints for agent lifecycle, mesh, analytics, marketplace, and more.',
   },
-  servers: [{ url: 'http://localhost:3456', description: 'Local development' }],
+  servers: [{ url: 'http://localhost:3457', description: 'Local development' }],
   paths: {
     // ── System ──
     '/health': {
@@ -602,7 +602,7 @@ const spec = {
                 schema: {
                   type: 'object',
                   properties: {
-                    alerts: { type: 'array', items: { $ref: '#/components/schemas/AlertRule' } },
+                    rules: { type: 'array', items: { $ref: '#/components/schemas/AlertRule' } },
                   },
                 },
               },
@@ -930,7 +930,17 @@ const spec = {
           required: true,
           content: { 'application/json': { schema: { type: 'object' } } },
         },
-        responses: okResponse('Tenant updated'),
+        responses: {
+          '200': {
+            description: 'Updated tenant',
+            content: {
+              'application/json': {
+                schema: { type: 'object', properties: { tenant: { type: 'object' } } },
+              },
+            },
+          },
+          '404': { description: 'Not found' },
+        },
       },
     },
     '/api/users': {

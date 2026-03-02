@@ -5,9 +5,30 @@ import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/
 import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
 import { APP_VERSION } from '@omniwatch/shared';
+import type { AuthContext } from '@omniwatch/shared';
 import { handleAgentRPC, handleSnapshotRPC } from '../engine/engine.js';
 
 export const mcpRoutes = new Hono();
+
+/** Current request auth context — set before MCP handles each request */
+let currentAuth: AuthContext = { userId: 'anonymous', tenantId: 'default', role: 'viewer' };
+
+/** Check if agent belongs to the current tenant */
+function isAgentAccessible(agentId: string): boolean {
+  const db = getDb();
+  if (currentAuth.role === 'admin') return true;
+  const agent = db.prepare('SELECT tenant_id FROM agents WHERE id = ?').get(agentId) as
+    | { tenant_id: string }
+    | undefined;
+  return agent?.tenant_id === currentAuth.tenantId;
+}
+
+/** Tenant filter SQL fragment */
+function tenantFilter(alias?: string): string {
+  const col = alias ? `${alias}.tenant_id` : 'tenant_id';
+  if (currentAuth.role === 'admin') return '1=1';
+  return `${col} = '${currentAuth.tenantId.replace(/'/g, "''")}'`;
+}
 
 /** Create MCP server instance */
 function createMcpServer(): McpServer {
@@ -27,13 +48,13 @@ function createMcpServer(): McpServer {
       if (status) {
         agents = db
           .prepare(
-            'SELECT id, name, type, status, description, created_at FROM agents WHERE status = ? ORDER BY created_at DESC',
+            `SELECT id, name, type, status, description, created_at FROM agents WHERE status = ? AND ${tenantFilter()} ORDER BY created_at DESC`,
           )
           .all(status);
       } else {
         agents = db
           .prepare(
-            "SELECT id, name, type, status, description, created_at FROM agents WHERE status != 'destroyed' ORDER BY created_at DESC",
+            `SELECT id, name, type, status, description, created_at FROM agents WHERE status != 'destroyed' AND ${tenantFilter()} ORDER BY created_at DESC`,
           )
           .all();
       }
@@ -47,6 +68,12 @@ function createMcpServer(): McpServer {
     'Get detailed information about a specific agent',
     { agent_id: z.string().describe('The agent ID') },
     async ({ agent_id }) => {
+      if (!isAgentAccessible(agent_id)) {
+        return {
+          content: [{ type: 'text' as const, text: `Agent '${agent_id}' not found` }],
+          isError: true,
+        };
+      }
       const db = getDb();
       const agent = db
         .prepare(
@@ -73,6 +100,12 @@ function createMcpServer(): McpServer {
       level: z.string().optional().describe('Filter by log level: info, warn, error'),
     },
     async ({ agent_id, limit, level }) => {
+      if (!isAgentAccessible(agent_id)) {
+        return {
+          content: [{ type: 'text' as const, text: `Agent '${agent_id}' not found` }],
+          isError: true,
+        };
+      }
       const db = getDb();
       const safeLimit = Math.min(limit || 20, 100);
       let logs;
@@ -102,6 +135,12 @@ function createMcpServer(): McpServer {
       action: z.enum(['start', 'stop', 'restart']).describe('The action to perform'),
     },
     async ({ agent_id, action }) => {
+      if (!isAgentAccessible(agent_id)) {
+        return {
+          content: [{ type: 'text' as const, text: `Agent '${agent_id}' not found` }],
+          isError: true,
+        };
+      }
       try {
         const handler = handleAgentRPC[action as 'start' | 'stop' | 'restart'];
         const result = await handler({ id: agent_id });
@@ -130,7 +169,11 @@ function createMcpServer(): McpServer {
     },
     async ({ prompt, name }) => {
       try {
-        const result = await handleAgentRPC.create({ prompt, name });
+        const result = await handleAgentRPC.create({
+          prompt,
+          name,
+          tenantId: currentAuth.tenantId,
+        });
         return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return {
@@ -149,19 +192,22 @@ function createMcpServer(): McpServer {
   // Tool: get system stats
   server.tool('system_stats', 'Get OmniWatch system stats (agent counts, uptime)', {}, async () => {
     const db = getDb();
+    const filter = tenantFilter();
     const stats = {
       total: (
-        db.prepare("SELECT COUNT(*) as c FROM agents WHERE status != 'destroyed'").get() as {
-          c: number;
-        }
+        db
+          .prepare(`SELECT COUNT(*) as c FROM agents WHERE status != 'destroyed' AND ${filter}`)
+          .get() as { c: number }
       ).c,
       running: (
-        db.prepare("SELECT COUNT(*) as c FROM agents WHERE status = 'running'").get() as {
-          c: number;
-        }
+        db
+          .prepare(`SELECT COUNT(*) as c FROM agents WHERE status = 'running' AND ${filter}`)
+          .get() as { c: number }
       ).c,
       error: (
-        db.prepare("SELECT COUNT(*) as c FROM agents WHERE status = 'error'").get() as { c: number }
+        db
+          .prepare(`SELECT COUNT(*) as c FROM agents WHERE status = 'error' AND ${filter}`)
+          .get() as { c: number }
       ).c,
       daemon: true,
     };
@@ -177,6 +223,12 @@ function createMcpServer(): McpServer {
       label: z.string().optional().describe('Optional label for the snapshot'),
     },
     async ({ agent_id, label }) => {
+      if (!isAgentAccessible(agent_id)) {
+        return {
+          content: [{ type: 'text' as const, text: `Agent '${agent_id}' not found` }],
+          isError: true,
+        };
+      }
       try {
         const result = await handleSnapshotRPC.capture({ agentId: agent_id, label });
         return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
@@ -203,7 +255,7 @@ function createMcpServer(): McpServer {
       const db = getDb();
       const agents = db
         .prepare(
-          "SELECT id, name, type, status FROM agents WHERE status != 'destroyed' ORDER BY created_at DESC",
+          `SELECT id, name, type, status FROM agents WHERE status != 'destroyed' AND ${tenantFilter()} ORDER BY created_at DESC`,
         )
         .all();
       return {
@@ -225,6 +277,13 @@ function createMcpServer(): McpServer {
     { description: 'Status and details of a specific agent' },
     async (uri) => {
       const agentId = uri.pathname.split('/')[0] || '';
+      if (!isAgentAccessible(agentId)) {
+        return {
+          contents: [
+            { uri: uri.href, text: `Agent '${agentId}' not found`, mimeType: 'text/plain' },
+          ],
+        };
+      }
       const db = getDb();
       const agent = db
         .prepare(
@@ -253,6 +312,13 @@ function createMcpServer(): McpServer {
     { description: 'Recent logs for a specific agent' },
     async (uri) => {
       const agentId = uri.pathname.split('/')[0] || '';
+      if (!isAgentAccessible(agentId)) {
+        return {
+          contents: [
+            { uri: uri.href, text: `Agent '${agentId}' not found`, mimeType: 'text/plain' },
+          ],
+        };
+      }
       const db = getDb();
       const logs = db
         .prepare(
@@ -288,6 +354,7 @@ async function ensureMcpReady(): Promise<WebStandardStreamableHTTPServerTranspor
 
 /** POST /mcp - Streamable HTTP MCP endpoint */
 mcpRoutes.post('/mcp', async (c) => {
+  currentAuth = c.get('auth');
   const t = await ensureMcpReady();
   const response = await t.handleRequest(c.req.raw);
   return response;
@@ -295,6 +362,7 @@ mcpRoutes.post('/mcp', async (c) => {
 
 /** GET /mcp - MCP info endpoint */
 mcpRoutes.get('/mcp', async (c) => {
+  currentAuth = c.get('auth');
   const t = await ensureMcpReady();
   const response = await t.handleRequest(c.req.raw);
   return response;
@@ -302,6 +370,7 @@ mcpRoutes.get('/mcp', async (c) => {
 
 /** DELETE /mcp - MCP session close */
 mcpRoutes.delete('/mcp', async (c) => {
+  currentAuth = c.get('auth');
   const t = await ensureMcpReady();
   const response = await t.handleRequest(c.req.raw);
   return response;

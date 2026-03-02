@@ -411,16 +411,14 @@ describe('Auth Middleware', () => {
 
   // ─── MCP Path Bypass ──────────────────────────────────────────────
 
-  describe('MCP paths bypass auth', () => {
-    it('/api/mcp paths should be accessible without auth in production', async () => {
+  describe('MCP paths require auth', () => {
+    it('/api/mcp paths should require authentication', async () => {
       process.env.NODE_ENV = 'production';
       const app = createApp();
 
-      // MCP routes: auth middleware skips auth and assigns anonymous viewer
-      // The MCP endpoint itself may return any status, but NOT 401
+      // MCP routes now require authentication (no longer bypassed)
       const res = await app.request('/api/mcp');
-      expect(res.status).not.toBe(401);
-      expect(res.status).not.toBe(403);
+      expect(res.status).toBe(401);
     });
   });
 

@@ -17,11 +17,8 @@ const PUBLIC_PATHS = ['/health', '/api/system/status', '/auth', '/api/docs'];
 
 /** Auth middleware — extracts API key from X-API-Key header */
 export const authMiddleware = createMiddleware(async (c, next) => {
-  // Skip auth for public paths, MCP, and OAuth routes
-  if (
-    PUBLIC_PATHS.some((p) => c.req.path === p || c.req.path.startsWith(p + '/')) ||
-    c.req.path.startsWith('/api/mcp')
-  ) {
+  // Skip auth for public paths and OAuth routes
+  if (PUBLIC_PATHS.some((p) => c.req.path === p || c.req.path.startsWith(p + '/'))) {
     c.set('auth', { userId: 'anonymous', tenantId: 'default', role: 'viewer' as UserRole });
     return next();
   }

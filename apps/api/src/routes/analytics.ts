@@ -4,6 +4,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { handleAnalyticsRPC, handleSecurityRPC } from '../engine/engine.js';
 import { getErrorMessage } from '@omniwatch/shared';
+import { getDb } from '@omniwatch/db';
 import { requireRole } from '../middleware/auth.js';
 
 /** Schema: GET /analytics/metrics query params */
@@ -59,7 +60,20 @@ analyticsRoutes.get(
   zValidator('query', metricsQuerySchema),
   async (c) => {
     try {
+      const auth = c.get('auth');
       const { agentId, period, limit, hours } = c.req.valid('query');
+
+      // Verify agentId belongs to caller's tenant
+      if (auth.role !== 'admin') {
+        const db = getDb();
+        const agent = db.prepare('SELECT tenant_id FROM agents WHERE id = ?').get(agentId) as
+          | { tenant_id: string }
+          | undefined;
+        if (!agent || agent.tenant_id !== auth.tenantId) {
+          return c.json({ error: `Agent '${agentId}' not found` }, 404);
+        }
+      }
+
       const metrics = handleAnalyticsRPC.metrics({ agentId, period, limit, hours });
       return c.json({ metrics });
     } catch (err) {
@@ -128,9 +142,13 @@ analyticsRoutes.put(
   zValidator('json', updateAlertSchema),
   async (c) => {
     try {
+      const auth = c.get('auth');
       const { id } = c.req.valid('param');
       const body = c.req.valid('json');
-      const rule = handleAnalyticsRPC.updateAlert({ id, updates: body });
+      const rule = handleAnalyticsRPC.updateAlert({ id, updates: body, tenantId: auth.tenantId });
+      if (!rule) {
+        return c.json({ error: 'Alert rule not found' }, 404);
+      }
       return c.json({ rule });
     } catch (err) {
       return c.json({ error: getErrorMessage(err) }, 500);
@@ -145,8 +163,12 @@ analyticsRoutes.delete(
   zValidator('param', numericIdParam),
   async (c) => {
     try {
+      const auth = c.get('auth');
       const { id } = c.req.valid('param');
-      handleAnalyticsRPC.deleteAlert({ id });
+      const deleted = handleAnalyticsRPC.deleteAlert({ id, tenantId: auth.tenantId });
+      if (!deleted) {
+        return c.json({ error: 'Alert rule not found' }, 404);
+      }
       return c.body(null, 204);
     } catch (err) {
       return c.json({ error: getErrorMessage(err) }, 500);

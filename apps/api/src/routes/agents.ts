@@ -33,6 +33,20 @@ const agentLogsQuerySchema = z.object({
 
 export const agentRoutes = new Hono();
 
+/** Verify agent exists and belongs to the caller's tenant. Returns agent or null. */
+function verifyAgentTenant(
+  db: ReturnType<typeof getDb>,
+  id: string,
+  auth: { role: string; tenantId: string },
+): { id: string; tenant_id: string } | null {
+  const agent = db.prepare('SELECT id, tenant_id FROM agents WHERE id = ?').get(id) as
+    | { id: string; tenant_id: string }
+    | undefined;
+  if (!agent) return null;
+  if (auth.role !== 'admin' && agent.tenant_id !== auth.tenantId) return null;
+  return agent;
+}
+
 /** GET /agents - list all agents filtered by tenant */
 agentRoutes.get('/agents', zValidator('query', listAgentsQuerySchema), (c) => {
   const db = getDb();
@@ -126,7 +140,13 @@ agentRoutes.post(
 
 /** DELETE /agents/:id - destroy agent via engine (operator+) */
 agentRoutes.delete('/agents/:id', requireRole('admin', 'operator'), async (c) => {
+  const db = getDb();
+  const auth = c.get('auth');
   const { id } = c.req.param();
+
+  if (!verifyAgentTenant(db, id, auth)) {
+    return c.json({ error: `Agent '${id}' not found` }, 404);
+  }
 
   try {
     await handleAgentRPC.destroy({ id });
@@ -139,7 +159,13 @@ agentRoutes.delete('/agents/:id', requireRole('admin', 'operator'), async (c) =>
 
 /** POST /agents/:id/start - start agent (operator+) */
 agentRoutes.post('/agents/:id/start', requireRole('admin', 'operator'), async (c) => {
+  const db = getDb();
+  const auth = c.get('auth');
   const { id } = c.req.param();
+
+  if (!verifyAgentTenant(db, id, auth)) {
+    return c.json({ error: `Agent '${id}' not found` }, 404);
+  }
 
   try {
     const result = await handleAgentRPC.start({ id });
@@ -152,7 +178,13 @@ agentRoutes.post('/agents/:id/start', requireRole('admin', 'operator'), async (c
 
 /** POST /agents/:id/stop - stop agent (operator+) */
 agentRoutes.post('/agents/:id/stop', requireRole('admin', 'operator'), async (c) => {
+  const db = getDb();
+  const auth = c.get('auth');
   const { id } = c.req.param();
+
+  if (!verifyAgentTenant(db, id, auth)) {
+    return c.json({ error: `Agent '${id}' not found` }, 404);
+  }
 
   try {
     const result = await handleAgentRPC.stop({ id });
@@ -165,7 +197,13 @@ agentRoutes.post('/agents/:id/stop', requireRole('admin', 'operator'), async (c)
 
 /** POST /agents/:id/restart - restart agent (operator+) */
 agentRoutes.post('/agents/:id/restart', requireRole('admin', 'operator'), async (c) => {
+  const db = getDb();
+  const auth = c.get('auth');
   const { id } = c.req.param();
+
+  if (!verifyAgentTenant(db, id, auth)) {
+    return c.json({ error: `Agent '${id}' not found` }, 404);
+  }
 
   try {
     const result = await handleAgentRPC.restart({ id });

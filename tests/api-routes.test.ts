@@ -88,7 +88,7 @@ vi.mock('@omniwatch/api/engine', () => ({
     alertRules: vi.fn().mockReturnValue([]),
     createAlert: vi.fn(),
     updateAlert: vi.fn(),
-    deleteAlert: vi.fn(),
+    deleteAlert: vi.fn().mockReturnValue({ deleted: true }),
     checkAlerts: vi.fn(),
   },
   handleMeshRPC: {

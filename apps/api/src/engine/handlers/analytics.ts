@@ -63,13 +63,15 @@ export const handleAnalyticsRPC: Record<string, (params: Record<string, unknown>
   updateAlert: (params) => {
     const id = params.id as number;
     if (!id) throw new Error('id is required');
-    return updateAlertRule(id, params.updates as Partial<AlertRule>);
+    const tenantId = params.tenantId as string | undefined;
+    return updateAlertRule(id, params.updates as Partial<AlertRule>, tenantId);
   },
 
   deleteAlert: (params) => {
     const id = params.id as number;
     if (!id) throw new Error('id is required');
-    return { deleted: deleteAlertRule(id) };
+    const tenantId = params.tenantId as string | undefined;
+    return { deleted: deleteAlertRule(id, tenantId) };
   },
 
   checkAlerts: async () => {

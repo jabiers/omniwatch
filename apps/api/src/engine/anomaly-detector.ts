@@ -176,7 +176,11 @@ export function createAlertRule(rule: Omit<AlertRule, 'id' | 'created_at'>): Ale
     .get(result.lastInsertRowid) as AlertRule;
 }
 
-export function updateAlertRule(id: number, updates: Partial<AlertRule>): AlertRule | null {
+export function updateAlertRule(
+  id: number,
+  updates: Partial<AlertRule>,
+  tenantId?: string,
+): AlertRule | null {
   const db = getDb();
   const existing = db
     .prepare(
@@ -184,6 +188,9 @@ export function updateAlertRule(id: number, updates: Partial<AlertRule>): AlertR
     )
     .get(id) as AlertRule | null;
   if (!existing) return null;
+
+  // Tenant ownership check
+  if (tenantId && existing.tenant_id !== tenantId) return null;
 
   const merged = { ...existing, ...updates };
   db.prepare(
@@ -205,8 +212,14 @@ export function updateAlertRule(id: number, updates: Partial<AlertRule>): AlertR
     .get(id) as AlertRule;
 }
 
-export function deleteAlertRule(id: number): boolean {
+export function deleteAlertRule(id: number, tenantId?: string): boolean {
   const db = getDb();
+  if (tenantId) {
+    const existing = db.prepare('SELECT tenant_id FROM alert_rules WHERE id = ?').get(id) as {
+      tenant_id: string;
+    } | null;
+    if (!existing || existing.tenant_id !== tenantId) return false;
+  }
   const result = db.prepare('DELETE FROM alert_rules WHERE id = ?').run(id);
   return result.changes > 0;
 }

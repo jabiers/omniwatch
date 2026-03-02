@@ -32,9 +32,18 @@ export const handleAgentRPC = {
 
     // 3. Create agent record (user-provided name takes priority)
     const agentName = (params.name as string)?.trim() || generated.name;
-    const agent = createAgentRecord(prompt, agentName, generated.description, generated.code, {
-      dependencies: generated.dependencies,
-    });
+    const tenantId = params.tenantId as string | undefined;
+    const agent = createAgentRecord(
+      prompt,
+      agentName,
+      generated.description,
+      generated.code,
+      {
+        dependencies: generated.dependencies,
+      },
+      undefined,
+      tenantId,
+    );
 
     // 4. Install npm dependencies
     if (generated.dependencies.length > 0) {
