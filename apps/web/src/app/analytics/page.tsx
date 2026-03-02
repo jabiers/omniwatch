@@ -27,6 +27,7 @@ import {
   Download,
 } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
+import { DASHBOARD_POLL_INTERVAL } from '../../lib/constants';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -216,7 +217,7 @@ export default function AnalyticsPage() {
   // Load analytics when agent changes or on mount, auto-refresh every 30s
   useEffect(() => {
     loadAnalytics();
-    const interval = setInterval(loadAnalytics, 30_000);
+    const interval = setInterval(loadAnalytics, DASHBOARD_POLL_INTERVAL);
     return () => clearInterval(interval);
   }, [loadAnalytics]);
 

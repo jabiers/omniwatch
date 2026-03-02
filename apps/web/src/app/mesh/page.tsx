@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Network, Radio, ArrowRight, RefreshCw } from 'lucide-react';
 import { Pagination } from '../../components/pagination';
 import { apiFetch } from '../../lib/api';
+import { DASHBOARD_POLL_INTERVAL } from '../../lib/constants';
 
 interface MeshEvent {
   id: number;
@@ -56,7 +57,7 @@ export default function MeshPage() {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 30000);
+    const interval = setInterval(loadData, DASHBOARD_POLL_INTERVAL);
     return () => clearInterval(interval);
   }, [loadData]);
 

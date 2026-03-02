@@ -76,7 +76,10 @@ export const MAX_AGENTS_FREE = 10;
 export const MAX_AGENTS_PRO = 50;
 
 // App version (synced via scripts/sync-version.mjs)
-export const APP_VERSION = '4.23.0';
+export const APP_VERSION = '4.24.0';
+
+// Dashboard polling interval
+export const DASHBOARD_POLL_INTERVAL = 30_000; // 30 seconds
 
 // v0.6: Analytics
 export const METRIC_ROLLUP_INTERVAL = 3_600_000; // 1 hour

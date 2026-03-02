@@ -68,6 +68,7 @@ export {
   ANOMALY_WINDOW_HOURS,
   ALERT_CHECK_INTERVAL,
   APP_VERSION,
+  DASHBOARD_POLL_INTERVAL,
 } from './constants.js';
 
 // Errors

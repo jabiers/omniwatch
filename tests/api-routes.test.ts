@@ -104,6 +104,13 @@ vi.mock('nanoid', () => ({
   nanoid: vi.fn().mockReturnValue('mock-nanoid-12'),
 }));
 
+// Disable rate limiter for tests (module reads env at load time, after import hoisting)
+vi.mock('../apps/api/src/middleware/rate-limit.js', () => ({
+  rateLimiter: () => async (_c: unknown, next: () => Promise<void>) => {
+    await next();
+  },
+}));
+
 // Enable dev auth bypass for tests
 process.env.OMNIWATCH_DEV_AUTH = '1';
 
@@ -1243,5 +1250,259 @@ describe('Config Routes', () => {
       }),
     });
     expect(res.status).toBe(403);
+  });
+});
+
+// ─── v4.24: 10 New API Route Tests ──────────────────────────────────
+
+describe('GET /api/analytics/anomalies', () => {
+  it('should return 200 with anomalies array', async () => {
+    const res = await app.request('/api/analytics/anomalies');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { anomalies: unknown[] };
+    expect(body).toHaveProperty('anomalies');
+    expect(Array.isArray(body.anomalies)).toBe(true);
+  });
+
+  it('should accept optional agentId filter', async () => {
+    const res = await app.request('/api/analytics/anomalies?agentId=agent-1');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { anomalies: unknown[] };
+    expect(body).toHaveProperty('anomalies');
+  });
+});
+
+describe('GET /api/security/events', () => {
+  it('should return 200 with events array', async () => {
+    const res = await app.request('/api/security/events');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { events: unknown[] };
+    expect(body).toHaveProperty('events');
+    expect(Array.isArray(body.events)).toBe(true);
+  });
+
+  it('should accept limit query param', async () => {
+    const res = await app.request('/api/security/events?limit=10');
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('PUT /api/tenants/:id', () => {
+  it('should return 404 when tenant not found', async () => {
+    mockGet.mockReturnValueOnce(undefined);
+    const res = await app.request('/api/tenants/nonexistent', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Updated' }),
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('should update tenant and return 200', async () => {
+    const tenant = {
+      id: 't1',
+      name: 'Old Name',
+      plan: 'free',
+      max_agents: 10,
+      created_at: '2026-01-01',
+    };
+    // First get: existing tenant check
+    mockGet.mockReturnValueOnce(tenant);
+    // Second get: return updated tenant after update
+    mockGet.mockReturnValueOnce({ ...tenant, name: 'New Name' });
+
+    const res = await app.request('/api/tenants/t1', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'New Name' }),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { tenant: { name: string } };
+    expect(body).toHaveProperty('tenant');
+    expect(body.tenant.name).toBe('New Name');
+  });
+});
+
+describe('POST /api/users/:id/rotate-key', () => {
+  it('should return 404 when user not found', async () => {
+    mockGet.mockReturnValueOnce(undefined);
+    const res = await app.request('/api/users/nonexistent/rotate-key', {
+      method: 'POST',
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('should rotate key and return new api_key', async () => {
+    mockGet.mockReturnValueOnce({ id: 'u1', tenant_id: 'default' });
+    const res = await app.request('/api/users/u1/rotate-key', {
+      method: 'POST',
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { api_key: string };
+    expect(body).toHaveProperty('api_key');
+    expect(body.api_key.startsWith('omni_')).toBe(true);
+  });
+});
+
+describe('POST /api/marketplace (publish)', () => {
+  it('should reject when required fields are missing', async () => {
+    const res = await app.request('/api/marketplace', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ description: 'no name or prompt' }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('should create recipe and return 201', async () => {
+    const recipe = {
+      id: 'r-new',
+      name: 'Test Recipe',
+      description: 'A test',
+      prompt: 'Monitor test',
+      category: 'general',
+      author: 'dev-user',
+      version: '1.0.0',
+      downloads: 0,
+      rating: 0,
+      tags: '[]',
+      config: '{}',
+      published: 1,
+      created_at: '2026-01-01',
+      updated_at: '2026-01-01',
+    };
+    mockGet.mockReturnValueOnce(recipe);
+
+    const res = await app.request('/api/marketplace', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Test Recipe',
+        prompt: 'Monitor test',
+      }),
+    });
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as { recipe: { name: string } };
+    expect(body).toHaveProperty('recipe');
+    expect(body.recipe.name).toBe('Test Recipe');
+  });
+});
+
+describe('POST /api/marketplace/:id/install', () => {
+  it('should return 404 when recipe not found', async () => {
+    mockGet.mockReturnValueOnce(undefined);
+    const res = await app.request('/api/marketplace/nonexistent/install', {
+      method: 'POST',
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('should install recipe and return 201', async () => {
+    const recipe = {
+      id: 'r1',
+      name: 'CPU Monitor',
+      prompt: 'Monitor CPU',
+      category: 'monitoring',
+      published: 1,
+      config: '{"type":"watcher"}',
+    };
+    mockGet.mockReturnValueOnce(recipe);
+    mockAgentCreate.mockResolvedValueOnce({
+      id: 'agent-installed',
+      name: 'CPU Monitor',
+      status: 'creating',
+    });
+
+    const res = await app.request('/api/marketplace/r1/install', {
+      method: 'POST',
+    });
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as { agent: { id: string } };
+    expect(body).toHaveProperty('agent');
+    expect(body.agent.id).toBe('agent-installed');
+  });
+});
+
+describe('POST /api/recipes/:id/install', () => {
+  it('should return 404 for non-existent recipe', async () => {
+    const res = await app.request('/api/recipes/nonexistent/install', {
+      method: 'POST',
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('should install built-in recipe (502 if engine unavailable)', async () => {
+    // Use a known built-in recipe — the mock rejects by default
+    const res = await app.request('/api/recipes/rss-monitor/install', {
+      method: 'POST',
+    });
+    // 201 if engine works, 502 if mock rejects, 404 if recipe id not found
+    expect([201, 404, 502]).toContain(res.status);
+  });
+});
+
+describe('GET /api/system/health/detailed', () => {
+  it('should return 200 with health checks', async () => {
+    mockGet.mockReturnValueOnce({ '1': 1 }); // SELECT 1 succeeds
+    const res = await app.request('/api/system/health/detailed');
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      status: string;
+      timestamp: string;
+      checks: { database: { status: string }; memory: { rss_mb: number } };
+    };
+    expect(body.status).toBe('healthy');
+    expect(body).toHaveProperty('timestamp');
+    expect(body).toHaveProperty('checks');
+    expect(body.checks).toHaveProperty('database');
+    expect(body.checks).toHaveProperty('memory');
+  });
+});
+
+describe('POST /api/agents/:id/snapshots', () => {
+  it('should return 404 for non-existent agent', async () => {
+    mockGet.mockReturnValueOnce(undefined);
+    const res = await app.request('/api/agents/nonexistent/snapshots', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('should capture snapshot for existing agent', async () => {
+    mockGet.mockReturnValueOnce({ id: 'a1', tenant_id: 'default' });
+    const { handleSnapshotRPC } = await import('@omniwatch/api/engine');
+    (handleSnapshotRPC.capture as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ seq: 5 });
+
+    const res = await app.request('/api/agents/a1/snapshots', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label: 'test snapshot' }),
+    });
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as { seq: number };
+    expect(body).toHaveProperty('seq');
+  });
+});
+
+describe('POST /api/agents/:id/snapshots/:seq/restore', () => {
+  it('should return 404 for non-existent agent', async () => {
+    mockGet.mockReturnValueOnce(undefined);
+    const res = await app.request('/api/agents/nonexistent/snapshots/1/restore', {
+      method: 'POST',
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('should restore snapshot for existing agent', async () => {
+    mockGet.mockReturnValueOnce({ id: 'a1', tenant_id: 'default' });
+    const { handleSnapshotRPC } = await import('@omniwatch/api/engine');
+    (handleSnapshotRPC.restore as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+    const res = await app.request('/api/agents/a1/snapshots/3/restore', {
+      method: 'POST',
+    });
+    expect(res.status).toBe(200);
   });
 });

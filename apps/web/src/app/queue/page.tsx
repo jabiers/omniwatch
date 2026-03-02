@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Pagination } from '../../components/pagination';
 import { apiFetch } from '../../lib/api';
+import { DASHBOARD_POLL_INTERVAL } from '../../lib/constants';
 
 interface QueueStats {
   pending: number;
@@ -79,7 +80,7 @@ export default function QueuePage() {
   // Initial load + auto-refresh every 30s
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 30_000);
+    const interval = setInterval(loadData, DASHBOARD_POLL_INTERVAL);
     return () => clearInterval(interval);
   }, [loadData]);
 

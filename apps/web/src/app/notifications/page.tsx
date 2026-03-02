@@ -5,6 +5,7 @@ import { Filter, Calendar, Check, Eye } from 'lucide-react';
 import { Pagination } from '../../components/pagination';
 import { apiFetch } from '../../lib/api';
 import { useWebSocket } from '../../lib/ws';
+import { DASHBOARD_POLL_INTERVAL } from '../../lib/constants';
 
 interface Notification {
   id: number;
@@ -70,7 +71,7 @@ export default function NotificationsPage() {
   // Initial load + auto-refresh every 30s (WebSocket handles real-time updates)
   useEffect(() => {
     loadNotifications();
-    const interval = setInterval(loadNotifications, 30000);
+    const interval = setInterval(loadNotifications, DASHBOARD_POLL_INTERVAL);
     return () => clearInterval(interval);
   }, [loadNotifications]);
 

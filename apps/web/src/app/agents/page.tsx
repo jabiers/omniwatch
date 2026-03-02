@@ -19,6 +19,7 @@ import { useToastStore } from '../../lib/toast-store';
 import { useWebSocket } from '../../lib/ws';
 import { SkeletonTable } from '../../components/skeleton';
 import { StatusBadge } from '../../components/status-badge';
+import { DASHBOARD_POLL_INTERVAL } from '../../lib/constants';
 
 interface Agent {
   id: string;
@@ -66,7 +67,7 @@ export default function AgentsPage() {
   // Initial load + auto-refresh every 30s (WebSocket handles real-time updates)
   useEffect(() => {
     loadAgents();
-    const interval = setInterval(loadAgents, 30000);
+    const interval = setInterval(loadAgents, DASHBOARD_POLL_INTERVAL);
     return () => clearInterval(interval);
   }, [loadAgents]);
 

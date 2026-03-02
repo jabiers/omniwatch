@@ -18,6 +18,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useWebSocket } from '../lib/ws';
 import { apiFetch } from '../lib/api';
 import { Skeleton } from '../components/skeleton';
+import { DASHBOARD_POLL_INTERVAL } from '../lib/constants';
 
 interface Agent {
   id: string;
@@ -90,7 +91,7 @@ export default function DashboardPage() {
   // Initial load + auto-refresh every 30s (WebSocket handles real-time updates)
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 30000);
+    const interval = setInterval(loadData, DASHBOARD_POLL_INTERVAL);
     return () => clearInterval(interval);
   }, [loadData]);
 
