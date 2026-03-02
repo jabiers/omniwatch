@@ -1146,3 +1146,102 @@ describe('Numeric ID Validation', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('Alert Rule CRUD', () => {
+  it('GET /analytics/alerts returns rules list', async () => {
+    const res = await app.request('/api/analytics/alerts');
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toHaveProperty('rules');
+  });
+
+  it('POST /analytics/alerts creates a rule', async () => {
+    const res = await app.request('/api/analytics/alerts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        metric_name: 'error_rate',
+        operator: 'gt',
+        threshold: 0.5,
+        window_minutes: 15,
+        notify_channels: ['slack'],
+        enabled: true,
+      }),
+    });
+    expect(res.status).toBe(201);
+  });
+
+  it('POST /analytics/alerts rejects invalid operator', async () => {
+    const res = await app.request('/api/analytics/alerts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        metric_name: 'error_rate',
+        operator: 'invalid',
+        threshold: 0.5,
+      }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('PUT /analytics/alerts/:id updates a rule', async () => {
+    const mockUpdate = vi.fn().mockReturnValue({ id: 1, metric_name: 'error_rate' });
+    const { handleAnalyticsRPC } = await import('@omniwatch/api/engine');
+    (handleAnalyticsRPC.updateAlert as ReturnType<typeof vi.fn>).mockReturnValueOnce(mockUpdate());
+    const res = await app.request('/api/analytics/alerts/1', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: false }),
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it('PUT /analytics/alerts/:id returns 404 if not found', async () => {
+    const { handleAnalyticsRPC } = await import('@omniwatch/api/engine');
+    (handleAnalyticsRPC.updateAlert as ReturnType<typeof vi.fn>).mockReturnValueOnce(null);
+    const res = await app.request('/api/analytics/alerts/999', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: false }),
+    });
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('Config Routes', () => {
+  it('GET /config returns masked config', async () => {
+    const res = await app.request('/api/config');
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toHaveProperty('config');
+    expect(json.config).toHaveProperty('ai');
+    expect(json.config).toHaveProperty('notification');
+  });
+
+  it('PUT /config updates config (admin)', async () => {
+    const res = await app.request('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        config: { agent: { max_count: 50 } },
+      }),
+    });
+    expect(res.status).toBe(200);
+  });
+
+  it('PUT /config rejects non-admin users', async () => {
+    // Auth middleware: viewer user
+    mockGet.mockReturnValueOnce({ id: 'u1', tenant_id: 'default', role: 'viewer' });
+    const res = await app.request('/api/config', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': 'omni_viewer',
+      },
+      body: JSON.stringify({
+        config: { agent: { max_count: 50 } },
+      }),
+    });
+    expect(res.status).toBe(403);
+  });
+});
