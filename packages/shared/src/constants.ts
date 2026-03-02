@@ -76,10 +76,17 @@ export const MAX_AGENTS_FREE = 10;
 export const MAX_AGENTS_PRO = 50;
 
 // App version (synced via scripts/sync-version.mjs)
-export const APP_VERSION = '4.24.0';
+export const APP_VERSION = '4.25.0';
 
 // Dashboard polling interval
 export const DASHBOARD_POLL_INTERVAL = 30_000; // 30 seconds
+
+// MCP defaults
+export const MCP_DEFAULT_LIMIT = 20;
+export const MCP_LOG_LIMIT = 30;
+
+// System health
+export const OLLAMA_HEALTH_TIMEOUT = 3_000; // 3s
 
 // v0.6: Analytics
 export const METRIC_ROLLUP_INTERVAL = 3_600_000; // 1 hour

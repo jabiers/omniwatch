@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { statSync } from 'node:fs';
 import { getDb, loadConfig } from '@omniwatch/db';
-import { DB_PATH, APP_VERSION } from '@omniwatch/shared';
+import { DB_PATH, APP_VERSION, OLLAMA_HEALTH_TIMEOUT } from '@omniwatch/shared';
+import type { AuthContext } from '@omniwatch/shared';
 
 export const systemRoutes = new Hono();
 
@@ -35,17 +36,21 @@ systemRoutes.get('/system/health/detailed', (c) => {
 /** GET /system/status - system overview stats (engine runs in-process) */
 systemRoutes.get('/system/status', (c) => {
   const db = getDb();
+  const auth = c.get('auth') as AuthContext | undefined;
+  const filtered = auth && auth.role !== 'admin';
+  const tClause = filtered ? 'AND tenant_id = ?' : '';
+  const tParams: unknown[] = filtered ? [auth!.tenantId] : [];
 
   const agentCount = (
-    db.prepare("SELECT COUNT(*) as count FROM agents WHERE status != 'destroyed'").get() as {
-      count: number;
-    }
+    db
+      .prepare(`SELECT COUNT(*) as count FROM agents WHERE status != 'destroyed' ${tClause}`)
+      .get(...tParams) as { count: number }
   ).count;
 
   const runningCount = (
-    db.prepare("SELECT COUNT(*) as count FROM agents WHERE status = 'running'").get() as {
-      count: number;
-    }
+    db
+      .prepare(`SELECT COUNT(*) as count FROM agents WHERE status = 'running' ${tClause}`)
+      .get(...tParams) as { count: number }
   ).count;
 
   let dbSize = 0;
@@ -80,7 +85,7 @@ systemRoutes.get('/system/ollama', async (c) => {
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
+    const timeout = setTimeout(() => controller.abort(), OLLAMA_HEALTH_TIMEOUT);
 
     const res = await fetch(`${baseUrl}/api/tags`, { signal: controller.signal });
     clearTimeout(timeout);

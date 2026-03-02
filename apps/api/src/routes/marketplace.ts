@@ -26,6 +26,8 @@ const listQuerySchema = z.object({
   category: z.string().optional(),
   search: z.string().optional(),
   sort: z.enum(['downloads', 'rating', 'newest']).default('downloads'),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 /** Marketplace recipe row from DB */
@@ -55,7 +57,7 @@ export const marketplaceRoutes = new Hono();
 
 /** GET /marketplace — List recipes with optional filtering and sorting */
 marketplaceRoutes.get('/marketplace', zValidator('query', listQuerySchema), (c) => {
-  const { category, search, sort } = c.req.valid('query');
+  const { category, search, sort, limit, offset } = c.req.valid('query');
   const db = getDb();
 
   let query =
@@ -88,7 +90,8 @@ marketplaceRoutes.get('/marketplace', zValidator('query', listQuerySchema), (c) 
       break;
   }
 
-  query += ' LIMIT 100';
+  query += ' LIMIT ? OFFSET ?';
+  params.push(limit, offset);
 
   const rows = db.prepare(query).all(...params) as MarketplaceRecipe[];
 

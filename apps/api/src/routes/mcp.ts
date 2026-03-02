@@ -4,7 +4,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
-import { APP_VERSION } from '@omniwatch/shared';
+import { APP_VERSION, MCP_DEFAULT_LIMIT, MCP_LOG_LIMIT } from '@omniwatch/shared';
 import type { AuthContext } from '@omniwatch/shared';
 import { handleAgentRPC, handleSnapshotRPC } from '../engine/engine.js';
 
@@ -23,11 +23,11 @@ function isAgentAccessible(agentId: string): boolean {
   return agent?.tenant_id === currentAuth.tenantId;
 }
 
-/** Tenant filter SQL fragment */
-function tenantFilter(alias?: string): string {
+/** Tenant filter SQL fragment — returns parameterized clause + bind values */
+function tenantFilter(alias?: string): { clause: string; params: unknown[] } {
   const col = alias ? `${alias}.tenant_id` : 'tenant_id';
-  if (currentAuth.role === 'admin') return '1=1';
-  return `${col} = '${currentAuth.tenantId.replace(/'/g, "''")}'`;
+  if (currentAuth.role === 'admin') return { clause: '1=1', params: [] };
+  return { clause: `${col} = ?`, params: [currentAuth.tenantId] };
 }
 
 /** Create MCP server instance */
@@ -44,19 +44,20 @@ function createMcpServer(): McpServer {
     { status: z.string().optional().describe('Filter by status: running, stopped, error, etc.') },
     async ({ status }) => {
       const db = getDb();
+      const tf = tenantFilter();
       let agents;
       if (status) {
         agents = db
           .prepare(
-            `SELECT id, name, type, status, description, created_at FROM agents WHERE status = ? AND ${tenantFilter()} ORDER BY created_at DESC`,
+            `SELECT id, name, type, status, description, created_at FROM agents WHERE status = ? AND ${tf.clause} ORDER BY created_at DESC`,
           )
-          .all(status);
+          .all(status, ...tf.params);
       } else {
         agents = db
           .prepare(
-            `SELECT id, name, type, status, description, created_at FROM agents WHERE status != 'destroyed' AND ${tenantFilter()} ORDER BY created_at DESC`,
+            `SELECT id, name, type, status, description, created_at FROM agents WHERE status != 'destroyed' AND ${tf.clause} ORDER BY created_at DESC`,
           )
-          .all();
+          .all(...tf.params);
       }
       return { content: [{ type: 'text' as const, text: JSON.stringify(agents, null, 2) }] };
     },
@@ -96,7 +97,7 @@ function createMcpServer(): McpServer {
     'Get recent logs for an agent',
     {
       agent_id: z.string().describe('The agent ID'),
-      limit: z.number().optional().default(20).describe('Number of log entries'),
+      limit: z.number().optional().default(MCP_DEFAULT_LIMIT).describe('Number of log entries'),
       level: z.string().optional().describe('Filter by log level: info, warn, error'),
     },
     async ({ agent_id, limit, level }) => {
@@ -107,7 +108,7 @@ function createMcpServer(): McpServer {
         };
       }
       const db = getDb();
-      const safeLimit = Math.min(limit || 20, 100);
+      const safeLimit = Math.min(limit || MCP_DEFAULT_LIMIT, 100);
       let logs;
       if (level) {
         logs = db
@@ -192,22 +193,22 @@ function createMcpServer(): McpServer {
   // Tool: get system stats
   server.tool('system_stats', 'Get OmniWatch system stats (agent counts, uptime)', {}, async () => {
     const db = getDb();
-    const filter = tenantFilter();
+    const tf = tenantFilter();
     const stats = {
       total: (
         db
-          .prepare(`SELECT COUNT(*) as c FROM agents WHERE status != 'destroyed' AND ${filter}`)
-          .get() as { c: number }
+          .prepare(`SELECT COUNT(*) as c FROM agents WHERE status != 'destroyed' AND ${tf.clause}`)
+          .get(...tf.params) as { c: number }
       ).c,
       running: (
         db
-          .prepare(`SELECT COUNT(*) as c FROM agents WHERE status = 'running' AND ${filter}`)
-          .get() as { c: number }
+          .prepare(`SELECT COUNT(*) as c FROM agents WHERE status = 'running' AND ${tf.clause}`)
+          .get(...tf.params) as { c: number }
       ).c,
       error: (
         db
-          .prepare(`SELECT COUNT(*) as c FROM agents WHERE status = 'error' AND ${filter}`)
-          .get() as { c: number }
+          .prepare(`SELECT COUNT(*) as c FROM agents WHERE status = 'error' AND ${tf.clause}`)
+          .get(...tf.params) as { c: number }
       ).c,
       daemon: true,
     };
@@ -253,11 +254,12 @@ function createMcpServer(): McpServer {
     { description: 'List of all OmniWatch agents' },
     async () => {
       const db = getDb();
+      const tf = tenantFilter();
       const agents = db
         .prepare(
-          `SELECT id, name, type, status FROM agents WHERE status != 'destroyed' AND ${tenantFilter()} ORDER BY created_at DESC`,
+          `SELECT id, name, type, status FROM agents WHERE status != 'destroyed' AND ${tf.clause} ORDER BY created_at DESC`,
         )
-        .all();
+        .all(...tf.params);
       return {
         contents: [
           {
@@ -322,9 +324,9 @@ function createMcpServer(): McpServer {
       const db = getDb();
       const logs = db
         .prepare(
-          'SELECT level, message, created_at FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT 30',
+          'SELECT level, message, created_at FROM agent_logs WHERE agent_id = ? ORDER BY created_at DESC LIMIT ?',
         )
-        .all(agentId);
+        .all(agentId, MCP_LOG_LIMIT);
       return {
         contents: [
           { uri: uri.href, text: JSON.stringify(logs, null, 2), mimeType: 'application/json' },
