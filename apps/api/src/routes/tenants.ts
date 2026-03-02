@@ -28,14 +28,29 @@ const createUserSchema = z.object({
   role: z.enum(['admin', 'operator', 'viewer']).default('viewer'),
 });
 
+/** Schema: GET /tenants query params */
+const listTenantsSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+/** Schema: GET /users query params */
+const listUsersSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
 export const tenantRoutes = new Hono();
 
 /** GET /tenants — List all tenants (admin only) */
-tenantRoutes.get('/tenants', requireRole('admin'), (c) => {
+tenantRoutes.get('/tenants', requireRole('admin'), zValidator('query', listTenantsSchema), (c) => {
   const db = getDb();
+  const { limit, offset } = c.req.valid('query');
   const tenants = db
-    .prepare('SELECT id, name, plan, max_agents, created_at FROM tenants ORDER BY created_at DESC')
-    .all() as Tenant[];
+    .prepare(
+      'SELECT id, name, plan, max_agents, created_at FROM tenants ORDER BY created_at DESC LIMIT ? OFFSET ?',
+    )
+    .all(limit, offset) as Tenant[];
   return c.json({ tenants });
 });
 
@@ -140,14 +155,15 @@ tenantRoutes.post('/users/:id/rotate-key', requireRole('admin'), async (c) => {
 });
 
 /** GET /users — List users in tenant */
-tenantRoutes.get('/users', requireRole('admin'), (c) => {
+tenantRoutes.get('/users', requireRole('admin'), zValidator('query', listUsersSchema), (c) => {
   const auth = c.get('auth');
   const db = getDb();
+  const { limit, offset } = c.req.valid('query');
   const users = db
     .prepare(
-      'SELECT id, tenant_id, email, role, created_at FROM users WHERE tenant_id = ? ORDER BY created_at DESC',
+      'SELECT id, tenant_id, email, role, created_at FROM users WHERE tenant_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
     )
-    .all(auth.tenantId) as Omit<User, 'api_key_hash'>[];
+    .all(auth.tenantId, limit, offset) as Omit<User, 'api_key_hash'>[];
   return c.json({ users });
 });
 

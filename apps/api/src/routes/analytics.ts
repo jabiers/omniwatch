@@ -89,7 +89,20 @@ analyticsRoutes.get(
   zValidator('query', anomaliesQuerySchema),
   async (c) => {
     try {
+      const auth = c.get('auth');
       const { agentId } = c.req.valid('query');
+
+      // Verify agentId belongs to caller's tenant (non-admin)
+      if (agentId && auth.role !== 'admin') {
+        const db = getDb();
+        const agent = db.prepare('SELECT tenant_id FROM agents WHERE id = ?').get(agentId) as
+          | { tenant_id: string }
+          | undefined;
+        if (!agent || agent.tenant_id !== auth.tenantId) {
+          return c.json({ error: `Agent '${agentId}' not found` }, 404);
+        }
+      }
+
       const anomalies = handleAnalyticsRPC.anomalies({ agentId });
       return c.json({ anomalies });
     } catch (err) {

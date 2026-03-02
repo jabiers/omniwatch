@@ -1,5 +1,6 @@
 /** MCP (Model Context Protocol) server — Exposes OmniWatch agents as MCP tools */
 import { Hono } from 'hono';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { z } from 'zod';
@@ -10,24 +11,29 @@ import { handleAgentRPC, handleSnapshotRPC } from '../engine/engine.js';
 
 export const mcpRoutes = new Hono();
 
-/** Current request auth context — set before MCP handles each request */
-let currentAuth: AuthContext = { userId: 'anonymous', tenantId: 'default', role: 'viewer' };
+/** Per-request auth context scoped via AsyncLocalStorage (no shared mutable state) */
+const authStore = new AsyncLocalStorage<AuthContext>();
+function getCurrentAuth(): AuthContext {
+  return authStore.getStore() ?? { userId: 'anonymous', tenantId: 'default', role: 'viewer' };
+}
 
 /** Check if agent belongs to the current tenant */
 function isAgentAccessible(agentId: string): boolean {
   const db = getDb();
-  if (currentAuth.role === 'admin') return true;
+  const auth = getCurrentAuth();
+  if (auth.role === 'admin') return true;
   const agent = db.prepare('SELECT tenant_id FROM agents WHERE id = ?').get(agentId) as
     | { tenant_id: string }
     | undefined;
-  return agent?.tenant_id === currentAuth.tenantId;
+  return agent?.tenant_id === auth.tenantId;
 }
 
 /** Tenant filter SQL fragment — returns parameterized clause + bind values */
 function tenantFilter(alias?: string): { clause: string; params: unknown[] } {
   const col = alias ? `${alias}.tenant_id` : 'tenant_id';
-  if (currentAuth.role === 'admin') return { clause: '1=1', params: [] };
-  return { clause: `${col} = ?`, params: [currentAuth.tenantId] };
+  const auth = getCurrentAuth();
+  if (auth.role === 'admin') return { clause: '1=1', params: [] };
+  return { clause: `${col} = ?`, params: [auth.tenantId] };
 }
 
 /** Create MCP server instance */
@@ -173,7 +179,7 @@ function createMcpServer(): McpServer {
         const result = await handleAgentRPC.create({
           prompt,
           name,
-          tenantId: currentAuth.tenantId,
+          tenantId: getCurrentAuth().tenantId,
         });
         return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
@@ -356,24 +362,21 @@ async function ensureMcpReady(): Promise<WebStandardStreamableHTTPServerTranspor
 
 /** POST /mcp - Streamable HTTP MCP endpoint */
 mcpRoutes.post('/mcp', async (c) => {
-  currentAuth = c.get('auth');
+  const auth = c.get('auth');
   const t = await ensureMcpReady();
-  const response = await t.handleRequest(c.req.raw);
-  return response;
+  return authStore.run(auth, () => t.handleRequest(c.req.raw));
 });
 
 /** GET /mcp - MCP info endpoint */
 mcpRoutes.get('/mcp', async (c) => {
-  currentAuth = c.get('auth');
+  const auth = c.get('auth');
   const t = await ensureMcpReady();
-  const response = await t.handleRequest(c.req.raw);
-  return response;
+  return authStore.run(auth, () => t.handleRequest(c.req.raw));
 });
 
 /** DELETE /mcp - MCP session close */
 mcpRoutes.delete('/mcp', async (c) => {
-  currentAuth = c.get('auth');
+  const auth = c.get('auth');
   const t = await ensureMcpReady();
-  const response = await t.handleRequest(c.req.raw);
-  return response;
+  return authStore.run(auth, () => t.handleRequest(c.req.raw));
 });

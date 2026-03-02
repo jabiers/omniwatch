@@ -49,46 +49,50 @@ function verifyAgentTenant(
 
 /** GET /agents - list all agents filtered by tenant */
 agentRoutes.get('/agents', zValidator('query', listAgentsQuerySchema), (c) => {
-  const db = getDb();
-  const auth = c.get('auth');
-  const { status, tenant, limit, offset } = c.req.valid('query');
+  try {
+    const db = getDb();
+    const auth = c.get('auth');
+    const { status, tenant, limit, offset } = c.req.valid('query');
 
-  const cols =
-    'id, name, type, status, prompt, sandbox_level, schedule, last_run_at, error_count, heal_count, parent_id, tenant_id, created_at, updated_at';
+    const cols =
+      'id, name, type, status, prompt, sandbox_level, schedule, last_run_at, error_count, heal_count, parent_id, tenant_id, created_at, updated_at';
 
-  let agents: Agent[];
-  if (auth.role === 'admin' && !tenant) {
-    if (status) {
-      agents = db
-        .prepare(
-          `SELECT ${cols} FROM agents WHERE status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-        )
-        .all(status, limit, offset) as Agent[];
+    let agents: Agent[];
+    if (auth.role === 'admin' && !tenant) {
+      if (status) {
+        agents = db
+          .prepare(
+            `SELECT ${cols} FROM agents WHERE status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+          )
+          .all(status, limit, offset) as Agent[];
+      } else {
+        agents = db
+          .prepare(
+            `SELECT ${cols} FROM agents WHERE status != ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+          )
+          .all('destroyed', limit, offset) as Agent[];
+      }
     } else {
-      agents = db
-        .prepare(
-          `SELECT ${cols} FROM agents WHERE status != ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-        )
-        .all('destroyed', limit, offset) as Agent[];
+      const tenantId = tenant || auth.tenantId;
+      if (status) {
+        agents = db
+          .prepare(
+            `SELECT ${cols} FROM agents WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+          )
+          .all(tenantId, status, limit, offset) as Agent[];
+      } else {
+        agents = db
+          .prepare(
+            `SELECT ${cols} FROM agents WHERE tenant_id = ? AND status != ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+          )
+          .all(tenantId, 'destroyed', limit, offset) as Agent[];
+      }
     }
-  } else {
-    const tenantId = tenant || auth.tenantId;
-    if (status) {
-      agents = db
-        .prepare(
-          `SELECT ${cols} FROM agents WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-        )
-        .all(tenantId, status, limit, offset) as Agent[];
-    } else {
-      agents = db
-        .prepare(
-          `SELECT ${cols} FROM agents WHERE tenant_id = ? AND status != ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-        )
-        .all(tenantId, 'destroyed', limit, offset) as Agent[];
-    }
+
+    return c.json({ agents });
+  } catch (err) {
+    return c.json({ error: getErrorMessage(err) }, 500);
   }
-
-  return c.json({ agents });
 });
 
 /** GET /agents/:id - single agent detail */

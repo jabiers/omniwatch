@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { statSync } from 'node:fs';
 import { getDb, loadConfig } from '@omniwatch/db';
-import { DB_PATH, APP_VERSION, OLLAMA_HEALTH_TIMEOUT } from '@omniwatch/shared';
+import { DB_PATH, APP_VERSION, OLLAMA_HEALTH_TIMEOUT, getErrorMessage } from '@omniwatch/shared';
 import type { AuthContext } from '@omniwatch/shared';
 
 export const systemRoutes = new Hono();
@@ -35,39 +35,43 @@ systemRoutes.get('/system/health/detailed', (c) => {
 
 /** GET /system/status - system overview stats (engine runs in-process) */
 systemRoutes.get('/system/status', (c) => {
-  const db = getDb();
-  const auth = c.get('auth') as AuthContext | undefined;
-  const filtered = auth && auth.role !== 'admin';
-  const tClause = filtered ? 'AND tenant_id = ?' : '';
-  const tParams: unknown[] = filtered ? [auth!.tenantId] : [];
-
-  const agentCount = (
-    db
-      .prepare(`SELECT COUNT(*) as count FROM agents WHERE status != 'destroyed' ${tClause}`)
-      .get(...tParams) as { count: number }
-  ).count;
-
-  const runningCount = (
-    db
-      .prepare(`SELECT COUNT(*) as count FROM agents WHERE status = 'running' ${tClause}`)
-      .get(...tParams) as { count: number }
-  ).count;
-
-  let dbSize = 0;
   try {
-    dbSize = statSync(DB_PATH).size;
-  } catch {
-    // DB file may not exist yet
-  }
+    const db = getDb();
+    const auth = c.get('auth') as AuthContext | undefined;
+    const filtered = auth && auth.role !== 'admin';
+    const tClause = filtered ? 'AND tenant_id = ?' : '';
+    const tParams: unknown[] = filtered ? [auth!.tenantId] : [];
 
-  return c.json({
-    agentCount,
-    runningCount,
-    daemonPid: process.pid,
-    daemonRunning: true,
-    dbSize,
-    uptime: process.uptime(),
-  });
+    const agentCount = (
+      db
+        .prepare(`SELECT COUNT(*) as count FROM agents WHERE status != 'destroyed' ${tClause}`)
+        .get(...tParams) as { count: number }
+    ).count;
+
+    const runningCount = (
+      db
+        .prepare(`SELECT COUNT(*) as count FROM agents WHERE status = 'running' ${tClause}`)
+        .get(...tParams) as { count: number }
+    ).count;
+
+    let dbSize = 0;
+    try {
+      dbSize = statSync(DB_PATH).size;
+    } catch {
+      // DB file may not exist yet
+    }
+
+    return c.json({
+      agentCount,
+      runningCount,
+      daemonPid: process.pid,
+      daemonRunning: true,
+      dbSize,
+      uptime: process.uptime(),
+    });
+  } catch (err) {
+    return c.json({ error: getErrorMessage(err) }, 500);
+  }
 });
 
 interface OllamaModel {
