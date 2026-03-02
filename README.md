@@ -99,7 +99,7 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
 - **Simplified Build** -- 5 packages (was 6), single tsup config with multiple entry points
 
 ### Quality & Security (v3.0+)
-- **Test Suite** -- 526 tests across 60 files (405 root + 121 web)
+- **Test Suite** -- 534 tests across 60 files (413 root + 121 web)
 - **Query Optimization** -- Zero SELECT * in production code; all queries use explicit columns
 - **Input Validation** -- Zod schemas on all API routes via @hono/zod-validator
 - **Error Handling** -- try-catch on all async route handlers with structured JSON errors
@@ -250,7 +250,7 @@ npx turbo build
 # Dev mode (watch)
 npx turbo dev
 
-# Run all tests (526 tests, 60 files)
+# Run all tests (534 tests, 60 files)
 npx turbo test
 
 # Type check
