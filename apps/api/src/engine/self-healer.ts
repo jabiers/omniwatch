@@ -131,6 +131,19 @@ export async function attemptHeal(agentId: string): Promise<void> {
       return;
     }
 
+    // Smart restart: first attempt — try simple restart for transient errors
+    if (agent.heal_count === 0) {
+      log('info', `Agent ${agentId} first heal attempt: trying simple restart`);
+      updateAgent(agentId, {
+        status: 'ready',
+        heal_count: 1,
+        error_count: 0,
+      } as Partial<Agent>);
+      await startAgent(agentId);
+      log('info', `Agent ${agentId} simple restart attempted (heal #1)`);
+      return;
+    }
+
     const recentLogs = getRecentLogs(agentId);
 
     // Build enriched error context

@@ -13,7 +13,7 @@ declare module 'hono' {
 }
 
 /** Paths that don't require authentication */
-const PUBLIC_PATHS = ['/health', '/api/system/status', '/auth', '/api/docs'];
+const PUBLIC_PATHS = ['/health', '/api/system/status', '/api/auth', '/api/docs'];
 
 /** Auth middleware — extracts API key from X-API-Key header */
 export const authMiddleware = createMiddleware(async (c, next) => {

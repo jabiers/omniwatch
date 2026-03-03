@@ -127,16 +127,15 @@ describe('Auth Middleware', () => {
       expect(res.status).toBe(200);
     });
 
-    it('/auth/* routes should be accessible without auth middleware blocking', async () => {
+    it('/api/auth/* routes should be accessible without auth middleware blocking', async () => {
       process.env.NODE_ENV = 'production';
       const app = createApp();
 
-      // POST /auth/login — the auth middleware does NOT run for this path
-      // (it's mounted at /api/* only, and /auth/login is on the oauth routes at root level)
+      // POST /api/auth/login — PUBLIC_PATHS includes /api/auth so auth middleware skips it
       // The login handler calls db.prepare().get() to look up user by api_key_hash
       mockGet.mockReturnValueOnce(null); // user not found
 
-      const res = await app.request('/auth/login', {
+      const res = await app.request('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apiKey: 'omni_invalid' }),

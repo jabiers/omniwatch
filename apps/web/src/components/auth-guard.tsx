@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
-import { useAuthStore } from "../lib/auth-store";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
+import { useAuthStore } from '../lib/auth-store';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -11,32 +11,49 @@ interface AuthGuardProps {
 
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
+    async function checkAuth() {
+      const state = useAuthStore.getState();
+      if (!state.isAuthenticated()) {
+        router.replace('/login');
+        return;
+      }
+
+      // Server-side session validation — verify token is still valid
+      try {
+        const res = await fetch('/api/auth/me', {
+          headers: { Authorization: `Bearer ${state.token}` },
+        });
+        if (!res.ok) {
+          // Session expired or revoked on server
+          state.clearAuth();
+          router.replace('/login');
+          return;
+        }
+      } catch {
+        // Network error — allow offline access with local token
+      }
+
+      setChecked(true);
+    }
+
+    // Already hydrated (most common case on subsequent renders)
+    if (useAuthStore.persist.hasHydrated()) {
+      checkAuth();
+      return;
+    }
+
     // Wait for zustand persist rehydration
     const unsub = useAuthStore.persist.onFinishHydration(() => {
-      if (!useAuthStore.getState().isAuthenticated()) {
-        router.replace("/login");
-      } else {
-        setChecked(true);
-      }
+      checkAuth();
     });
-
-    // If already hydrated (e.g., subsequent renders)
-    if (useAuthStore.persist.hasHydrated()) {
-      if (!isAuthenticated()) {
-        router.replace("/login");
-      } else {
-        setChecked(true);
-      }
-    }
 
     return () => {
       unsub();
     };
-  }, [isAuthenticated, router]);
+  }, [router]);
 
   if (!checked) {
     return (

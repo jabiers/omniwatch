@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { SkeletonTable } from '../../components/skeleton';
 import {
   Layers,
   RefreshCw,
@@ -152,8 +153,8 @@ export default function QueuePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-500">
-        Loading queue data...
+      <div className="space-y-6">
+        <SkeletonTable rows={5} />
       </div>
     );
   }
@@ -181,8 +182,15 @@ export default function QueuePage() {
 
       {/* Error Banner */}
       {error && (
-        <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-          {error}
+        <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-sm text-red-400 flex items-center justify-between">
+          <span>{error}</span>
+          <button
+            onClick={() => setError(null)}
+            aria-label="Dismiss error"
+            className="ml-2 shrink-0"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 

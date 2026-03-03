@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Store, Download, Star, Search, Tag, Plus, Loader2, CheckCircle, X } from 'lucide-react';
+import { SkeletonCard } from '../../components/skeleton';
 import { Pagination } from '../../components/pagination';
 import { apiFetch } from '../../lib/api';
 
@@ -326,9 +327,10 @@ export default function MarketplacePage() {
 
       {/* Recipe Grid */}
       {loading ? (
-        <div className="flex items-center justify-center h-40 text-gray-500">
-          <Loader2 className="w-5 h-5 animate-spin mr-2" />
-          Loading marketplace...
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
         </div>
       ) : recipes.length === 0 ? (
         <div className="text-center text-gray-500 py-16">

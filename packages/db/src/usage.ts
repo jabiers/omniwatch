@@ -26,6 +26,11 @@ const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   'gpt-4o': { input: 2.5, output: 10.0 },
   'gpt-4o-mini': { input: 0.15, output: 0.6 },
   'o3-mini': { input: 1.1, output: 4.4 },
+  // Google Gemini
+  'gemini-2.5-pro': { input: 1.25, output: 10.0 },
+  'gemini-2.5-flash': { input: 0.15, output: 0.6 },
+  'gemini-2.0-flash': { input: 0.1, output: 0.4 },
+  'gemini-2.0-flash-lite': { input: 0.075, output: 0.3 },
   // Ollama (local = free)
 };
 

@@ -995,9 +995,9 @@ describe('GET /api/marketplace/:id', () => {
 
 // ─── Auth Login ──────────────────────────────────────────────────────
 
-describe('POST /auth/login', () => {
+describe('POST /api/auth/login', () => {
   it('should reject when apiKey is missing', async () => {
-    const res = await app.request('/auth/login', {
+    const res = await app.request('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
@@ -1008,7 +1008,7 @@ describe('POST /auth/login', () => {
   it('should return 401 for invalid API key', async () => {
     mockGet.mockReturnValueOnce(null);
 
-    const res = await app.request('/auth/login', {
+    const res = await app.request('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ apiKey: 'omni_invalid' }),

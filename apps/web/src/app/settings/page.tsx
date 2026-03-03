@@ -452,7 +452,7 @@ export default function SettingsPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label htmlFor="telegram-token" className="text-sm text-gray-400 mb-1 block">
                 Telegram Bot Token

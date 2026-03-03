@@ -13,6 +13,7 @@ import {
   Share2,
   Database,
 } from 'lucide-react';
+import { SkeletonCard } from '../../components/skeleton';
 import { apiFetch } from '../../lib/api';
 
 interface Recipe {
@@ -130,9 +131,10 @@ export default function RecipesPage() {
 
       {/* Recipe Grid */}
       {loading ? (
-        <div className="flex items-center justify-center h-40 text-gray-500">
-          <Loader2 className="w-5 h-5 animate-spin mr-2" />
-          Loading recipes...
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
         </div>
       ) : recipes.length === 0 ? (
         <div className="text-center text-gray-500 py-16">No recipes found.</div>

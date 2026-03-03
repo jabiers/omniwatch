@@ -48,8 +48,8 @@ export function createApp(): Hono {
   app.use('/api/*', authMiddleware);
   app.onError(errorHandler);
 
-  // OAuth routes (no auth required — mounted before /api auth middleware)
-  app.route('/', oauthRoutes);
+  // OAuth routes (public — excluded from auth via PUBLIC_PATHS)
+  app.route('/api', oauthRoutes);
 
   // Mount route groups
   app.route('/api', agentRoutes);

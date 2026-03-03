@@ -41,9 +41,11 @@ describe('AnalyticsPage', () => {
     vi.clearAllMocks();
   });
 
-  it('should show loading state initially', () => {
+  it('should show skeleton loading state initially', () => {
     render(<AnalyticsPage />);
-    expect(screen.getByText('Loading analytics...')).toBeInTheDocument();
+    // Skeleton loaders render animated pulse divs instead of text
+    const skeletons = document.querySelectorAll('.animate-pulse');
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it('should render analytics heading after load', async () => {

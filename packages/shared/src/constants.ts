@@ -28,6 +28,30 @@ export const WHITELISTED_PACKAGES = [
   'ws',
   'csv-parse',
   'jsonpath',
+  // Monitoring & data
+  'cron-parser',
+  'ms',
+  'pretty-ms',
+  'bytes',
+  'humanize-duration',
+  // HTTP & APIs
+  'got',
+  'ky',
+  'form-data',
+  'qs',
+  // Parsing & formatting
+  'yaml',
+  'toml',
+  'marked',
+  'turndown',
+  'sanitize-html',
+  'fast-xml-parser',
+  // Crypto & hashing
+  'uuid',
+  'nanoid',
+  // Date & time
+  'date-fns',
+  'luxon',
 ];
 
 export const FORBIDDEN_APIS = [
@@ -76,7 +100,7 @@ export const MAX_AGENTS_FREE = 10;
 export const MAX_AGENTS_PRO = 50;
 
 // App version (synced via scripts/sync-version.mjs)
-export const APP_VERSION = '4.26.0';
+export const APP_VERSION = '4.27.0';
 
 // Dashboard polling interval
 export const DASHBOARD_POLL_INTERVAL = 30_000; // 30 seconds

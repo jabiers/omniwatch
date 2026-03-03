@@ -26,6 +26,7 @@ import {
   Check,
   Download,
 } from 'lucide-react';
+import { SkeletonCard, SkeletonTable } from '../../components/skeleton';
 import { apiFetch } from '../../lib/api';
 import { DASHBOARD_POLL_INTERVAL } from '../../lib/constants';
 
@@ -464,9 +465,13 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-500">
-        <Loader2 className="w-5 h-5 animate-spin mr-2" />
-        Loading analytics...
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+        <SkeletonTable rows={4} />
       </div>
     );
   }

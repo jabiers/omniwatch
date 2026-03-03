@@ -117,6 +117,57 @@ class OpenAIProvider implements AIProvider {
   }
 }
 
+/** Google Gemini provider — via OpenAI-compatible endpoint */
+class GeminiProvider implements AIProvider {
+  private client: OpenAI;
+
+  constructor(apiKey: string) {
+    this.client = new OpenAI({
+      apiKey,
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+    });
+  }
+
+  async chat(system: string, messages: ChatMessage[], maxTokens = 4096): Promise<string> {
+    const model = loadConfig().ai.model || 'gemini-2.0-flash';
+    const start = Date.now();
+
+    const response = await this.client.chat.completions.create({
+      model,
+      max_tokens: maxTokens,
+      messages: [
+        { role: 'system', content: system + '\n\nIMPORTANT: Always respond with valid JSON only.' },
+        ...messages,
+      ],
+    });
+
+    const choice = response.choices[0];
+    if (!choice?.message?.content) {
+      throw new Error('Unexpected response from Gemini');
+    }
+
+    const inputTokens = response.usage?.prompt_tokens || 0;
+    const outputTokens = response.usage?.completion_tokens || 0;
+    try {
+      recordAIUsage({
+        agent_id: aiContext.agentId,
+        provider: 'google',
+        model,
+        operation: aiContext.operation,
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        total_tokens: inputTokens + outputTokens,
+        cost_usd: calculateCost(model, inputTokens, outputTokens),
+        duration_ms: Date.now() - start,
+      });
+    } catch {
+      /* non-critical */
+    }
+
+    return choice.message.content;
+  }
+}
+
 /** Ollama provider — local AI via Ollama HTTP API (no API key needed) */
 class OllamaProvider implements AIProvider {
   private baseUrl: string;
@@ -231,6 +282,10 @@ function resolveApiKey(provider: string): string {
     return config.ai.api_key || process.env.OPENAI_API_KEY || '';
   }
 
+  if (provider === 'google') {
+    return config.ai.api_key || process.env.GOOGLE_AI_API_KEY || process.env.GEMINI_API_KEY || '';
+  }
+
   // Default: Anthropic
   return (
     config.ai.api_key || process.env.ANTHROPIC_API_KEY || process.env.OMNI_ANTHROPIC_API_KEY || ''
@@ -279,6 +334,10 @@ export function getAIProvider(): AIProvider {
     case 'openai':
       instance = new OpenAIProvider(apiKey);
       log('info', `AI provider: OpenAI (${model})`);
+      break;
+    case 'google':
+      instance = new GeminiProvider(apiKey);
+      log('info', `AI provider: Google Gemini (${model})`);
       break;
     case 'anthropic':
     default:

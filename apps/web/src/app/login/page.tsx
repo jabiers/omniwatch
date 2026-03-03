@@ -5,22 +5,27 @@ import { useRouter } from 'next/navigation';
 import { Activity, KeyRound, Loader2, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../../lib/auth-store';
 
-// API requests are proxied via Next.js rewrites (see next.config.ts)
-const API_BASE = '';
-
 export default function LoginPage() {
   const router = useRouter();
-  const { setAuth, isAuthenticated } = useAuthStore();
+  const { setAuth } = useAuthStore();
   const [apiKey, setApiKey] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated (after hydration)
   useEffect(() => {
-    if (isAuthenticated()) {
-      router.replace('/');
+    function check() {
+      if (useAuthStore.getState().isAuthenticated()) {
+        router.replace('/');
+      }
     }
-  }, [isAuthenticated, router]);
+    if (useAuthStore.persist.hasHydrated()) {
+      check();
+    } else {
+      const unsub = useAuthStore.persist.onFinishHydration(check);
+      return () => unsub();
+    }
+  }, [router]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -32,12 +37,17 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
     try {
-      const res = await fetch(`${API_BASE}/api/auth/login`, {
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apiKey: apiKey.trim() }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
 
       if (res.ok) {
         const data = (await res.json()) as {
@@ -51,8 +61,13 @@ export default function LoginPage() {
       } else {
         setError(`Server error (${res.status}). Please try again.`);
       }
-    } catch {
-      setError('Cannot connect to OmniWatch API. Is the daemon running?');
+    } catch (err) {
+      clearTimeout(timeout);
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setError('Connection timed out. Please try again.');
+      } else {
+        setError('Cannot connect to OmniWatch API. Is the server running?');
+      }
     } finally {
       setLoading(false);
     }

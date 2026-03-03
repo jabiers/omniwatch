@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback, use, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import ReactMarkdown from 'react-markdown';
 import {
   ArrowLeft,
   Play,
@@ -329,16 +330,19 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
       });
 
       if (res.ok) {
-        const data = (await res.json()) as {
+        const raw = (await res.json()) as {
+          result?: { message?: string; modifiedCode?: string; action?: string };
           message?: string;
           response?: string;
           modifiedCode?: string;
           code?: string;
         };
+        // API wraps response in { result: { message, modifiedCode, action } }
+        const data = raw.result ?? raw;
         const assistantMessage: ChatMessage = {
           role: 'assistant',
-          content: data.message ?? data.response ?? 'OK',
-          modifiedCode: data.modifiedCode ?? data.code,
+          content: data.message ?? (raw as { response?: string }).response ?? 'No response',
+          modifiedCode: data.modifiedCode ?? (raw as { code?: string }).code,
           timestamp: Date.now(),
         };
         setChatMessages((prev) => [...prev, assistantMessage]);
@@ -541,7 +545,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
 
       {/* Metrics Summary */}
       {displayMetrics && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="glass-card text-center">
             <p className="text-xs text-gray-500 mb-1">Run Count</p>
             <p className="text-2xl font-bold">{displayMetrics.run_count}</p>
@@ -704,7 +708,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
 
       {/* Chat Tab */}
       {activeTab === 'chat' && (
-        <div className="glass-card !p-0 flex flex-col" style={{ height: 480 }}>
+        <div className="glass-card !p-0 flex flex-col h-[480px] max-h-[60vh]">
           {/* Chat messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {chatMessages.length === 0 && (
@@ -729,7 +733,13 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                       : 'bg-white/[0.05] text-gray-300'
                   }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                  {msg.role === 'assistant' ? (
+                    <div className="text-sm prose prose-invert prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-headings:text-gray-200 prose-strong:text-white prose-code:text-emerald-300 prose-code:bg-white/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                  )}
 
                   {/* Modified code preview */}
                   {msg.modifiedCode && (

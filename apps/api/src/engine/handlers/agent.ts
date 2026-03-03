@@ -6,11 +6,13 @@ import {
   stopAgent,
   restartAgent,
   destroyAgent,
+  updateAgent,
 } from '../agent-manager.js';
 import { generateAgentCode } from '../code-generator.js';
 import { validateCode } from '../code-validator.js';
 import { installDependencies } from '../dependency-installer.js';
 import { Errors, log } from '@omniwatch/shared';
+import type { Agent } from '@omniwatch/shared';
 
 export const handleAgentRPC = {
   async create(params: Record<string, unknown>) {
@@ -70,6 +72,8 @@ export const handleAgentRPC = {
 
   async start(params: Record<string, unknown>) {
     const id = params.id as string;
+    // Reset heal state on manual start so self-healing can retry
+    updateAgent(id, { heal_count: 0, error_count: 0, last_error: null } as Partial<Agent>);
     await startAgent(id);
     return getAgent(id);
   },
@@ -82,6 +86,8 @@ export const handleAgentRPC = {
 
   async restart(params: Record<string, unknown>) {
     const id = params.id as string;
+    // Reset heal state on manual restart so self-healing can retry
+    updateAgent(id, { heal_count: 0, error_count: 0, last_error: null } as Partial<Agent>);
     await restartAgent(id);
     return getAgent(id);
   },

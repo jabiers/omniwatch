@@ -128,7 +128,12 @@ function AppShell({ children }: { children: React.ReactNode }) {
     initTheme();
   }, []);
 
-  function handleLogout() {
+  async function handleLogout() {
+    try {
+      await apiFetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // Server session cleanup is best-effort
+    }
     clearAuth();
     router.replace('/login');
   }
