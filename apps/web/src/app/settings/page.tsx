@@ -67,6 +67,7 @@ export default function SettingsPage() {
 
   // AI config
   const [aiApiKey, setAiApiKey] = useState('');
+  const [aiKeyMasked, setAiKeyMasked] = useState(false); // true when showing server-masked value
   const [aiModel, setAiModel] = useState('claude-sonnet-4-20250514');
   const [showKey, setShowKey] = useState(false);
 
@@ -107,7 +108,9 @@ export default function SettingsPage() {
             'config' in data && data.config ? data.config : (data as ApiConfig);
 
           // AI
-          setAiApiKey(cfg.ai?.api_key ?? '');
+          const serverKey = cfg.ai?.api_key ?? '';
+          setAiApiKey(serverKey);
+          setAiKeyMasked(serverKey.startsWith('••••'));
           setAiModel(cfg.ai?.model ?? 'claude-sonnet-4-20250514');
           setOllamaUrl(cfg.ai?.ollama_url ?? 'http://localhost:11434');
 
@@ -316,27 +319,46 @@ export default function SettingsPage() {
               <label htmlFor="ai-api-key" className="text-sm text-gray-400 mb-1 block">
                 API Key
               </label>
-              <div className="relative">
-                <input
-                  id="ai-api-key"
-                  type={showKey ? 'text' : 'password'}
-                  value={aiApiKey}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAiApiKey(e.target.value)}
-                  placeholder="sk-ant-..."
-                  className="w-full px-3 py-2 pr-10 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm font-mono focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowKey(!showKey)}
-                  aria-label={showKey ? 'Hide API key' : 'Show API key'}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
-                >
-                  {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              <p className="text-xs text-gray-600 mt-1">
-                Masked values from the server indicate the key is already set.
-              </p>
+              {aiKeyMasked ? (
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08]">
+                    <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span className="text-sm text-emerald-400">API key is configured</span>
+                    <span className="text-xs text-gray-600 font-mono ml-auto">{aiApiKey}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAiApiKey('');
+                      setAiKeyMasked(false);
+                    }}
+                    className="px-3 py-2 rounded-lg text-xs bg-white/[0.05] border border-white/[0.08] text-gray-400 hover:bg-white/[0.1] hover:text-white transition-colors whitespace-nowrap"
+                  >
+                    Change Key
+                  </button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <input
+                    id="ai-api-key"
+                    type={showKey ? 'text' : 'password'}
+                    value={aiApiKey}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setAiApiKey(e.target.value)
+                    }
+                    placeholder="sk-ant-..."
+                    className="w-full px-3 py-2 pr-10 rounded-lg bg-white/[0.03] border border-white/[0.08] text-sm font-mono focus:outline-none focus:border-emerald-500/50 placeholder:text-gray-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKey(!showKey)}
+                    aria-label={showKey ? 'Hide API key' : 'Show API key'}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                  >
+                    {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
