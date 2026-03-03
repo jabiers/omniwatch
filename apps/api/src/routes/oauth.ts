@@ -56,6 +56,51 @@ const oauthCallbackSchema = z.object({
 
 export const oauthRoutes = new Hono();
 
+// ─── POST /auth/local — localhost auto-login ─────────────────────────
+
+oauthRoutes.post('/auth/local', async (c) => {
+  try {
+    const db = getDb();
+
+    // Find admin user (first admin in default tenant)
+    const admin = db
+      .prepare(
+        "SELECT id, tenant_id, email, role, display_name, avatar_url, provider FROM users WHERE role = 'admin' AND tenant_id = 'default' LIMIT 1",
+      )
+      .get() as {
+      id: string;
+      tenant_id: string;
+      email: string;
+      role: UserRole;
+      display_name: string | null;
+      avatar_url: string | null;
+      provider: string;
+    } | null;
+
+    if (!admin) {
+      return c.json({ error: 'No admin user found. Create one via: omni auth create-key' }, 404);
+    }
+
+    purgeExpired();
+    const token = createSession(admin.id);
+
+    return c.json({
+      token,
+      user: {
+        id: admin.id,
+        tenant_id: admin.tenant_id,
+        email: admin.email,
+        role: admin.role,
+        display_name: admin.display_name,
+        avatar_url: admin.avatar_url,
+        provider: admin.provider,
+      },
+    });
+  } catch (err) {
+    return c.json({ error: getErrorMessage(err) }, 500);
+  }
+});
+
 // ─── POST /auth/login — API key login ────────────────────────────────
 
 oauthRoutes.post('/auth/login', zValidator('json', loginSchema), async (c) => {

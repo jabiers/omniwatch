@@ -16,39 +16,39 @@ describe('LoginPage', () => {
     useAuthStore.setState({ token: null, role: null, tenantId: null });
   });
 
-  it('should render the login form with API key input and sign-in button', () => {
+  it('should render branding and quick access button', () => {
     render(<LoginPage />);
 
     expect(screen.getByText('OmniWatch')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Sign in' })).toBeInTheDocument();
+    expect(screen.getByText('Welcome back')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Quick Access/i })).toBeInTheDocument();
+  });
+
+  it('should show API Key and GitHub login options', () => {
+    render(<LoginPage />);
+
+    expect(screen.getByRole('button', { name: /API Key/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /GitHub/i })).toBeInTheDocument();
+  });
+
+  it('should switch to API key mode when clicking API Key button', () => {
+    render(<LoginPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /API Key/i }));
+
+    expect(screen.getByText('API Key Login')).toBeInTheDocument();
     expect(screen.getByLabelText('API Key')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText('omni_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sign in' })).toBeDisabled();
   });
 
-  it('should render help text about generating API keys', () => {
+  it('should enable sign-in button when API key is entered', () => {
     render(<LoginPage />);
 
-    expect(screen.getByText('omni auth create-key')).toBeInTheDocument();
-    expect(screen.getByText('Enter your API key to access the dashboard')).toBeInTheDocument();
-  });
-
-  it('should have the sign-in button disabled when input is empty', () => {
-    render(<LoginPage />);
-
-    const submitButton = screen.getByRole('button', { name: 'Sign in' });
-    expect(submitButton).toBeDisabled();
-  });
-
-  it('should enable the sign-in button when API key is entered', () => {
-    render(<LoginPage />);
+    fireEvent.click(screen.getByRole('button', { name: /API Key/i }));
 
     const input = screen.getByLabelText('API Key');
     fireEvent.change(input, { target: { value: 'omni_abc123' } });
 
-    const submitButton = screen.getByRole('button', { name: 'Sign in' });
-    expect(submitButton).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Sign in' })).not.toBeDisabled();
   });
 });
