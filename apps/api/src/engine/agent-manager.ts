@@ -161,11 +161,21 @@ export async function startAgent(id: string): Promise<void> {
     `level=${sandboxLevel} memory=${memoryLimit}MB timeout=${timeout}ms`,
   );
 
-  // runtime.js is in dist/engine/agent/runtime.js (or src/engine/agent/runtime.ts in dev)
+  // Resolve runtime path — try multiple locations since import.meta.url
+  // can resolve incorrectly when bundled by Next.js in dev mode
   const __engineDir = dirname(fileURLToPath(import.meta.url));
-  const distRuntime = resolve(__engineDir, 'agent', 'runtime.js');
-  const srcRuntime = resolve(__engineDir, 'agent', 'runtime.ts');
-  const scriptPath = existsSync(distRuntime) ? distRuntime : srcRuntime;
+  const apiRoot = resolve(__engineDir, '..');
+  const candidates = [
+    resolve(__engineDir, 'agent', 'runtime.js'),
+    resolve(__engineDir, 'agent', 'runtime.ts'),
+    resolve(apiRoot, 'engine', 'agent', 'runtime.js'),
+    resolve(apiRoot, 'dist', 'engine', 'agent', 'runtime.js'),
+    resolve(apiRoot, 'src', 'engine', 'agent', 'runtime.ts'),
+  ];
+  const scriptPath = candidates.find((p) => existsSync(p));
+  if (!scriptPath) {
+    throw new Error(`Agent runtime not found. Searched: ${candidates.join(', ')}`);
+  }
 
   const child = fork(scriptPath, [id], {
     cwd: agentDir,
