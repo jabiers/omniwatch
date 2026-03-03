@@ -1,9 +1,11 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { getDb } from '@omniwatch/db';
 import type { Agent, AgentLog } from '@omniwatch/shared';
-import { getErrorMessage } from '@omniwatch/shared';
+import { getErrorMessage, AGENTS_DIR } from '@omniwatch/shared';
 import { handleAgentRPC } from '../engine/engine.js';
 import { requireRole } from '../middleware/auth.js';
 import { broadcast } from '../ws.js';
@@ -115,6 +117,34 @@ agentRoutes.get('/agents/:id', (c) => {
   }
 
   return c.json({ agent });
+});
+
+/** GET /agents/:id/code - read agent source code from disk */
+agentRoutes.get('/agents/:id/code', (c) => {
+  const db = getDb();
+  const auth = c.get('auth');
+  const { id } = c.req.param();
+
+  const agent = db.prepare('SELECT id, tenant_id FROM agents WHERE id = ?').get(id) as
+    | { id: string; tenant_id: string }
+    | undefined;
+  if (!agent) {
+    return c.json({ error: `Agent '${id}' not found` }, 404);
+  }
+  if (auth.role !== 'admin' && agent.tenant_id !== auth.tenantId) {
+    return c.json({ error: `Agent '${id}' not found` }, 404);
+  }
+
+  try {
+    const codePath = join(AGENTS_DIR, id, 'index.js');
+    if (!existsSync(codePath)) {
+      return c.json({ code: '', error: 'Agent code file not found' }, 404);
+    }
+    const code = readFileSync(codePath, 'utf-8');
+    return c.json({ code });
+  } catch (err) {
+    return c.json({ error: getErrorMessage(err) }, 500);
+  }
 });
 
 /** POST /agents - create agent via engine (operator+) */

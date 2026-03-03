@@ -1,10 +1,12 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { AGENTS_DIR } from '@omniwatch/shared';
-import type { AgentLog } from '@omniwatch/shared';
+import { createHash } from 'node:crypto';
+import { AGENTS_DIR, log } from '@omniwatch/shared';
+import type { Agent, AgentLog } from '@omniwatch/shared';
 import { getDb } from '@omniwatch/db';
-import { getAgent } from './agent-manager.js';
+import { getAgent, updateAgent, startAgent } from './agent-manager.js';
 import { validateCode } from './code-validator.js';
+import { installDependencies } from './dependency-installer.js';
 import { getAIProvider, setAIContext } from './ai-provider.js';
 
 /** Extract JSON from AI response that may contain markdown or extra text */
@@ -24,6 +26,8 @@ export interface ChatResponse {
   message: string;
   modifiedCode?: string;
   action?: 'apply' | 'info';
+  dependencies?: string[];
+  autoApplied?: boolean;
 }
 
 export async function handleChat(
@@ -83,14 +87,20 @@ export async function handleChat(
 
   const ai = getAIProvider();
 
-  const systemPrompt = `You are an AI assistant for OmniWatch, an autonomous monitoring platform.
-You are talking to the operator of a monitoring agent. Provide insightful, detailed analysis.
+  const systemPrompt = `You are a hands-on troubleshooter and developer for OmniWatch agents.
+You have FULL ACCESS to read and modify agent code. You ARE the agent's mechanic — you fix problems directly.
+
+## CRITICAL RULES
+1. When the user reports an error or asks you to fix/heal/solve a problem: you MUST analyze the error, fix the code, and return the complete modified code with action "apply". NEVER say "contact the administrator" or "this is a platform issue" — YOU are the solution.
+2. When the user asks about status: analyze ALL data and give specific numbers, timestamps, root cause analysis.
+3. When the user asks to modify behavior: return the full modified code.
+4. Always respond in the same language as the user.
+5. Be concise but thorough. Never respond with vague statements.
 
 ## Agent Information
 - **Name**: ${agent.name} (ID: ${agent.id})
 - **Type**: ${agent.type}
 - **Status**: ${agent.status}
-- **Description**: ${agent.description || 'N/A'}
 - **Original Prompt**: ${agent.prompt}
 - **Schedule**: ${agent.schedule || 'continuous'}
 - **Config**: interval=${config.interval || 'default'}ms, timeout=${config.timeout || 'default'}ms
@@ -116,16 +126,25 @@ ${metrics ? `Runs: ${metrics.run_count} (success: ${metrics.success_count}, erro
 ## Recent Notifications
 ${notifications.length > 0 ? notifications.map((n) => `[${n.severity}] ${n.title}: ${n.message} (${n.created_at})`).join('\n') : '(no notifications sent)'}
 
-## Instructions
-- When the user asks about the agent's **status, situation, or health**: Analyze ALL the above data and provide a comprehensive assessment. Include what the agent is doing, whether it's functioning correctly, any errors or anomalies, and recent activity summary. Be specific with numbers and timestamps.
-- When the user asks to **modify behavior or code**: Respond with the full modified code.
-- When the user asks a **question about the agent's capabilities or logic**: Explain based on the code.
-- Respond in the same language the user is using.
-- Be detailed and analytical — never respond with just "OK" or vague statements.
+## How to Fix Common Problems
+- **MODULE_NOT_FOUND**: The required npm package is missing. Fix by rewriting the code to use a working approach or specify the needed dependency.
+- **Network/fetch errors**: Check URL, add timeout, add retry logic with exponential backoff.
+- **Syntax errors**: Fix the syntax in the code.
+- **Runtime errors (TypeError, ReferenceError)**: Fix the code logic.
+- **Agent stuck in error state**: Provide fixed code — when you return action "apply", the system will automatically save the code, install dependencies, and restart the agent.
 
 ## Response Format
-Respond with JSON only:
-{ "message": "detailed explanation", "modifiedCode": "full code if changed, or null", "action": "apply|info" }`;
+Respond ONLY with valid JSON (no markdown wrapping):
+{
+  "message": "explanation of what was wrong and what you fixed",
+  "modifiedCode": "COMPLETE fixed code (not partial, not a diff) or null if no code change needed",
+  "action": "apply" or "info",
+  "dependencies": ["pkg-name"] or null
+}
+
+- action "apply": You are providing fixed/modified code. The system will auto-apply it and restart the agent.
+- action "info": Information only, no code change.
+- dependencies: npm packages the code needs (only when introducing new packages).`;
 
   const messages = [
     ...conversationHistory.map((m) => ({
@@ -137,7 +156,73 @@ Respond with JSON only:
 
   setAIContext({ agentId, operation: 'chat' });
   const text = await ai.chat(systemPrompt, messages);
-  return JSON.parse(extractJson(text)) as ChatResponse;
+  const response = JSON.parse(extractJson(text)) as ChatResponse;
+
+  // Auto-apply: when AI returns action "apply" with code, apply it immediately
+  if (response.action === 'apply' && response.modifiedCode) {
+    try {
+      const validation = validateCode(response.modifiedCode);
+      if (!validation.valid) {
+        response.message += `\n\n⚠️ Code validation failed: ${validation.issues.join(', ')}. Code was NOT applied.`;
+        response.autoApplied = false;
+        return response;
+      }
+
+      const codePath = join(AGENTS_DIR, agentId, 'index.js');
+      const agentDir = join(AGENTS_DIR, agentId);
+
+      // Install new dependencies if specified
+      if (response.dependencies && response.dependencies.length > 0) {
+        try {
+          const pkgPath = join(agentDir, 'package.json');
+          const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+          pkg.dependencies = pkg.dependencies || {};
+          for (const dep of response.dependencies) {
+            pkg.dependencies[dep] = 'latest';
+          }
+          writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
+          await installDependencies(agentId);
+          log(
+            'info',
+            `Chat: installed dependencies [${response.dependencies.join(', ')}] for ${agentId}`,
+          );
+        } catch (depErr) {
+          log(
+            'warn',
+            `Chat: dependency install failed for ${agentId}: ${depErr instanceof Error ? depErr.message : String(depErr)}`,
+          );
+        }
+      }
+
+      // Write the fixed code
+      writeFileSync(codePath, response.modifiedCode);
+      const codeHash = createHash('sha256')
+        .update(response.modifiedCode)
+        .digest('hex')
+        .slice(0, 16);
+
+      // Reset error state and restart
+      updateAgent(agentId, {
+        status: 'ready',
+        code_hash: codeHash,
+        error_count: 0,
+        heal_count: 0,
+        last_error: null,
+      } as Partial<Agent>);
+      await startAgent(agentId);
+
+      response.autoApplied = true;
+      response.message += '\n\n✅ Code applied and agent restarted successfully.';
+      log('info', `Chat: auto-applied code fix for ${agentId}`);
+    } catch (applyErr) {
+      const errMsg = applyErr instanceof Error ? applyErr.message : String(applyErr);
+      response.autoApplied = false;
+      response.message += `\n\n❌ Auto-apply failed: ${errMsg}. You can try applying manually from the Code tab.`;
+      log('warn', `Chat: auto-apply failed for ${agentId}: ${errMsg}`);
+    }
+  }
+
+  return response;
 }
 
 export function applyCodeChange(agentId: string, newCode: string): void {

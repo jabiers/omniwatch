@@ -13,6 +13,7 @@ import {
   Filter,
   Send,
   Code,
+  Save,
   CheckCircle,
   XCircle,
   MessageSquare,
@@ -79,6 +80,7 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   modifiedCode?: string;
+  autoApplied?: boolean;
   timestamp: number;
 }
 
@@ -131,9 +133,15 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
   const [snapshotLoading, setSnapshotLoading] = useState(false);
   const [restoringSeq, setRestoringSeq] = useState<number | null>(null);
 
+  // Code editor state
+  const [agentCode, setAgentCode] = useState('');
+  const [codeOriginal, setCodeOriginal] = useState('');
+  const [codeLoading, setCodeLoading] = useState(false);
+  const [codeSaving, setCodeSaving] = useState(false);
+
   // Tab state
   const [activeTab, setActiveTab] = useState<
-    'logs' | 'chat' | 'metrics' | 'snapshots' | 'children'
+    'logs' | 'chat' | 'code' | 'metrics' | 'snapshots' | 'children'
   >('logs');
 
   const logsEndRef = useRef<HTMLDivElement>(null);
@@ -201,6 +209,46 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
       // API not available
     }
   }, [id]);
+
+  const loadCode = useCallback(async () => {
+    setCodeLoading(true);
+    try {
+      const res = await apiFetch(`/api/agents/${id}/code`);
+      if (res.ok) {
+        const data = (await res.json()) as { code: string };
+        setAgentCode(data.code);
+        setCodeOriginal(data.code);
+      }
+    } catch {
+      // API not available
+    } finally {
+      setCodeLoading(false);
+    }
+  }, [id]);
+
+  /** Save code changes via apply endpoint */
+  async function saveCode() {
+    if (!agentCode.trim() || agentCode === codeOriginal) return;
+    setCodeSaving(true);
+    try {
+      const res = await apiFetch(`/api/agents/${id}/apply`, {
+        method: 'POST',
+        body: JSON.stringify({ code: agentCode }),
+      });
+      if (res.ok) {
+        setCodeOriginal(agentCode);
+        addToast('Code applied & agent restarted', 'success');
+        await loadAgent();
+      } else {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        addToast(body.error || 'Failed to apply code', 'error');
+      }
+    } catch {
+      addToast('Failed to save code', 'error');
+    } finally {
+      setCodeSaving(false);
+    }
+  }
 
   const loadChildren = useCallback(async () => {
     try {
@@ -331,21 +379,32 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
 
       if (res.ok) {
         const raw = (await res.json()) as {
-          result?: { message?: string; modifiedCode?: string; action?: string };
+          result?: {
+            message?: string;
+            modifiedCode?: string;
+            action?: string;
+            autoApplied?: boolean;
+          };
           message?: string;
           response?: string;
           modifiedCode?: string;
           code?: string;
+          autoApplied?: boolean;
         };
-        // API wraps response in { result: { message, modifiedCode, action } }
+        // API wraps response in { result: { message, modifiedCode, action, autoApplied } }
         const data = raw.result ?? raw;
         const assistantMessage: ChatMessage = {
           role: 'assistant',
           content: data.message ?? (raw as { response?: string }).response ?? 'No response',
           modifiedCode: data.modifiedCode ?? (raw as { code?: string }).code,
+          autoApplied: data.autoApplied,
           timestamp: Date.now(),
         };
         setChatMessages((prev) => [...prev, assistantMessage]);
+        // Refresh agent status if code was auto-applied
+        if (data.autoApplied) {
+          await loadAgent();
+        }
       } else {
         const err = (await res.json().catch(() => ({}))) as { message?: string };
         const errMessage: ChatMessage = {
@@ -597,6 +656,20 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
         </button>
         <button
           onClick={() => {
+            setActiveTab('code');
+            loadCode();
+          }}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm transition-colors border-b-2 -mb-[1px] ${
+            activeTab === 'code'
+              ? 'border-emerald-500 text-white'
+              : 'border-transparent text-gray-500 hover:text-gray-300'
+          }`}
+        >
+          <Code className="w-3.5 h-3.5" />
+          Code
+        </button>
+        <button
+          onClick={() => {
             setActiveTab('metrics');
             loadMetrics();
             loadMetricsHistory();
@@ -749,7 +822,12 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
                           <Code className="w-3 h-3" />
                           Modified Code
                         </span>
-                        {applyResult?.index === i ? (
+                        {msg.autoApplied ? (
+                          <span className="flex items-center gap-1 text-xs text-emerald-400">
+                            <CheckCircle className="w-3 h-3" />
+                            Auto-applied
+                          </span>
+                        ) : applyResult?.index === i ? (
                           applyResult.success ? (
                             <span className="flex items-center gap-1 text-xs text-emerald-400">
                               <CheckCircle className="w-3 h-3" />
@@ -821,6 +899,46 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
               <Send className="w-4 h-4" />
             </button>
           </form>
+        </div>
+      )}
+
+      {/* Code Tab */}
+      {activeTab === 'code' && (
+        <div className="glass-card !p-0 flex flex-col">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08]">
+            <h2 className="text-sm font-medium flex items-center gap-2">
+              <Code className="w-3.5 h-3.5 text-emerald-400" />
+              Agent Source Code
+              <span className="text-[10px] text-gray-600 font-mono">index.js</span>
+            </h2>
+            <div className="flex items-center gap-2">
+              {agentCode !== codeOriginal && (
+                <span className="text-[10px] text-yellow-400">unsaved changes</span>
+              )}
+              <button
+                onClick={saveCode}
+                disabled={codeSaving || agentCode === codeOriginal || !agentCode.trim()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <Save className="w-3 h-3" />
+                {codeSaving ? 'Saving...' : 'Save & Restart'}
+              </button>
+            </div>
+          </div>
+          {codeLoading ? (
+            <div className="p-8 text-center text-sm text-gray-500">Loading code...</div>
+          ) : (
+            <div className="relative">
+              <textarea
+                value={agentCode}
+                onChange={(e) => setAgentCode(e.target.value)}
+                spellCheck={false}
+                className="w-full min-h-[480px] max-h-[70vh] p-4 bg-transparent text-sm font-mono text-gray-300 leading-relaxed resize-y focus:outline-none"
+                style={{ tabSize: 2 }}
+                aria-label="Agent source code editor"
+              />
+            </div>
+          )}
         </div>
       )}
 
