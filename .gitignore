@@ -4,6 +4,9 @@ dist/
 .turbo/
 *.tsbuildinfo
 
+# Test coverage
+coverage/
+
 # Runtime data
 .omniwatch/
 
