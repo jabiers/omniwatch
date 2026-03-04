@@ -19,6 +19,7 @@ import {
   Layers,
   Building2,
   Store,
+  HelpCircle,
   LogOut,
   Sun,
   Moon,
@@ -44,6 +45,7 @@ const navItems = [
   { href: '/usage', label: 'Usage', icon: DollarSign },
   { href: '/notifications', label: 'Notifications', icon: Bell },
   { href: '/tenants', label: 'Tenants', icon: Building2 },
+  { href: '/help', label: 'Help', icon: HelpCircle },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 

@@ -1,14 +1,8 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import {
-  DollarSign,
-  Cpu,
-  Zap,
-  TrendingUp,
-  Loader2,
-} from "lucide-react";
-import { apiFetch } from "../../lib/api";
+import { useState, useEffect } from 'react';
+import { DollarSign, Cpu, Zap, TrendingUp, Loader2 } from 'lucide-react';
+import { apiFetch } from '../../lib/api';
 
 interface UsageSummary {
   total_cost: number;
@@ -21,7 +15,7 @@ interface UsageSummary {
 }
 
 function formatCost(usd: number): string {
-  if (usd === 0) return "$0.00";
+  if (usd === 0) return '$0.00';
   if (usd < 0.01) return `$${usd.toFixed(4)}`;
   return `$${usd.toFixed(2)}`;
 }
@@ -89,8 +83,8 @@ export default function UsagePage() {
               onClick={() => setDays(d)}
               className={`px-3 py-1 text-xs rounded-lg transition-colors ${
                 days === d
-                  ? "bg-emerald-500/20 text-emerald-400"
-                  : "text-gray-500 hover:bg-white/[0.05]"
+                  ? 'bg-emerald-500/20 text-emerald-400'
+                  : 'text-gray-500 hover:bg-white/[0.05]'
               }`}
             >
               {d}d
@@ -106,9 +100,7 @@ export default function UsagePage() {
             <DollarSign className="w-4 h-4" />
             Total Cost
           </div>
-          <p className="text-2xl font-semibold text-emerald-400">
-            {formatCost(data.total_cost)}
-          </p>
+          <p className="text-2xl font-semibold text-emerald-400">{formatCost(data.total_cost)}</p>
         </div>
         <div className="glass-card">
           <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
@@ -122,18 +114,14 @@ export default function UsagePage() {
             <TrendingUp className="w-4 h-4" />
             Input Tokens
           </div>
-          <p className="text-2xl font-semibold">
-            {formatTokens(data.total_input_tokens)}
-          </p>
+          <p className="text-2xl font-semibold">{formatTokens(data.total_input_tokens)}</p>
         </div>
         <div className="glass-card">
           <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
             <Cpu className="w-4 h-4" />
             Output Tokens
           </div>
-          <p className="text-2xl font-semibold">
-            {formatTokens(data.total_output_tokens)}
-          </p>
+          <p className="text-2xl font-semibold">{formatTokens(data.total_output_tokens)}</p>
         </div>
       </div>
 
@@ -217,8 +205,80 @@ export default function UsagePage() {
         </div>
       </div>
 
+      {/* Projected Monthly Cost */}
+      {data.daily.length > 1 && data.total_cost > 0 && (
+        <div className="glass-card">
+          <h2 className="text-lg font-medium mb-2">Projected Monthly Cost</h2>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-semibold text-amber-400">
+              {formatCost((data.total_cost / days) * 30)}
+            </span>
+            <span className="text-sm text-gray-500">/ month (based on {days}-day average)</span>
+          </div>
+          <p className="text-xs text-gray-600 mt-1">
+            Daily avg: {formatCost(data.total_cost / days)} &middot;{' '}
+            {Math.round(data.total_requests / days)} calls/day
+          </p>
+        </div>
+      )}
+
+      {/* Model Pricing Reference */}
+      <div className="glass-card">
+        <h2 className="text-lg font-medium mb-3">Model Pricing Reference</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-white/[0.08]">
+                <th className="text-left text-xs text-gray-500 py-2 px-2">Provider</th>
+                <th className="text-left text-xs text-gray-500 py-2 px-2">Model</th>
+                <th className="text-right text-xs text-gray-500 py-2 px-2">Input/M tokens</th>
+                <th className="text-right text-xs text-gray-500 py-2 px-2">Output/M tokens</th>
+              </tr>
+            </thead>
+            <tbody className="text-xs">
+              {[
+                { provider: 'Anthropic', model: 'Claude Sonnet 4', input: 3.0, output: 15.0 },
+                { provider: 'Anthropic', model: 'Claude Opus 4', input: 15.0, output: 75.0 },
+                { provider: 'Anthropic', model: 'Claude Haiku 3.5', input: 0.8, output: 4.0 },
+                { provider: 'OpenAI', model: 'GPT-4o', input: 2.5, output: 10.0 },
+                { provider: 'OpenAI', model: 'GPT-4o Mini', input: 0.15, output: 0.6 },
+                { provider: 'OpenAI', model: 'GPT-4.1', input: 2.0, output: 8.0 },
+                { provider: 'OpenAI', model: 'GPT-4.1 Mini', input: 0.4, output: 1.6 },
+                { provider: 'OpenAI', model: 'GPT-4.1 Nano', input: 0.1, output: 0.4 },
+                { provider: 'OpenAI', model: 'o3-mini', input: 1.1, output: 4.4 },
+                { provider: 'Google', model: 'Gemini 2.5 Pro', input: 1.25, output: 10.0 },
+                { provider: 'Google', model: 'Gemini 2.5 Flash', input: 0.15, output: 0.6 },
+                { provider: 'Google', model: 'Gemini 2.0 Flash', input: 0.1, output: 0.4 },
+                { provider: 'Ollama', model: 'All local models', input: 0, output: 0 },
+              ].map((row, i) => (
+                <tr key={i} className="border-b border-white/[0.04]">
+                  <td className="py-1.5 px-2 text-gray-400">{row.provider}</td>
+                  <td className="py-1.5 px-2 font-mono text-gray-300">{row.model}</td>
+                  <td className="py-1.5 px-2 text-right text-gray-400">
+                    {row.input === 0 ? (
+                      <span className="text-emerald-400">Free</span>
+                    ) : (
+                      `$${row.input.toFixed(2)}`
+                    )}
+                  </td>
+                  <td className="py-1.5 px-2 text-right text-gray-400">
+                    {row.output === 0 ? (
+                      <span className="text-emerald-400">Free</span>
+                    ) : (
+                      `$${row.output.toFixed(2)}`
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Ollama Savings Note */}
-      {models.some(([m]) => m.startsWith("llama") || m.startsWith("mistral") || m.startsWith("qwen")) && (
+      {models.some(
+        ([m]) => m.startsWith('llama') || m.startsWith('mistral') || m.startsWith('qwen'),
+      ) && (
         <div className="glass-card border-emerald-500/20">
           <p className="text-sm text-emerald-400">
             You&apos;re using local models via Ollama — these requests are free!

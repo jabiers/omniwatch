@@ -121,16 +121,25 @@ export function getAgentMetrics(
   agentId: string,
   period: 'hourly' | 'daily' = 'hourly',
   limit = 24,
-): { metric_name: string; avg_value: number; count: number; period_start: string }[] {
+): {
+  metric_name: string;
+  avg_value: number;
+  min_value: number;
+  max_value: number;
+  count: number;
+  period_start: string;
+}[] {
   const db = getDb();
   return db
     .prepare(
-      'SELECT metric_name, avg_value, count, period_start FROM metric_rollups ' +
+      'SELECT metric_name, avg_value, min_value, max_value, count, period_start FROM metric_rollups ' +
         'WHERE agent_id = ? AND period = ? ORDER BY period_start DESC LIMIT ?',
     )
     .all(agentId, period, limit) as {
     metric_name: string;
     avg_value: number;
+    min_value: number;
+    max_value: number;
     count: number;
     period_start: string;
   }[];

@@ -385,3 +385,58 @@ agentRoutes.get('/agents/:id/metrics', (c) => {
 
   return c.json({ metrics });
 });
+
+/** Schema: POST /agents/:id/exec request body */
+const execCommandSchema = z.object({
+  command: z.string().min(1).max(2000),
+  cwd: z.string().optional(),
+  timeout: z.number().int().min(1000).max(60000).optional(),
+});
+
+/** POST /agents/:id/exec - run a command in agent context (admin only) */
+agentRoutes.post(
+  '/agents/:id/exec',
+  requireRole('admin'),
+  zValidator('json', execCommandSchema),
+  async (c) => {
+    const db = getDb();
+    const auth = c.get('auth');
+    const { id } = c.req.param();
+    const { command, cwd, timeout } = c.req.valid('json');
+
+    if (!verifyAgentTenant(db, id, auth)) {
+      return c.json({ error: `Agent '${id}' not found` }, 404);
+    }
+
+    try {
+      const { execFile } = await import('node:child_process');
+      const { join } = await import('node:path');
+      const { AGENTS_DIR } = await import('@omniwatch/shared');
+
+      const execCwd = cwd || join(AGENTS_DIR, id);
+      const execTimeout = Math.min(timeout || 30000, 60000);
+
+      const result = await new Promise<{ stdout: string; stderr: string; exitCode: number }>(
+        (resolve) => {
+          execFile(
+            'sh',
+            ['-c', command],
+            { cwd: execCwd, timeout: execTimeout, maxBuffer: 1024 * 1024 },
+            (err, stdout, stderr) => {
+              const exitCode = err && 'code' in err ? (err as { code: number }).code : err ? 1 : 0;
+              resolve({
+                stdout: stdout?.toString().slice(0, 10000) || '',
+                stderr: stderr?.toString().slice(0, 5000) || '',
+                exitCode,
+              });
+            },
+          );
+        },
+      );
+
+      return c.json({ result });
+    } catch (err) {
+      return c.json({ error: getErrorMessage(err) }, 500);
+    }
+  },
+);

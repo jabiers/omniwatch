@@ -1,4 +1,4 @@
-import { fork, type ChildProcess } from 'node:child_process';
+import { fork, execFile, type ChildProcess } from 'node:child_process';
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -348,6 +348,10 @@ function handleAgentMessage(agentId: string, msg: AgentMessage): void {
     case 'snapshot':
       handleSnapshotMessage(agentId, msg);
       break;
+    // v4.28: Local command execution
+    case 'exec':
+      handleExecMessage(agentId, msg);
+      break;
     case 'error': {
       insertLog(agentId, 'error', msg.error, { stack: msg.stack });
       // v0.5: Auto-capture snapshot on error
@@ -417,6 +421,107 @@ function handleSnapshotMessage(agentId: string, msg: AgentMessage): void {
   } catch (err) {
     log('error', `Snapshot failed for ${agentId}: ${err}`);
   }
+}
+
+/** Allowed commands for agent exec (security allowlist) */
+const EXEC_ALLOWED_COMMANDS = new Set([
+  'ls',
+  'cat',
+  'head',
+  'tail',
+  'grep',
+  'find',
+  'wc',
+  'date',
+  'echo',
+  'pwd',
+  'curl',
+  'wget',
+  'ping',
+  'dig',
+  'nslookup',
+  'whoami',
+  'uname',
+  'df',
+  'du',
+  'node',
+  'npm',
+  'npx',
+  'pnpm',
+  'yarn',
+  'python3',
+  'python',
+  'pip',
+  'git',
+  'docker',
+  'kubectl',
+  'terraform',
+  'jq',
+  'sed',
+  'awk',
+  'sort',
+  'uniq',
+  'cut',
+  'tr',
+  'tee',
+]);
+
+/** Handle exec messages from agents — run local commands with security constraints */
+function handleExecMessage(agentId: string, msg: AgentMessage): void {
+  if (msg.type !== 'exec') return;
+  const child = processes.get(agentId);
+  if (!child) return;
+
+  const agent = getAgent(agentId);
+  const sandboxLevel = (agent?.sandbox_level || 'standard') as SandboxLevel;
+
+  // Strict sandbox blocks all exec
+  if (sandboxLevel === 'strict') {
+    logSecurityEvent(agentId, 'exec_blocked', `Strict sandbox blocked: ${msg.command}`);
+    child.send({
+      type: 'exec.result',
+      requestId: msg.requestId,
+      exitCode: 1,
+      error: 'Command execution blocked by strict sandbox policy',
+    } as DaemonToAgentMessage);
+    return;
+  }
+
+  // Extract the base command and validate
+  const baseCmd = msg.command.trim().split(/\s+/)[0].replace(/^.*\//, '');
+  if (!EXEC_ALLOWED_COMMANDS.has(baseCmd)) {
+    logSecurityEvent(agentId, 'exec_blocked', `Disallowed command: ${baseCmd}`);
+    child.send({
+      type: 'exec.result',
+      requestId: msg.requestId,
+      exitCode: 1,
+      error: `Command '${baseCmd}' is not in the allowed list`,
+    } as DaemonToAgentMessage);
+    return;
+  }
+
+  const timeout = Math.min(msg.timeout || 30000, 60000);
+  const cwd = msg.cwd || join(AGENTS_DIR, agentId);
+
+  logSecurityEvent(agentId, 'exec_start', `${msg.command} (cwd: ${cwd})`);
+
+  execFile(
+    'sh',
+    ['-c', msg.command],
+    { cwd, timeout, maxBuffer: 1024 * 1024 },
+    (err, stdout, stderr) => {
+      const exitCode = err && 'code' in err ? (err as { code: number }).code : err ? 1 : 0;
+      child.send({
+        type: 'exec.result',
+        requestId: msg.requestId,
+        stdout: stdout?.toString().slice(0, 10000) || '',
+        stderr: stderr?.toString().slice(0, 5000) || '',
+        exitCode,
+        error: err?.message,
+      } as DaemonToAgentMessage);
+      logSecurityEvent(agentId, 'exec_end', `exit=${exitCode} cmd=${baseCmd}`);
+    },
+  );
 }
 
 function handleStoreMessage(agentId: string, msg: AgentMessage): void {

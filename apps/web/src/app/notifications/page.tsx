@@ -24,12 +24,27 @@ const severityConfig: Record<string, { dot: string; text: string; bg: string }> 
     text: 'text-red-400',
     bg: 'bg-red-500/10',
   },
+  high: {
+    dot: 'bg-red-500',
+    text: 'text-red-400',
+    bg: 'bg-red-500/10',
+  },
   warning: {
     dot: 'bg-yellow-500',
     text: 'text-yellow-400',
     bg: 'bg-yellow-500/10',
   },
+  medium: {
+    dot: 'bg-yellow-500',
+    text: 'text-yellow-400',
+    bg: 'bg-yellow-500/10',
+  },
   info: {
+    dot: 'bg-blue-500',
+    text: 'text-blue-400',
+    bg: 'bg-blue-500/10',
+  },
+  low: {
     dot: 'bg-blue-500',
     text: 'text-blue-400',
     bg: 'bg-blue-500/10',
@@ -320,11 +335,18 @@ export default function NotificationsPage() {
                       </span>
                     </td>
                     {/* Message */}
-                    <td className="px-4 py-3 text-sm max-w-md">
+                    <td className="px-4 py-3 text-sm max-w-md truncate">
                       {n.title && (
-                        <span className={`block text-xs text-gray-500 mb-0.5`}>{n.title}</span>
+                        <span className="block text-xs text-gray-500 mb-0.5 truncate">
+                          {n.title}
+                        </span>
                       )}
-                      <span className={isRead ? '' : 'font-medium'}>{n.message}</span>
+                      <span
+                        className={`block truncate ${isRead ? '' : 'font-medium'}`}
+                        title={n.message}
+                      >
+                        {n.message}
+                      </span>
                     </td>
                     {/* Agent */}
                     <td className="px-4 py-3 text-sm text-gray-400">{n.agent_id}</td>

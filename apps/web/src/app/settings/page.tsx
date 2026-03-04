@@ -40,24 +40,29 @@ const CLOUD_PROVIDERS = [
   {
     label: 'Anthropic (Claude)',
     models: [
-      { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4' },
-      { value: 'claude-opus-4-20250514', label: 'Claude Opus 4' },
-      { value: 'claude-haiku-3-5-20241022', label: 'Claude Haiku 3.5' },
+      { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4 ($3/M in)' },
+      { value: 'claude-opus-4-20250514', label: 'Claude Opus 4 ($15/M in)' },
+      { value: 'claude-haiku-3-5-20241022', label: 'Claude Haiku 3.5 ($0.80/M in)' },
     ],
   },
   {
     label: 'OpenAI',
     models: [
-      { value: 'gpt-4o', label: 'GPT-4o' },
-      { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
-      { value: 'o3-mini', label: 'o3-mini' },
+      { value: 'gpt-4o', label: 'GPT-4o ($2.50/M in)' },
+      { value: 'gpt-4o-mini', label: 'GPT-4o Mini ($0.15/M in)' },
+      { value: 'o3-mini', label: 'o3-mini ($1.10/M in)' },
+      { value: 'gpt-4.1', label: 'GPT-4.1 ($2.00/M in)' },
+      { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini ($0.40/M in)' },
+      { value: 'gpt-4.1-nano', label: 'GPT-4.1 Nano ($0.10/M in)' },
     ],
   },
   {
-    label: 'Google',
+    label: 'Google (Gemini)',
     models: [
-      { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
-      { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+      { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro ($1.25/M in)' },
+      { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash ($0.15/M in)' },
+      { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash ($0.10/M in)' },
+      { value: 'gemini-2.0-flash-lite', label: 'Gemini 2.0 Flash-Lite ($0.075/M in)' },
     ],
   },
 ];
@@ -193,7 +198,8 @@ export default function SettingsPage() {
 
     // Detect provider from model name
     const detectProvider = (m: string) => {
-      if (m.startsWith('gpt-') || m.startsWith('o1') || m.startsWith('o3')) return 'openai';
+      if (m.startsWith('gpt-') || m.startsWith('o1') || m.startsWith('o3') || m.startsWith('o4'))
+        return 'openai';
       if (m.startsWith('gemini-')) return 'google';
       const lower = m.toLowerCase();
       const ollamaPrefixes = [
@@ -562,6 +568,30 @@ export default function SettingsPage() {
               <p className="text-xs text-gray-500">Show desktop/OS notifications for alerts</p>
             </div>
           </label>
+
+          <div className="pt-2 border-t border-white/[0.06]">
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const res = await apiFetch('/api/notifications/test', { method: 'POST' });
+                  if (res.ok) {
+                    showToast('success', 'Test notification sent to all configured channels.');
+                  } else {
+                    showToast('error', 'Failed to send test notification.');
+                  }
+                } catch {
+                  showToast('error', 'Failed to send test notification.');
+                }
+              }}
+              className="px-4 py-2 rounded-lg text-sm bg-white/[0.05] border border-white/[0.08] text-gray-300 hover:bg-white/[0.1] transition-colors"
+            >
+              Send Test Notification
+            </button>
+            <p className="text-xs text-gray-600 mt-1">
+              Sends a test message to all configured channels to verify they work.
+            </p>
+          </div>
         </div>
 
         {/* Agent Configuration */}

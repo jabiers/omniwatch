@@ -22,6 +22,7 @@ import {
   GitBranch,
   RotateCw,
   Search,
+  Terminal,
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { apiFetch } from '../../../lib/api';
@@ -141,7 +142,7 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
 
   // Tab state
   const [activeTab, setActiveTab] = useState<
-    'logs' | 'chat' | 'code' | 'metrics' | 'snapshots' | 'children'
+    'logs' | 'chat' | 'code' | 'terminal' | 'metrics' | 'snapshots' | 'children'
   >('logs');
 
   const logsEndRef = useRef<HTMLDivElement>(null);
@@ -669,6 +670,17 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
           Code
         </button>
         <button
+          onClick={() => setActiveTab('terminal')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm transition-colors border-b-2 -mb-[1px] ${
+            activeTab === 'terminal'
+              ? 'border-emerald-500 text-white'
+              : 'border-transparent text-gray-500 hover:text-gray-300'
+          }`}
+        >
+          <Terminal className="w-3.5 h-3.5" />
+          Terminal
+        </button>
+        <button
           onClick={() => {
             setActiveTab('metrics');
             loadMetrics();
@@ -942,6 +954,9 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
         </div>
       )}
 
+      {/* Terminal Tab */}
+      {activeTab === 'terminal' && <TerminalPanel agentId={id} />}
+
       {/* Metrics Tab */}
       {activeTab === 'metrics' && (
         <div className="glass-card">
@@ -1159,6 +1174,134 @@ function MetricCard({
       <p className={`${small ? 'text-sm' : 'text-xl'} font-bold ${color ?? 'text-gray-200'}`}>
         {value}
       </p>
+    </div>
+  );
+}
+
+/** Terminal panel for executing commands in agent context */
+function TerminalPanel({ agentId }: { agentId: string }) {
+  const [command, setCommand] = useState('');
+  const [running, setRunning] = useState(false);
+  const [history, setHistory] = useState<
+    {
+      cmd: string;
+      stdout?: string;
+      stderr?: string;
+      exitCode: number;
+      error?: string;
+      ts: number;
+    }[]
+  >([]);
+  const outputRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (outputRef.current) {
+      outputRef.current.scrollTop = outputRef.current.scrollHeight;
+    }
+  }, [history]);
+
+  async function execCommand() {
+    const cmd = command.trim();
+    if (!cmd || running) return;
+    setRunning(true);
+    try {
+      const res = await apiFetch(`/api/agents/${agentId}/exec`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: cmd, timeout: 30000 }),
+      });
+      const data = (await res.json()) as {
+        stdout?: string;
+        stderr?: string;
+        exitCode?: number;
+        error?: string;
+      };
+      setHistory((h) => [
+        ...h,
+        {
+          cmd,
+          stdout: data.stdout,
+          stderr: data.stderr,
+          exitCode: data.exitCode ?? (data.error ? 1 : 0),
+          error: data.error,
+          ts: Date.now(),
+        },
+      ]);
+    } catch {
+      setHistory((h) => [
+        ...h,
+        { cmd, error: 'Network error — could not reach API', exitCode: 1, ts: Date.now() },
+      ]);
+    } finally {
+      setCommand('');
+      setRunning(false);
+    }
+  }
+
+  return (
+    <div className="glass-card flex flex-col" style={{ minHeight: 400 }}>
+      <div className="flex items-center gap-2 mb-3 text-xs text-gray-500">
+        <Terminal className="w-3.5 h-3.5" />
+        <span>Agent Terminal — commands execute in agent sandbox context</span>
+      </div>
+
+      {/* Output area */}
+      <div
+        ref={outputRef}
+        className="flex-1 overflow-y-auto rounded-lg bg-black/40 border border-white/[0.06] p-3 font-mono text-xs space-y-3 mb-3"
+        style={{ maxHeight: 400 }}
+      >
+        {history.length === 0 && (
+          <p className="text-gray-600 select-none">
+            Type a command below and press Enter. Allowed commands: ls, cat, curl, node, npm, git,
+            docker, etc.
+          </p>
+        )}
+        {history.map((entry, i) => (
+          <div key={i}>
+            <div className="text-emerald-400 mb-1">
+              <span className="text-gray-600 mr-2">$</span>
+              {entry.cmd}
+            </div>
+            {entry.stdout && (
+              <pre className="text-gray-300 whitespace-pre-wrap">{entry.stdout}</pre>
+            )}
+            {entry.stderr && <pre className="text-red-400 whitespace-pre-wrap">{entry.stderr}</pre>}
+            {entry.error && <pre className="text-red-400 whitespace-pre-wrap">{entry.error}</pre>}
+            <div className="text-gray-600 mt-0.5">
+              exit {entry.exitCode} &middot; {new Date(entry.ts).toLocaleTimeString()}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Input */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          execCommand();
+        }}
+        className="flex gap-2"
+      >
+        <div className="flex-1 flex items-center gap-2 rounded-lg bg-white/[0.04] border border-white/[0.08] px-3">
+          <span className="text-emerald-500 font-mono text-sm">$</span>
+          <input
+            value={command}
+            onChange={(e) => setCommand(e.target.value)}
+            placeholder="Enter command..."
+            disabled={running}
+            className="flex-1 bg-transparent py-2.5 text-sm font-mono text-gray-200 placeholder-gray-600 focus:outline-none"
+            aria-label="Terminal command input"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={running || !command.trim()}
+          className="px-4 py-2.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-sm hover:bg-emerald-500/20 transition-colors disabled:opacity-40"
+        >
+          {running ? 'Running...' : 'Run'}
+        </button>
+      </form>
     </div>
   );
 }

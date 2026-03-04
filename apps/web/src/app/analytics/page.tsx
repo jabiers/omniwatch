@@ -247,7 +247,7 @@ export default function AnalyticsPage() {
           }),
         });
       }
-      grouped.get(key)![row.metric_name] = Number(row.avg_value.toFixed(2));
+      grouped.get(key)![row.metric_name] = Number((row.avg_value ?? 0).toFixed(2));
     }
     return [...grouped.values()].sort((a, b) => String(a.time).localeCompare(String(b.time)));
   }, [metrics]);
@@ -266,9 +266,9 @@ export default function AnalyticsPage() {
     }
     return [...latest.values()].map((row) => ({
       metric: row.metric_name,
-      avg: Number(row.avg_value.toFixed(2)),
-      min: Number(row.min_value.toFixed(2)),
-      max: Number(row.max_value.toFixed(2)),
+      avg: Number((row.avg_value ?? 0).toFixed(2)),
+      min: Number((row.min_value ?? 0).toFixed(2)),
+      max: Number((row.max_value ?? 0).toFixed(2)),
     }));
   }, [metrics]);
 
@@ -774,24 +774,24 @@ export default function AnalyticsPage() {
                     <td className="px-4 py-3 text-sm text-gray-300">{agentName(a.agent_id)}</td>
                     <td className="px-4 py-3 text-sm font-mono text-amber-400">{a.metric_name}</td>
                     <td className="px-4 py-3 text-sm text-right text-gray-300 font-mono">
-                      {a.current_value.toFixed(2)}
+                      {(a.current_value ?? 0).toFixed(2)}
                     </td>
                     <td className="px-4 py-3 text-sm text-right text-gray-500 font-mono">
-                      {a.mean.toFixed(2)}
+                      {(a.mean ?? 0).toFixed(2)}
                     </td>
                     <td className="px-4 py-3 text-sm text-right font-mono">
                       <span
                         className={`px-2 py-0.5 rounded ${
-                          Math.abs(a.z_score) >= 3
+                          Math.abs(a.z_score ?? 0) >= 3
                             ? 'bg-red-500/10 text-red-400'
                             : 'bg-amber-500/10 text-amber-400'
                         }`}
                       >
-                        {a.z_score.toFixed(2)}
+                        {(a.z_score ?? 0).toFixed(2)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500">
-                      {a.stddev.toFixed(2)} &sigma;
+                      {(a.stddev ?? 0).toFixed(2)} &sigma;
                     </td>
                   </tr>
                 ))}

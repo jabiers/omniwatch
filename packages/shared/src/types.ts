@@ -89,7 +89,9 @@ export type AgentMessage =
       requestId: string;
     }
   // v0.5: Time Travel
-  | { type: 'snapshot'; label?: string; requestId: string };
+  | { type: 'snapshot'; label?: string; requestId: string }
+  // v4.28: Local command execution
+  | { type: 'exec'; command: string; cwd?: string; timeout?: number; requestId: string };
 
 export type DaemonToAgentMessage =
   | { type: 'store.result'; requestId: string; value: unknown }
@@ -99,7 +101,16 @@ export type DaemonToAgentMessage =
   // v0.5: Spawn Chain
   | { type: 'spawn.result'; requestId: string; agentId?: string; error?: string }
   // v0.5: Time Travel
-  | { type: 'snapshot.result'; requestId: string; seq: number };
+  | { type: 'snapshot.result'; requestId: string; seq: number }
+  // v4.28: Local command execution result
+  | {
+      type: 'exec.result';
+      requestId: string;
+      stdout?: string;
+      stderr?: string;
+      exitCode: number;
+      error?: string;
+    };
 
 // v0.2: Chat types
 export interface ChatMessage {

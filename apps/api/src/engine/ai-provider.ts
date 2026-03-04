@@ -135,6 +135,7 @@ class GeminiProvider implements AIProvider {
     const response = await this.client.chat.completions.create({
       model,
       max_tokens: maxTokens,
+      response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: system + '\n\nIMPORTANT: Always respond with valid JSON only.' },
         ...messages,
@@ -263,7 +264,13 @@ const OLLAMA_MODEL_PREFIXES = [
 
 /** Detect provider from model name */
 function detectProvider(model: string): string {
-  if (model.startsWith('gpt-') || model.startsWith('o1') || model.startsWith('o3')) return 'openai';
+  if (
+    model.startsWith('gpt-') ||
+    model.startsWith('o1') ||
+    model.startsWith('o3') ||
+    model.startsWith('o4')
+  )
+    return 'openai';
   if (model.startsWith('claude-')) return 'anthropic';
   if (model.startsWith('gemini-')) return 'google';
   // Check if model matches any known Ollama model prefix
