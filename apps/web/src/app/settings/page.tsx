@@ -70,6 +70,8 @@ export default function SettingsPage() {
   const [aiKeyMasked, setAiKeyMasked] = useState(false); // true when showing server-masked value
   const [aiModel, setAiModel] = useState('claude-sonnet-4-20250514');
   const [showKey, setShowKey] = useState(false);
+  const [revealedKey, setRevealedKey] = useState<string | null>(null);
+  const [revealingKey, setRevealingKey] = useState(false);
 
   // Ollama
   const [ollamaUrl, setOllamaUrl] = useState('http://localhost:11434');
@@ -324,13 +326,48 @@ export default function SettingsPage() {
                   <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08]">
                     <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span className="text-sm text-emerald-400">API key is configured</span>
-                    <span className="text-xs text-gray-600 font-mono ml-auto">{aiApiKey}</span>
+                    <span className="text-xs text-gray-600 font-mono ml-auto select-all">
+                      {revealedKey ?? aiApiKey}
+                    </span>
                   </div>
+                  <button
+                    type="button"
+                    disabled={revealingKey}
+                    aria-label={revealedKey ? 'Hide API key' : 'Reveal API key'}
+                    onClick={async () => {
+                      if (revealedKey) {
+                        setRevealedKey(null);
+                        return;
+                      }
+                      setRevealingKey(true);
+                      try {
+                        const res = await apiFetch('/api/config/api-key');
+                        if (res.ok) {
+                          const data = (await res.json()) as { api_key?: string };
+                          setRevealedKey(data.api_key || '');
+                        }
+                      } catch {
+                        /* ignore */
+                      } finally {
+                        setRevealingKey(false);
+                      }
+                    }}
+                    className="p-2 rounded-lg bg-white/[0.05] border border-white/[0.08] text-gray-400 hover:bg-white/[0.1] hover:text-white transition-colors disabled:opacity-40"
+                  >
+                    {revealingKey ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : revealedKey ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                   <button
                     type="button"
                     onClick={() => {
                       setAiApiKey('');
                       setAiKeyMasked(false);
+                      setRevealedKey(null);
                     }}
                     className="px-3 py-2 rounded-lg text-xs bg-white/[0.05] border border-white/[0.08] text-gray-400 hover:bg-white/[0.1] hover:text-white transition-colors whitespace-nowrap"
                   >

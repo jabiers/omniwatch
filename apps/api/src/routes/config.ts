@@ -100,6 +100,12 @@ configRoutes.get('/config', (c) => {
   return c.json({ config: masked });
 });
 
+/** GET /config/api-key - reveal full API key (admin only) */
+configRoutes.get('/config/api-key', requireRole('admin'), (c) => {
+  const config = loadConfig();
+  return c.json({ api_key: config.ai.api_key || '' });
+});
+
 /** PUT /config - update config fields (admin only) */
 configRoutes.put(
   '/config',
