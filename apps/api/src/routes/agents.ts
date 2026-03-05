@@ -393,6 +393,59 @@ const execCommandSchema = z.object({
   timeout: z.number().int().min(1000).max(60000).optional(),
 });
 
+/** Allowed commands for agent exec (security allowlist) */
+const EXEC_ALLOWED_COMMANDS = new Set([
+  'ls',
+  'cat',
+  'head',
+  'tail',
+  'grep',
+  'find',
+  'wc',
+  'sort',
+  'uniq',
+  'echo',
+  'date',
+  'whoami',
+  'pwd',
+  'env',
+  'which',
+  'file',
+  'stat',
+  'df',
+  'du',
+  'free',
+  'uptime',
+  'uname',
+  'hostname',
+  'curl',
+  'wget',
+  'ping',
+  'dig',
+  'nslookup',
+  'node',
+  'npm',
+  'npx',
+  'pnpm',
+  'yarn',
+  'bun',
+  'deno',
+  'python',
+  'python3',
+  'pip',
+  'git',
+  'docker',
+  'docker-compose',
+  'kubectl',
+  'jq',
+  'sed',
+  'awk',
+  'tr',
+  'cut',
+  'tee',
+  'xargs',
+]);
+
 /** POST /agents/:id/exec - run a command in agent context (admin only) */
 agentRoutes.post(
   '/agents/:id/exec',
@@ -408,12 +461,25 @@ agentRoutes.post(
       return c.json({ error: `Agent '${id}' not found` }, 404);
     }
 
+    // Validate command against allowlist
+    const baseCmd = command.trim().split(/[\s|;&]/)[0];
+    if (!EXEC_ALLOWED_COMMANDS.has(baseCmd)) {
+      return c.json(
+        {
+          error: `Command '${baseCmd}' is not allowed. Permitted: ${[...EXEC_ALLOWED_COMMANDS].slice(0, 10).join(', ')}...`,
+        },
+        403,
+      );
+    }
+
     try {
       const { execFile } = await import('node:child_process');
       const { join } = await import('node:path');
+      const { existsSync } = await import('node:fs');
       const { AGENTS_DIR } = await import('@omniwatch/shared');
 
-      const execCwd = cwd || join(AGENTS_DIR, id);
+      const agentDir = join(AGENTS_DIR, id);
+      const execCwd = cwd || (existsSync(agentDir) ? agentDir : process.cwd());
       const execTimeout = Math.min(timeout || 30000, 60000);
 
       const result = await new Promise<{ stdout: string; stderr: string; exitCode: number }>(

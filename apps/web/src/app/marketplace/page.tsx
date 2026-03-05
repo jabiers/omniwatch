@@ -38,21 +38,22 @@ interface PublishForm {
 
 const CATEGORIES = [
   { key: '', label: 'All' },
-  { key: 'general', label: 'General' },
   { key: 'monitoring', label: 'Monitoring' },
+  { key: 'finance', label: 'Finance' },
+  { key: 'devops', label: 'DevOps' },
   { key: 'security', label: 'Security' },
-  { key: 'performance', label: 'Performance' },
+  { key: 'social', label: 'Social' },
   { key: 'data', label: 'Data' },
-  { key: 'automation', label: 'Automation' },
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
   general: 'bg-gray-500/10 text-gray-400',
   monitoring: 'bg-blue-500/10 text-blue-400',
+  finance: 'bg-amber-500/10 text-amber-400',
+  devops: 'bg-purple-500/10 text-purple-400',
   security: 'bg-red-500/10 text-red-400',
-  performance: 'bg-amber-500/10 text-amber-400',
+  social: 'bg-pink-500/10 text-pink-400',
   data: 'bg-cyan-500/10 text-cyan-400',
-  automation: 'bg-purple-500/10 text-purple-400',
 };
 
 const SORT_OPTIONS = [

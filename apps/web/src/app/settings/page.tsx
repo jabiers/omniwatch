@@ -549,6 +549,37 @@ export default function SettingsPage() {
               />
             </div>
           </div>
+          <div className="rounded-lg bg-white/[0.02] border border-white/[0.06] p-3 text-xs text-gray-500 space-y-1.5">
+            <p className="font-medium text-gray-400">How to find your Telegram Chat ID:</p>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>
+                Create a bot via <span className="font-mono text-gray-400">@BotFather</span> on
+                Telegram and copy the bot token
+              </li>
+              <li>
+                Send <span className="font-mono text-gray-400">/start</span> to your bot in Telegram
+              </li>
+              <li>
+                Open{' '}
+                <span className="font-mono text-emerald-400/80 break-all">
+                  https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates
+                </span>{' '}
+                in your browser (replace &lt;TOKEN&gt; with your bot token)
+              </li>
+              <li>
+                Find{' '}
+                <span className="font-mono text-gray-400">
+                  &quot;chat&quot;:{'{'}&#34;id&#34;: <strong>YOUR_CHAT_ID</strong>
+                  {'}'}
+                </span>{' '}
+                in the response
+              </li>
+            </ol>
+            <p>
+              For group chats, add the bot to the group first, then check getUpdates. Group IDs are
+              negative (e.g. -100...).
+            </p>
+          </div>
 
           <label
             htmlFor="system-notifications"

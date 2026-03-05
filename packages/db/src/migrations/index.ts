@@ -6,6 +6,7 @@ import { up as v003 } from './v003-sandbox-queue-tenant-analytics.js';
 import { up as v004 } from './v004-marketplace.js';
 import { up as v005 } from './v005-oauth.js';
 import { up as v006 } from './v006-performance-indexes.js';
+import { up as v007 } from './v007-chat-history.js';
 
 interface Migration {
   version: number;
@@ -20,6 +21,7 @@ const migrations: Migration[] = [
   { version: 4, name: 'marketplace', up: v004 },
   { version: 5, name: 'oauth', up: v005 },
   { version: 6, name: 'performance-indexes', up: v006 },
+  { version: 7, name: 'chat-history', up: v007 },
 ];
 
 /** Run all pending migrations */

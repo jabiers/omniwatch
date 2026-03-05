@@ -28,6 +28,25 @@ function verifyAgentAccess(agentId: string, auth: { tenantId: string; role: stri
   return true;
 }
 
+/** GET /agents/:id/chat - get chat history */
+chatRoutes.get('/agents/:id/chat', zValidator('param', agentIdParam), (c) => {
+  const { id } = c.req.valid('param');
+  const auth = c.get('auth');
+  if (!verifyAgentAccess(id, auth)) {
+    return c.json({ error: `Agent '${id}' not found` }, 404);
+  }
+
+  const db = getDb();
+  const limit = Math.min(Number(c.req.query('limit')) || 100, 500);
+  const messages = db
+    .prepare(
+      'SELECT id, role, content, modified_code, auto_applied, created_at FROM agent_chat_messages WHERE agent_id = ? AND tenant_id = ? ORDER BY created_at ASC LIMIT ?',
+    )
+    .all(id, auth.tenantId, limit);
+
+  return c.json({ messages });
+});
+
 /** POST /agents/:id/chat - send chat message to modify agent */
 chatRoutes.post(
   '/agents/:id/chat',
@@ -42,12 +61,99 @@ chatRoutes.post(
     }
 
     const { message } = c.req.valid('json');
+    const db = getDb();
+
+    // Save user message
+    db.prepare(
+      'INSERT INTO agent_chat_messages (agent_id, tenant_id, role, content) VALUES (?, ?, ?, ?)',
+    ).run(id, auth.tenantId, 'user', message);
+
     try {
       const result = await handleChatRPC.chat({ id, message });
+
+      // Save assistant response
+      db.prepare(
+        'INSERT INTO agent_chat_messages (agent_id, tenant_id, role, content, modified_code, auto_applied) VALUES (?, ?, ?, ?, ?, ?)',
+      ).run(
+        id,
+        auth.tenantId,
+        'assistant',
+        result.message || '',
+        result.modifiedCode || null,
+        result.autoApplied ? 1 : 0,
+      );
+
       return c.json({ result });
     } catch (err) {
       return c.json({ error: getErrorMessage(err) }, 502);
     }
+  },
+);
+
+/** DELETE /agents/:id/chat - clear chat history */
+chatRoutes.delete(
+  '/agents/:id/chat',
+  requireRole('admin', 'operator'),
+  zValidator('param', agentIdParam),
+  (c) => {
+    const { id } = c.req.valid('param');
+    const auth = c.get('auth');
+    if (!verifyAgentAccess(id, auth)) {
+      return c.json({ error: `Agent '${id}' not found` }, 404);
+    }
+
+    const db = getDb();
+    db.prepare('DELETE FROM agent_chat_messages WHERE agent_id = ? AND tenant_id = ?').run(
+      id,
+      auth.tenantId,
+    );
+
+    return c.body(null, 204);
+  },
+);
+
+/** POST /agents/:id/chat/summarize - summarize and compact chat history */
+chatRoutes.post(
+  '/agents/:id/chat/summarize',
+  requireRole('admin', 'operator'),
+  zValidator('param', agentIdParam),
+  async (c) => {
+    const { id } = c.req.valid('param');
+    const auth = c.get('auth');
+    if (!verifyAgentAccess(id, auth)) {
+      return c.json({ error: `Agent '${id}' not found` }, 404);
+    }
+
+    const db = getDb();
+    const messages = db
+      .prepare(
+        'SELECT role, content FROM agent_chat_messages WHERE agent_id = ? AND tenant_id = ? ORDER BY created_at ASC',
+      )
+      .all(id, auth.tenantId) as { role: string; content: string }[];
+
+    if (messages.length < 4) {
+      return c.json({ error: 'Not enough messages to summarize' }, 400);
+    }
+
+    // Build summary from messages
+    const conversation = messages.map((m) => `${m.role}: ${m.content}`).join('\n');
+    const summaryText = `[Chat Summary] ${messages.length} messages exchanged. Key topics: ${messages
+      .filter((m) => m.role === 'user')
+      .map((m) => m.content.slice(0, 60))
+      .join('; ')}`;
+
+    // Replace all messages with single summary
+    db.transaction(() => {
+      db.prepare('DELETE FROM agent_chat_messages WHERE agent_id = ? AND tenant_id = ?').run(
+        id,
+        auth.tenantId,
+      );
+      db.prepare(
+        'INSERT INTO agent_chat_messages (agent_id, tenant_id, role, content) VALUES (?, ?, ?, ?)',
+      ).run(id, auth.tenantId, 'system', summaryText);
+    })();
+
+    return c.json({ summary: summaryText, originalCount: messages.length });
   },
 );
 

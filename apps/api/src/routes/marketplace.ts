@@ -4,7 +4,7 @@ import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { getDb } from '@omniwatch/db';
 import { handleAgentRPC } from '../engine/engine.js';
-import { safeJsonParse, getErrorMessage } from '@omniwatch/shared';
+import { safeJsonParse, getErrorMessage, listRecipes } from '@omniwatch/shared';
 import { requireRole } from '../middleware/auth.js';
 import { randomUUID } from 'node:crypto';
 
@@ -14,7 +14,17 @@ const publishRecipeSchema = z.object({
   description: z.string().max(2000).optional(),
   prompt: z.string().min(1, 'prompt is required'),
   category: z
-    .enum(['general', 'monitoring', 'security', 'performance', 'data', 'automation'])
+    .enum([
+      'general',
+      'monitoring',
+      'security',
+      'performance',
+      'data',
+      'automation',
+      'finance',
+      'devops',
+      'social',
+    ])
     .default('general'),
   tags: z.array(z.string().max(50)).max(10).default([]),
   config: z.record(z.unknown()).optional(),
@@ -227,3 +237,34 @@ marketplaceRoutes.delete('/marketplace/:id', requireRole('admin'), (c) => {
   db.prepare('DELETE FROM marketplace_recipes WHERE id = ?').run(id);
   return c.body(null, 204);
 });
+
+/** Seed marketplace with built-in recipes if empty */
+export function seedMarketplace(): void {
+  const db = getDb();
+  const count = db.prepare('SELECT COUNT(*) as cnt FROM marketplace_recipes').get() as {
+    cnt: number;
+  };
+  if (count.cnt > 0) return;
+
+  const recipes = listRecipes();
+  const insert = db.prepare(
+    'INSERT INTO marketplace_recipes (id, name, description, prompt, category, author, version, tags, config, published) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)',
+  );
+
+  const tx = db.transaction(() => {
+    for (const r of recipes) {
+      insert.run(
+        r.id,
+        r.name,
+        r.description,
+        r.prompt,
+        r.category,
+        'omniwatch',
+        '1.0.0',
+        JSON.stringify(r.tags),
+        JSON.stringify(r.config ?? {}),
+      );
+    }
+  });
+  tx();
+}

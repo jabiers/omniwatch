@@ -47,7 +47,7 @@ describe('MarketplacePage', () => {
     expect(await screen.findByText('All')).toBeInTheDocument();
     expect(screen.getByText('Monitoring')).toBeInTheDocument();
     expect(screen.getByText('Security')).toBeInTheDocument();
-    expect(screen.getByText('Automation')).toBeInTheDocument();
+    expect(screen.getByText('Finance')).toBeInTheDocument();
   });
 
   it('should render sort dropdown', async () => {

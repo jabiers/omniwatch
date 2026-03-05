@@ -25,6 +25,7 @@ import { SystemChannel } from './notification-channels/system.js';
 import { SlackChannel } from './notification-channels/slack.js';
 import { DiscordChannel } from './notification-channels/discord.js';
 import { TelegramChannel } from './notification-channels/telegram.js';
+import { seedMarketplace } from '../routes/marketplace.js';
 
 // Re-export handlers
 export { handleAgentRPC } from './handlers/agent.js';
@@ -61,6 +62,9 @@ export async function initEngine(): Promise<void> {
   // Start background services
   startHealthMonitor();
   startScheduler();
+
+  // Seed marketplace with built-in recipes if empty
+  seedMarketplace();
 
   // Restore previous state
   await restoreRunningAgents();

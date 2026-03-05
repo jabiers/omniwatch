@@ -263,6 +263,79 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
     }
   }, [id]);
 
+  // Load chat history from DB
+  const [chatLoaded, setChatLoaded] = useState(false);
+  const loadChatHistory = useCallback(async () => {
+    try {
+      const res = await apiFetch(`/api/agents/${id}/chat?limit=200`);
+      if (res.ok) {
+        const data = (await res.json()) as {
+          messages?: {
+            role: string;
+            content: string;
+            modified_code?: string;
+            auto_applied?: number;
+            created_at?: string;
+          }[];
+        };
+        const msgs: ChatMessage[] = (data.messages ?? []).map((m) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+          modifiedCode: m.modified_code || undefined,
+          autoApplied: m.auto_applied === 1,
+          timestamp: m.created_at ? new Date(m.created_at).getTime() : Date.now(),
+        }));
+        setChatMessages(msgs);
+        setChatLoaded(true);
+      }
+    } catch {
+      // Chat history unavailable
+    }
+  }, [id]);
+
+  // Load chat history when tab switches to chat
+  useEffect(() => {
+    if (activeTab === 'chat' && !chatLoaded) {
+      loadChatHistory();
+    }
+  }, [activeTab, chatLoaded, loadChatHistory]);
+
+  /** Clear all chat history for this agent */
+  async function clearChatHistory() {
+    try {
+      const res = await apiFetch(`/api/agents/${id}/chat`, { method: 'DELETE' });
+      if (res.ok) {
+        setChatMessages([]);
+        addToast('Chat history cleared', 'success');
+      }
+    } catch {
+      addToast('Failed to clear chat history', 'error');
+    }
+  }
+
+  /** Summarize and compact chat history */
+  async function summarizeChatHistory() {
+    try {
+      const res = await apiFetch(`/api/agents/${id}/chat/summarize`, { method: 'POST' });
+      if (res.ok) {
+        const data = (await res.json()) as { summary: string; originalCount: number };
+        setChatMessages([
+          {
+            role: 'assistant',
+            content: data.summary,
+            timestamp: Date.now(),
+          },
+        ]);
+        addToast(`Summarized ${data.originalCount} messages`, 'success');
+      } else {
+        const err = (await res.json().catch(() => ({}))) as { error?: string };
+        addToast(err.error || 'Failed to summarize', 'error');
+      }
+    } catch {
+      addToast('Failed to summarize chat', 'error');
+    }
+  }
+
   // Initial load
   useEffect(() => {
     async function initialLoad() {
@@ -794,6 +867,25 @@ export default function AgentDetailPage({ params }: { params: Promise<{ id: stri
       {/* Chat Tab */}
       {activeTab === 'chat' && (
         <div className="glass-card !p-0 flex flex-col h-[480px] max-h-[60vh]">
+          {/* Chat header with session actions */}
+          {chatMessages.length > 0 && (
+            <div className="flex items-center justify-end gap-2 px-4 pt-3 pb-0">
+              <button
+                onClick={summarizeChatHistory}
+                className="text-[11px] px-2 py-1 rounded bg-white/[0.04] text-gray-500 hover:text-amber-400 hover:bg-amber-500/10 transition-colors"
+                title="Summarize conversation"
+              >
+                Summarize
+              </button>
+              <button
+                onClick={clearChatHistory}
+                className="text-[11px] px-2 py-1 rounded bg-white/[0.04] text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                title="Clear chat history"
+              >
+                Clear
+              </button>
+            </div>
+          )}
           {/* Chat messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {chatMessages.length === 0 && (
@@ -1211,18 +1303,17 @@ function TerminalPanel({ agentId }: { agentId: string }) {
         body: JSON.stringify({ command: cmd, timeout: 30000 }),
       });
       const data = (await res.json()) as {
-        stdout?: string;
-        stderr?: string;
-        exitCode?: number;
+        result?: { stdout?: string; stderr?: string; exitCode?: number };
         error?: string;
       };
+      const r = data.result;
       setHistory((h) => [
         ...h,
         {
           cmd,
-          stdout: data.stdout,
-          stderr: data.stderr,
-          exitCode: data.exitCode ?? (data.error ? 1 : 0),
+          stdout: r?.stdout,
+          stderr: r?.stderr,
+          exitCode: r?.exitCode ?? (data.error ? 1 : 0),
           error: data.error,
           ts: Date.now(),
         },
