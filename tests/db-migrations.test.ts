@@ -29,13 +29,14 @@ describe('Database Migrations', () => {
         version: number;
         name: string;
       }[];
-      expect(applied.length).toBe(6);
+      expect(applied.length).toBe(7);
       expect(applied[0]).toEqual({ version: 1, name: 'core' });
       expect(applied[1]).toEqual({ version: 2, name: 'mesh-spawn-timetravel' });
       expect(applied[2]).toEqual({ version: 3, name: 'sandbox-queue-tenant-analytics' });
       expect(applied[3]).toEqual({ version: 4, name: 'marketplace' });
       expect(applied[4]).toEqual({ version: 5, name: 'oauth' });
       expect(applied[5]).toEqual({ version: 6, name: 'performance-indexes' });
+      expect(applied[6]).toEqual({ version: 7, name: 'chat-history' });
     });
 
     it('should record applied_at timestamp for each migration', () => {
@@ -60,7 +61,7 @@ describe('Database Migrations', () => {
       expect(() => runMigrations(db)).not.toThrow();
 
       const count = (db.prepare('SELECT COUNT(*) as c FROM _migrations').get() as { c: number }).c;
-      expect(count).toBe(6);
+      expect(count).toBe(7);
     });
 
     it('should not alter existing data on re-run', () => {
