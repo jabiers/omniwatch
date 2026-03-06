@@ -461,8 +461,13 @@ agentRoutes.post(
       return c.json({ error: `Agent '${id}' not found` }, 404);
     }
 
+    // Reject shell metacharacters to prevent command injection
+    if (/[|;&`$()<>]/.test(command)) {
+      return c.json({ error: 'Shell operators (|, ;, &, `, $, <, >) are not allowed' }, 403);
+    }
+
     // Validate command against allowlist
-    const baseCmd = command.trim().split(/[\s|;&]/)[0];
+    const baseCmd = command.trim().split(/\s+/)[0];
     if (!EXEC_ALLOWED_COMMANDS.has(baseCmd)) {
       return c.json(
         {

@@ -40,7 +40,13 @@ snapshotRoutes.get('/agents/:id/snapshots', zValidator('param', agentIdParam), (
     .prepare(
       'SELECT id, agent_id, seq, label, created_at FROM agent_snapshots WHERE agent_id = ? ORDER BY seq DESC',
     )
-    .all(id);
+    .all(id) as {
+    id: string;
+    agent_id: string;
+    seq: number;
+    label: string | null;
+    created_at: string;
+  }[];
 
   return c.json({ snapshots });
 });
@@ -68,7 +74,7 @@ snapshotRoutes.post(
 
     try {
       const result = await handleSnapshotRPC.capture({ agentId: id, label });
-      return c.json(result, 201);
+      return c.json({ snapshot: result }, 201);
     } catch (err) {
       return c.json({ error: getErrorMessage(err) }, 502);
     }
@@ -99,7 +105,7 @@ snapshotRoutes.post(
         agentId: id,
         seq,
       });
-      return c.json(result);
+      return c.json({ snapshot: result });
     } catch (err) {
       return c.json({ error: getErrorMessage(err) }, 502);
     }

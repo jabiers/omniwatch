@@ -28,24 +28,33 @@ function verifyAgentAccess(agentId: string, auth: { tenantId: string; role: stri
   return true;
 }
 
-/** GET /agents/:id/chat - get chat history */
-chatRoutes.get('/agents/:id/chat', zValidator('param', agentIdParam), (c) => {
-  const { id } = c.req.valid('param');
-  const auth = c.get('auth');
-  if (!verifyAgentAccess(id, auth)) {
-    return c.json({ error: `Agent '${id}' not found` }, 404);
-  }
-
-  const db = getDb();
-  const limit = Math.min(Number(c.req.query('limit')) || 100, 500);
-  const messages = db
-    .prepare(
-      'SELECT id, role, content, modified_code, auto_applied, created_at FROM agent_chat_messages WHERE agent_id = ? AND tenant_id = ? ORDER BY created_at ASC LIMIT ?',
-    )
-    .all(id, auth.tenantId, limit);
-
-  return c.json({ messages });
+const chatQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(500).default(100),
 });
+
+/** GET /agents/:id/chat - get chat history */
+chatRoutes.get(
+  '/agents/:id/chat',
+  zValidator('param', agentIdParam),
+  zValidator('query', chatQuerySchema),
+  (c) => {
+    const { id } = c.req.valid('param');
+    const auth = c.get('auth');
+    if (!verifyAgentAccess(id, auth)) {
+      return c.json({ error: `Agent '${id}' not found` }, 404);
+    }
+
+    const db = getDb();
+    const { limit } = c.req.valid('query');
+    const messages = db
+      .prepare(
+        'SELECT id, role, content, modified_code, auto_applied, created_at FROM agent_chat_messages WHERE agent_id = ? AND tenant_id = ? ORDER BY created_at ASC LIMIT ?',
+      )
+      .all(id, auth.tenantId, limit);
+
+    return c.json({ messages });
+  },
+);
 
 /** POST /agents/:id/chat - send chat message to modify agent */
 chatRoutes.post(
@@ -63,25 +72,25 @@ chatRoutes.post(
     const { message } = c.req.valid('json');
     const db = getDb();
 
-    // Save user message
-    db.prepare(
-      'INSERT INTO agent_chat_messages (agent_id, tenant_id, role, content) VALUES (?, ?, ?, ?)',
-    ).run(id, auth.tenantId, 'user', message);
-
     try {
       const result = await handleChatRPC.chat({ id, message });
 
-      // Save assistant response
-      db.prepare(
-        'INSERT INTO agent_chat_messages (agent_id, tenant_id, role, content, modified_code, auto_applied) VALUES (?, ?, ?, ?, ?, ?)',
-      ).run(
-        id,
-        auth.tenantId,
-        'assistant',
-        result.message || '',
-        result.modifiedCode || null,
-        result.autoApplied ? 1 : 0,
-      );
+      // Save both user message and assistant response atomically
+      db.transaction(() => {
+        db.prepare(
+          'INSERT INTO agent_chat_messages (agent_id, tenant_id, role, content) VALUES (?, ?, ?, ?)',
+        ).run(id, auth.tenantId, 'user', message);
+        db.prepare(
+          'INSERT INTO agent_chat_messages (agent_id, tenant_id, role, content, modified_code, auto_applied) VALUES (?, ?, ?, ?, ?, ?)',
+        ).run(
+          id,
+          auth.tenantId,
+          'assistant',
+          result.message || '',
+          result.modifiedCode || null,
+          result.autoApplied ? 1 : 0,
+        );
+      })();
 
       return c.json({ result });
     } catch (err) {
@@ -136,7 +145,6 @@ chatRoutes.post(
     }
 
     // Build summary from messages
-    const conversation = messages.map((m) => `${m.role}: ${m.content}`).join('\n');
     const summaryText = `[Chat Summary] ${messages.length} messages exchanged. Key topics: ${messages
       .filter((m) => m.role === 'user')
       .map((m) => m.content.slice(0, 60))

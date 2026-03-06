@@ -99,12 +99,12 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
 - **Simplified Build** -- 5 packages (was 6), single tsup config with multiple entry points
 
 ### Quality & Security (v3.0+)
-- **Test Suite** -- 553 tests across 60 files (432 root + 121 web)
+- **Test Suite** -- 554 tests across 60 files (432 root + 122 web)
 - **Query Optimization** -- Zero SELECT * in production code; all queries use explicit columns
 - **Input Validation** -- Zod schemas on all API routes via @hono/zod-validator
 - **Error Handling** -- try-catch on all async route handlers with structured JSON errors
 - **Security Hardening** -- Tenant isolation on bulk ops, SSRF prevention, webhook masking
-- **Dashboard Tests** -- All 14 pages covered with render tests
+- **Dashboard Tests** -- All 15 pages covered with render tests
 
 ## Architecture
 
@@ -119,8 +119,8 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
                                        |--fork--> [Agent N] (sandbox)
                                        v
                                  [SQLite DB (WAL)]
-                                 |-- 18 tables
-                                 +-- versioned migrations (v001-v006)
+                                 |-- 19 tables
+                                 +-- versioned migrations (v001-v007)
 
                           [Next.js Dashboard] --API proxy--> [API Server]
 ```
@@ -130,7 +130,7 @@ node apps/cli/dist/index.js watch "Check Hacker News every hour for AI-related p
 | **CLI** (`omni`) | Lightweight HTTP client. 15 commands + Ink TUI. Talks to API via HTTP. |
 | **API Server** (`apps/api`) | Unified Hono server (70+ endpoints) + embedded daemon engine + WebSocket + MCP. |
 | **Engine** (`apps/api/src/engine`) | Agent lifecycle, health, AI, sandbox, queue, metrics — embedded in API package. |
-| **Web** (`apps/web`) | Next.js 15 Glass Console. 14 pages with auth, charts, admin. |
+| **Web** (`apps/web`) | Next.js 15 Glass Console. 15 pages with auth, charts, admin. |
 | **Agent** | Sandboxed Node.js process with SDK (`omni.fetch`, `omni.notify`, `omni.store`). |
 
 ## Web Dashboard
@@ -152,6 +152,7 @@ The Glass Console dashboard (port 3457) provides full control over the platform.
 | Notifications | `/notifications` | Paginated, filterable notification history |
 | Tenants | `/tenants` | Multi-tenant and user management (admin only) |
 | Settings | `/settings` | AI, notification, and agent configuration |
+| Help | `/help` | Getting started guide, FAQ, keyboard shortcuts |
 | Login | `/login` | API key authentication with session management |
 
 ## API
@@ -250,7 +251,7 @@ npx turbo build
 # Dev mode (watch)
 npx turbo dev
 
-# Run all tests (553 tests, 60 files)
+# Run all tests (554 tests, 60 files)
 npx turbo test
 
 # Type check
@@ -269,9 +270,9 @@ GitHub Actions workflow runs on every push and PR to `main`:
 ## Database
 
 - **Engine**: SQLite with WAL mode (better-sqlite3)
-- **Tables**: 18 application tables + 1 migrations table
-- **Migrations**: 6 versioned migration files (v001-v006)
-- **Key tables**: agents, agent_logs, agent_metrics, agent_store, notifications, ai_usage, mesh_events, mesh_subscriptions, agent_snapshots, security_events, message_queue, dead_letters, tenants, users, metric_rollups, alert_rules, marketplace_recipes, oauth_sessions
+- **Tables**: 19 application tables + 1 migrations table
+- **Migrations**: 7 versioned migration files (v001-v007)
+- **Key tables**: agents, agent_logs, agent_metrics, agent_store, agent_chat_messages, notifications, ai_usage, mesh_events, mesh_subscriptions, agent_snapshots, security_events, message_queue, dead_letters, tenants, users, metric_rollups, alert_rules, marketplace_recipes, oauth_sessions
 
 ## Project Structure
 
@@ -286,14 +287,14 @@ omniwatch/
 |   |   +-- src/openapi.ts      # OpenAPI/Swagger
 |   |   +-- src/ws.ts           # WebSocket server
 |   +-- web/                    # Next.js 15 Dashboard
-|       +-- src/app/            # 14 pages (Glass Console)
+|       +-- src/app/            # 15 pages (Glass Console)
 |       +-- src/components/     # Pagination, AuthGuard, ToastContainer
 |       +-- src/lib/            # auth-store, toast-store, api wrapper
 +-- packages/
 |   +-- shared/                 # Types, constants, errors, IPC, auth
 |   +-- db/                     # SQLite schema + versioned migrations
-|       +-- src/migrations/     # v001-v006
-+-- tests/                      # 60 files, 526 tests
+|       +-- src/migrations/     # v001-v007
++-- tests/                      # 60 files, 554 tests
 +-- bin/omni.mjs                # CLI entry point
 +-- Dockerfile                  # Production container
 +-- docker-compose.yml          # Docker Compose config

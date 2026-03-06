@@ -1481,8 +1481,9 @@ describe('POST /api/agents/:id/snapshots', () => {
       body: JSON.stringify({ label: 'test snapshot' }),
     });
     expect(res.status).toBe(201);
-    const body = (await res.json()) as { seq: number };
-    expect(body).toHaveProperty('seq');
+    const body = (await res.json()) as { snapshot: { seq: number } };
+    expect(body).toHaveProperty('snapshot');
+    expect(body.snapshot).toHaveProperty('seq');
   });
 });
 

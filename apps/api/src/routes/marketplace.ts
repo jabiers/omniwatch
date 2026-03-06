@@ -226,16 +226,20 @@ marketplaceRoutes.post('/marketplace/:id/install', requireRole('admin', 'operato
 
 /** DELETE /marketplace/:id — Remove a recipe (admin only) */
 marketplaceRoutes.delete('/marketplace/:id', requireRole('admin'), (c) => {
-  const id = c.req.param('id');
-  const db = getDb();
+  try {
+    const id = c.req.param('id');
+    const db = getDb();
 
-  const existing = db.prepare('SELECT id FROM marketplace_recipes WHERE id = ?').get(id);
-  if (!existing) {
-    return c.json({ error: 'Recipe not found' }, 404);
+    const existing = db.prepare('SELECT id FROM marketplace_recipes WHERE id = ?').get(id);
+    if (!existing) {
+      return c.json({ error: 'Recipe not found' }, 404);
+    }
+
+    db.prepare('DELETE FROM marketplace_recipes WHERE id = ?').run(id);
+    return c.body(null, 204);
+  } catch (err) {
+    return c.json({ error: getErrorMessage(err) }, 500);
   }
-
-  db.prepare('DELETE FROM marketplace_recipes WHERE id = ?').run(id);
-  return c.body(null, 204);
 });
 
 /** Seed marketplace with built-in recipes if empty */

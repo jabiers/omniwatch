@@ -27,7 +27,10 @@ export function rateLimiter(
   windowMs = DEFAULT_WINDOW_MS,
 ): MiddlewareHandler {
   return async (c, next) => {
-    const ip = c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const ip =
+      c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ||
+      c.req.header('x-real-ip') ||
+      String((c.env as Record<string, unknown>)?.remoteAddr || 'unknown');
     const now = Date.now();
     const entry = store.get(ip);
 

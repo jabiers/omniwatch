@@ -178,8 +178,10 @@ tenantRoutes.post(
       const body = c.req.valid('json');
 
       const db = getDb();
-      // Check for duplicate email
-      const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(body.email);
+      // Check for duplicate email within tenant
+      const existing = db
+        .prepare('SELECT id FROM users WHERE email = ? AND tenant_id = ?')
+        .get(body.email, auth.tenantId);
       if (existing) return c.json({ error: 'Email already exists' }, 409);
 
       const id = nanoid(8);
@@ -210,17 +212,21 @@ tenantRoutes.post(
 
 /** DELETE /users/:id — Delete a user (admin only) */
 tenantRoutes.delete('/users/:id', requireRole('admin'), (c) => {
-  const auth = c.get('auth');
-  const userId = c.req.param('id');
-  const db = getDb();
+  try {
+    const auth = c.get('auth');
+    const userId = c.req.param('id');
+    const db = getDb();
 
-  // Ensure user belongs to same tenant
-  const user = db
-    .prepare('SELECT id FROM users WHERE id = ? AND tenant_id = ?')
-    .get(userId, auth.tenantId);
+    // Ensure user belongs to same tenant
+    const user = db
+      .prepare('SELECT id FROM users WHERE id = ? AND tenant_id = ?')
+      .get(userId, auth.tenantId);
 
-  if (!user) return c.json({ error: 'User not found' }, 404);
+    if (!user) return c.json({ error: 'User not found' }, 404);
 
-  db.prepare('DELETE FROM users WHERE id = ?').run(userId);
-  return c.body(null, 204);
+    db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+    return c.body(null, 204);
+  } catch (err) {
+    return c.json({ error: getErrorMessage(err) }, 500);
+  }
 });
